@@ -1,0 +1,3 @@
+[submodule "forge/lib/prb-math"]
+	path = forge/lib/prb-math
+	url = https://github.com/PaulRBerg/prb-math
