@@ -6,7 +6,7 @@ import "./UniswapV3Pool.sol";
 
 error PoolAlreadyExists();
 error ZeroAddressNotAllowed();
-error TokenMustBeDifferent();
+error TokensMustBeDifferent();
 error UnsupportedFee();
 
 contract UniswapV3Factory is IUniswapV3PoolDeployer {
@@ -33,7 +33,7 @@ contract UniswapV3Factory is IUniswapV3PoolDeployer {
         address tokenY,
         uint24 fee
     ) public returns (address pool) {
-        if (tokenX == tokenY) revert TokenMustBeDifferent();
+        if (tokenX == tokenY) revert TokensMustBeDifferent();
         if (fees[fee] == 0) revert UnsupportedFee();
 
         (tokenX, tokenY) = tokenX < tokenY
