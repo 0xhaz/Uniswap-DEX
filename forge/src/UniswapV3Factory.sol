@@ -1,16 +1,14 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.14;
 
 import "./interfaces/IUniswapV3PoolDeployer.sol";
 import "./UniswapV3Pool.sol";
 
-error PoolAlreadyExists();
-error ZeroAddressNotAllowed();
-error TokensMustBeDifferent();
-error UnsupportedFee();
-
 contract UniswapV3Factory is IUniswapV3PoolDeployer {
-    PoolParameters public parameters;
+    error PoolAlreadyExists();
+    error ZeroAddressNotAllowed();
+    error TokensMustBeDifferent();
+    error UnsupportedFee();
 
     event PoolCreated(
         address indexed token0,
@@ -18,6 +16,8 @@ contract UniswapV3Factory is IUniswapV3PoolDeployer {
         uint24 indexed fee,
         address pool
     );
+
+    PoolParameters public parameters;
 
     mapping(uint24 => uint24) public fees;
     mapping(address => mapping(address => mapping(uint24 => address)))
