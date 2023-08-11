@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
@@ -30,12 +30,12 @@ abstract contract Assertions is Test {
         assertEq(
             expected.pool.feeGrowthGlobal0X128(),
             expected.fees[0],
-            "invalid feeGrowthGlobal0X128"
+            "incorrect feeGrowthGlobal0X128"
         );
         assertEq(
             expected.pool.feeGrowthGlobal1X128(),
             expected.fees[1],
-            "invalid feeGrowthGlobal1X128"
+            "incorrect feeGrowthGlobal1X128"
         );
     }
 
@@ -98,18 +98,25 @@ abstract contract Assertions is Test {
         assertEq(
             initialized,
             expected.initialized,
-            "incorrect initialized value"
+            "incorrect tick initialized state"
         );
         assertEq(
             liquidityGross,
             expected.liquidityGross,
-            "incorrect liquidityGross value"
+            "incorrect tick gross liquidity"
         );
         assertEq(
             liquidityNet,
             expected.liquidityNet,
-            "incorrect liquidityNet value"
+            "incorrect tick net liquidity"
         );
+
+        // TODO: fix, must be the same as 'initialized'
+        // assertEq(
+        //     tickInBitMap(expected.pool, expected.tick),
+        //     expected.initialized,
+        //     "incorrect tick in bitmap state"
+        // );
     }
 
     struct ExpectedObservation {
@@ -141,27 +148,32 @@ abstract contract Assertions is Test {
         assertEq(
             tickCumulative,
             expected.tickCumulative,
-            "incorrect observation tickCumulative"
+            "incorrect observation cumulative tick"
         );
 
         assertEq(
             initialized,
             expected.initialized,
-            "incorrect observation initialized"
+            "incorrect observation initialization state"
         );
     }
 
     struct ExpectedMany {
         UniswapV3Pool pool;
         ERC20Mintable[2] tokens;
+        // Pool
         uint128 liquidity;
         uint160 sqrtPriceX96;
         int24 tick;
         uint256[2] fees;
+        // Balances
         uint256[2] userBalances;
         uint256[2] poolBalances;
+        // Position
         ExpectedPositionShort position;
+        // Ticks
         ExpectedTickShort[2] ticks;
+        // Observation
         ExpectedObservationShort observation;
     }
 
@@ -175,7 +187,6 @@ abstract contract Assertions is Test {
                 fees: expected.fees
             })
         );
-
         assertBalances(
             ExpectedBalances({
                 pool: expected.pool,
@@ -186,7 +197,6 @@ abstract contract Assertions is Test {
                 poolBalance1: expected.poolBalances[1]
             })
         );
-
         assertPosition(
             ExpectedPosition({
                 pool: expected.pool,

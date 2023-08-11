@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
@@ -28,17 +28,19 @@ abstract contract TestUtils is Test, Assertions {
         int128 quot = ABDKMath64x64.div(x, y);
         result = quot >> 64;
 
+        // Check if remainder is greater than 0.5
         if (quot % 2 ** 64 >= 0x8000000000000000) {
             result += 1;
         }
     }
 
+    // Implements: https://github.com/Uniswap/v3-sdk/blob/b6cd73a71f8f8ec6c40c130564d3aff12c38e693/src/utils/nearestUsableTick.ts
     function nearestUsableTick(
-        int24 _tick,
+        int24 tick_,
         uint24 tickSpacing
     ) internal pure returns (int24 result) {
         result =
-            int24(divRound(int128(_tick), int128(int24(tickSpacing)))) *
+            int24(divRound(int128(tick_), int128(int24(tickSpacing)))) *
             int24(tickSpacing);
 
         if (result < TickMath.MIN_TICK) {
@@ -58,32 +60,32 @@ abstract contract TestUtils is Test, Assertions {
             );
     }
 
-    // Calculate sqrtP from price with tick spacing equal to 60
+    // Calculates sqrtP from price with tick spacing equal to 60;
     function sqrtP60(uint256 price) internal pure returns (uint160) {
         return TickMath.getSqrtRatioAtTick(tick60(price));
     }
 
-    // Calculates sqrtP from tick with tick spacing equal to 60
-    function sqrtP60FromTick(int24 _tick) internal pure returns (uint160) {
-        return TickMath.getSqrtRatioAtTick(nearestUsableTick(_tick, 60));
+    // Calculates sqrtP from tick with tick spacing equal to 60;
+    function sqrtP60FromTick(int24 tick_) internal pure returns (uint160) {
+        return TickMath.getSqrtRatioAtTick(nearestUsableTick(tick_, 60));
     }
 
-    function tick(uint256 price) internal pure returns (int24 _tick) {
-        _tick = TickMath.getTickAtSqrtRatio(sqrtP(price));
+    function tick(uint256 price) internal pure returns (int24 tick_) {
+        tick_ = TickMath.getTickAtSqrtRatio(sqrtP(price));
     }
 
-    // Calculates tick from price with tick spacing equal to 60
-    function tick60(uint256 price) internal pure returns (int24 _tick) {
-        _tick = tick(price);
-        _tick = nearestUsableTick(_tick, 60);
+    // Calculates tick from price with tick spacing equal to 60;
+    function tick60(uint256 price) internal pure returns (int24 tick_) {
+        tick_ = tick(price);
+        tick_ = nearestUsableTick(tick_, 60);
     }
 
     function sqrtPToNearestTick(
-        uint160 _sqrtP,
+        uint160 sqrtP_,
         uint24 tickSpacing
-    ) internal pure returns (int24 _tick) {
-        _tick = TickMath.getTickAtSqrtRatio(_sqrtP);
-        _tick = nearestUsableTick(_tick, tickSpacing);
+    ) internal pure returns (int24 tick_) {
+        tick_ = TickMath.getTickAtSqrtRatio(sqrtP_);
+        tick_ = nearestUsableTick(tick_, tickSpacing);
     }
 
     function encodeError(
@@ -104,15 +106,15 @@ abstract contract TestUtils is Test, Assertions {
     }
 
     function encodeExtra(
-        address _token0,
-        address _token1,
+        address token0_,
+        address token1_,
         address payer
     ) internal pure returns (bytes memory) {
         return
             abi.encode(
                 IUniswapV3Pool.CallbackData({
-                    token0: _token0,
-                    token1: _token1,
+                    token0: token0_,
+                    token1: token1_,
                     payer: payer
                 })
             );

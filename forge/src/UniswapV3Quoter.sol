@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
 import "./interfaces/IUniswapV3Pool.sol";
@@ -9,8 +9,6 @@ import "./lib/TickMath.sol";
 contract UniswapV3Quoter {
     using Path for bytes;
 
-    address public immutable factory;
-
     struct QuoteSingleParams {
         address tokenIn;
         address tokenOut;
@@ -19,8 +17,10 @@ contract UniswapV3Quoter {
         uint160 sqrtPriceLimitX96;
     }
 
-    constructor(address _factory) {
-        factory = _factory;
+    address public immutable factory;
+
+    constructor(address factory_) {
+        factory = factory_;
     }
 
     function quote(
@@ -43,7 +43,7 @@ contract UniswapV3Quoter {
                 .decodeFirstPool();
 
             (
-                uint256 _amountOut,
+                uint256 amountOut_,
                 uint160 sqrtPriceX96After,
                 int24 tickAfter
             ) = quoteSingle(
@@ -58,7 +58,7 @@ contract UniswapV3Quoter {
 
             sqrtPriceX96AfterList[i] = sqrtPriceX96After;
             tickAfterList[i] = tickAfter;
-            amountIn = _amountOut;
+            amountIn = amountOut_;
             i++;
 
             if (path.hasMultiplePools()) {
@@ -76,7 +76,7 @@ contract UniswapV3Quoter {
         public
         returns (uint256 amountOut, uint160 sqrtPriceX96After, int24 tickAfter)
     {
-        IUniswapV3Pool pool = _getPool(
+        IUniswapV3Pool pool = getPool(
             params.tokenIn,
             params.tokenOut,
             params.fee
@@ -112,7 +112,7 @@ contract UniswapV3Quoter {
 
         uint256 amountOut = amount0Delta > 0
             ? uint256(-amount1Delta)
-            : uint256(amount0Delta);
+            : uint256(-amount0Delta);
 
         (uint160 sqrtPriceX96After, int24 tickAfter, , , ) = IUniswapV3Pool(
             pool
@@ -127,7 +127,7 @@ contract UniswapV3Quoter {
         }
     }
 
-    function _getPool(
+    function getPool(
         address token0,
         address token1,
         uint24 fee

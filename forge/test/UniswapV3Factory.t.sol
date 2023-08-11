@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
@@ -42,8 +42,8 @@ contract UniswapV3FactoryTest is Test, TestUtils {
         );
 
         assertEq(pool.factory(), address(factory), "invalid factory address");
-        assertEq(pool.token0(), address(usdc), "invalid token0 address");
-        assertEq(pool.token1(), address(weth), "invalid token1 address");
+        assertEq(pool.token0(), address(usdc), "invalid weth address");
+        assertEq(pool.token1(), address(weth), "invalid usdc address");
         assertEq(pool.tickSpacing(), 10, "invalid tick spacing");
         assertEq(pool.fee(), 500, "invalid fee");
 
@@ -56,12 +56,12 @@ contract UniswapV3FactoryTest is Test, TestUtils {
         ) = pool.slot0();
         assertEq(sqrtPriceX96, 0, "invalid sqrtPriceX96");
         assertEq(tick, 0, "invalid tick");
-        assertEq(observationIndex, 0, "invalid observationIndex");
-        assertEq(observationCardinality, 0, "invalid observationCardinality");
+        assertEq(observationIndex, 0, "invalid observation index");
+        assertEq(observationCardinality, 0, "invalid observation cardinality");
         assertEq(
             observationCardinalityNext,
             0,
-            "invalid observationCardinalityNext"
+            "invalid next observation cardinality"
         );
     }
 
@@ -82,6 +82,7 @@ contract UniswapV3FactoryTest is Test, TestUtils {
 
     function testCreateAlreadyExists() public {
         factory.createPool(address(weth), address(usdc), 500);
+
         vm.expectRevert(encodeError("PoolAlreadyExists()"));
         factory.createPool(address(weth), address(usdc), 500);
     }
