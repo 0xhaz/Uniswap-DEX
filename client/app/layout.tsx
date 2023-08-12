@@ -1,15 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import "@rainbow-me/rainbowkit/styles.css";
-
-import {
-  getDefaultWallets,
-  RainbowKitProvider,
-  darkTheme,
-  midnightTheme,
-} from "@rainbow-me/rainbowkit";
-import { chain, configureChains, createClient, WagmiConfig } from "wagmi";
-import { infuraProvider } from "wagmi/providers/infura";
+import Providers from "./context/Providers";
+import Header from "./components/header";
 
 export const metadata: Metadata = {
   title: "UniswapV3 DEX",
@@ -23,7 +15,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Providers>
+          <Header />
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }
