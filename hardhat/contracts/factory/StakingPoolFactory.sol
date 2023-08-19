@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.19;
 
-import "../StakingPool.sol";
+import "../core/StakingPool.sol";
 
 contract StakingPoolFactory {
     address public feeTo;

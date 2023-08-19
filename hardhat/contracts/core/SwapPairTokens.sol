@@ -3,8 +3,8 @@ pragma solidity ^0.8.19;
 
 import "../libraries/Math.sol";
 import "../libraries/UQ112x112.sol";
-import "./interfaces/IERC20.sol";
-import "./interfaces/ISwapFactory.sol";
+import "../interfaces/IERC20.sol";
+import "../interfaces/ISwapFactory.sol";
 import "./SwapTokens.sol";
 
 contract SwapPairTokens is SwapTokens {
