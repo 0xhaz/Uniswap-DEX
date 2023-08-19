@@ -2,15 +2,17 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "hardhat/console.sol";
 
-error LendingPool__InvalidAmount(uint256 amount);
-error LendingPool__InvalidValue(uint256 value);
+error LendingPool__InvalidAmount();
+error LendingPool__InvalidValue();
 error LendingPool__InvalidUser();
 
 contract LendingPool is ERC20 {
     ERC20 immutable token;
     address public immutable tokenAddress;
     uint256 totalPoolSupply;
+    uint256 interestFactor;
 
     // @dev the rate earned by the lender per second
     uint256 lendRate = 100;
@@ -49,6 +51,29 @@ contract LendingPool is ERC20 {
     constructor(address _tokenAddress) ERC20("XToken", "XT") {
         token = ERC20(_tokenAddress);
         tokenAddress = _tokenAddress;
+
+        uint256 tokenDecimals = token.decimals();
+        // Calculate the dynamic factor for interest rate
+        interestFactor = 10 ** tokenDecimals;
+    }
+
+    /**
+     * @dev - to liquidate the amount
+     * @param _liquidateAmount - amount to be liquidated
+     */
+
+    function liquidate(address _user, uint256 _liquidateAmount) public {
+        if (!borrowers[_user]) revert LendingPool__InvalidUser();
+
+        if (_liquidateAmount >= borrowAmount[_user].amount)
+            revert LendingPool__InvalidAmount();
+
+        token.transferFrom(_user, address(this), _liquidateAmount);
+
+        uint256 _reward = (_liquidateAmount * 3) / 100;
+        _updateBorrow(_user);
+        token.transfer(msg.sender, _reward);
+        borrowAmount[_user].amount -= _liquidateAmount + _reward;
     }
 
     /**
@@ -56,7 +81,7 @@ contract LendingPool is ERC20 {
      * @param _amount - deposited amount
      */
     function deposit(uint256 _amount, address _user) external {
-        if (_amount == 0) revert LendingPool__InvalidAmount(_amount);
+        if (_amount == 0) revert LendingPool__InvalidAmount();
 
         /// @dev transferring the tokens to the pool contract
         token.transferFrom(_user, address(this), _amount);
@@ -80,10 +105,9 @@ contract LendingPool is ERC20 {
      */
 
     function borrow(uint256 _amount, address _user) external {
-        if (_amount == 0) revert LendingPool__InvalidAmount(_amount);
+        if (_amount == 0) revert LendingPool__InvalidAmount();
 
-        if (_amount > totalPoolSupply / 10)
-            revert LendingPool__InvalidValue(_amount);
+        if (_amount > totalPoolSupply / 10) revert LendingPool__InvalidValue();
 
         /// @dev updating the total pool supply
         borrowAmount[_user].amount = _amount;
@@ -100,23 +124,6 @@ contract LendingPool is ERC20 {
         emit Borrow(_user, _amount);
     }
 
-    function _calculateRepayAmount(
-        address _user,
-        uint256 _repayAmount
-    ) internal view returns (uint256 _amount) {
-        /// @dev total amount to be repaid with interest
-        Amount storage amount_ = borrowAmount[_user];
-
-        if (_repayAmount >= amount_.amount)
-            revert LendingPool__InvalidAmount(_repayAmount);
-
-        uint256 _interest = (_repayAmount *
-            (((block.timestamp - amount_.start) * borrowRate) / 1e18)) /
-            totalPoolSupply;
-
-        _amount = (_repayAmount + _interest);
-    }
-
     /**
      * @dev - to repay the amount
      * @param _repayAmount - amount to be repaid
@@ -125,7 +132,8 @@ contract LendingPool is ERC20 {
         if (!borrowers[_user]) revert LendingPool__InvalidUser();
 
         uint256 _amount = _calculateRepayAmount(_user, _repayAmount);
-        if (_amount == 0) revert LendingPool__InvalidAmount(_amount);
+
+        if (_amount == 0) revert LendingPool__InvalidAmount();
 
         /// @dev transferring the tokens to the pool contract
         token.transferFrom(_user, address(this), _amount);
@@ -151,7 +159,7 @@ contract LendingPool is ERC20 {
 
         /// @dev calculating the total amount with interest
         uint256 _amount = _calculateWithdrawAmount(_user, _withdrawAmount);
-        if (_amount == 0) revert LendingPool__InvalidAmount(_amount);
+        if (_amount == 0) revert LendingPool__InvalidAmount();
 
         /// @dev delete the record from the lendAmount mapping
         lendAmount[_user].amount -= _amount;
@@ -171,23 +179,34 @@ contract LendingPool is ERC20 {
         emit Withdraw(_user, _withdrawAmount);
     }
 
-    /**
-     * @dev - to liquidate the amount
-     * @param _liquidateAmount - amount to be liquidated
-     */
+    function getBorrowers(address _user) external view returns (uint256) {
+        return borrowAmount[_user].amount;
+    }
 
-    function liquidate(address _user, uint256 _liquidateAmount) public {
-        if (!borrowers[_user]) revert LendingPool__InvalidUser();
+    function getBorrowRate() external view returns (uint256) {
+        return borrowRate;
+    }
 
-        if (_liquidateAmount >= borrowAmount[_user].amount)
-            revert LendingPool__InvalidAmount(_liquidateAmount);
+    function getCurrentTotalSupply(
+        address _tokenAddress
+    ) external view returns (uint256) {
+        return token.balanceOf(_tokenAddress);
+    }
 
-        token.transferFrom(_user, address(this), _liquidateAmount);
+    function _calculateRepayAmount(
+        address _user,
+        uint256 _repayAmount
+    ) internal view returns (uint256 _amount) {
+        /// @dev total amount to be repaid with interest
+        Amount storage amount_ = borrowAmount[_user];
 
-        uint256 _reward = (_liquidateAmount * 3) / 100;
-        _updateBorrow(_user);
-        token.transfer(msg.sender, _reward);
-        borrowAmount[_user].amount -= _liquidateAmount + _reward;
+        require(_repayAmount <= amount_.amount, "Invalid amount");
+
+        uint256 _interest = (_repayAmount *
+            (((block.timestamp - amount_.start) * borrowRate) /
+                interestFactor)) / totalPoolSupply;
+
+        _amount = (_repayAmount + _interest);
     }
 
     function _calculateWithdrawAmount(
@@ -196,11 +215,10 @@ contract LendingPool is ERC20 {
     ) internal view returns (uint256 _amount) {
         Amount storage amount_ = lendAmount[_user];
 
-        if (_withdrawAmount >= amount_.amount)
-            revert LendingPool__InvalidAmount(_withdrawAmount);
+        require(_withdrawAmount <= amount_.amount, "Invalid amount");
 
         uint256 _interest = (_withdrawAmount *
-            ((block.timestamp - amount_.start) * lendRate * 1e18)) /
+            ((block.timestamp - amount_.start) * lendRate * interestFactor)) /
             totalPoolSupply;
 
         _amount = (_withdrawAmount + _interest);
@@ -212,7 +230,9 @@ contract LendingPool is ERC20 {
         Amount storage amount_ = borrowAmount[_user];
         _interestAmount =
             (amount_.amount *
-                ((block.timestamp - amount_.start) * borrowRate * 1e18)) /
+                ((block.timestamp - amount_.start) *
+                    borrowRate *
+                    interestFactor)) /
             totalPoolSupply;
 
         paidInterest[_user] = _interestAmount;
@@ -225,7 +245,9 @@ contract LendingPool is ERC20 {
 
         _interestAmount =
             (amount_.amount *
-                ((block.timestamp - amount_.start) * lendRate * 1e18)) /
+                ((block.timestamp - amount_.start) *
+                    lendRate *
+                    interestFactor)) /
             totalPoolSupply;
 
         earnedInterest[_user] = _interestAmount;
