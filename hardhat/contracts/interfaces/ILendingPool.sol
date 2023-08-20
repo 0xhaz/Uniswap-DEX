@@ -25,6 +25,8 @@ interface ILendingPool {
 
     function repay(address _user, uint256 _amount) external;
 
+    function withdraw(address _user, uint256 _amount) external;
+
     function liquidate(address _user, uint256 _amount) external;
 
     function calculateRepayAmount(
