@@ -6,9 +6,9 @@ interface IStakingPool {
 
     function earned(address _user) external view returns (uint256);
 
-    function stake(uint256 _amount) external;
+    function stake(uint256 _amount, address _account) external;
 
-    function withdraw(uint256 _amount) external;
+    function withdraw(uint256 _amount, address _account) external;
 
     function rewards(address _user) external view returns (uint256);
 
