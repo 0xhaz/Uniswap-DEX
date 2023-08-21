@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 import "hardhat/console.sol";
 
 error LendingPool__InvalidAmount();
@@ -15,10 +16,10 @@ contract LendingPool is ERC20 {
     uint256 interestFactor;
 
     // @dev the rate earned by the lender per second
-    uint256 lendRate = 100;
+    uint256 lendRate = 100; // 100 / 10^18 = 0.0000000000000001% per second
 
     // @dev the rate paid by the borrower per second
-    uint256 borrowRate = 130;
+    uint256 borrowRate = 130; // 130 / 10^18 = 0.00000000000000013% per second
 
     uint256 periodBorrowed;
 
@@ -159,6 +160,7 @@ contract LendingPool is ERC20 {
 
         /// @dev calculating the total amount with interest
         uint256 _amount = _calculateWithdrawAmount(_user, _withdrawAmount);
+        console.log(_amount);
         if (_amount == 0) revert LendingPool__InvalidAmount();
 
         /// @dev delete the record from the lendAmount mapping
@@ -212,16 +214,19 @@ contract LendingPool is ERC20 {
     function _calculateWithdrawAmount(
         address _user,
         uint256 _withdrawAmount
-    ) internal view returns (uint256 _amount) {
+    ) internal view returns (uint256 amount) {
         Amount storage amount_ = lendAmount[_user];
 
         require(_withdrawAmount <= amount_.amount, "Invalid amount");
 
-        uint256 _interest = (_withdrawAmount *
-            ((block.timestamp - amount_.start) * lendRate * interestFactor)) /
-            totalPoolSupply;
+        uint256 elapsedTime = block.timestamp - amount_.start;
 
-        _amount = (_withdrawAmount + _interest);
+        uint256 interestEarned = (_withdrawAmount *
+            elapsedTime *
+            lendRate *
+            interestFactor) / totalPoolSupply;
+
+        amount = (_withdrawAmount + interestEarned);
     }
 
     function _updateBorrow(

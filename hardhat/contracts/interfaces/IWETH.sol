@@ -36,8 +36,6 @@ interface IWETH {
         uint256 _value
     ) external returns (bool);
 
-    receive() external payable;
-
     function deposit() external payable;
 
     function withdraw(uint256 _amount) external;
