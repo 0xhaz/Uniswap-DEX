@@ -15,9 +15,9 @@ contract SwapPairTokens is SwapTokens {
     bytes4 private constant SELECTOR =
         bytes4(keccak256(bytes("transfer(address,uint256)")));
 
-    address private factory;
-    address private token0;
-    address private token1;
+    address public factory;
+    address public token0;
+    address public token1;
 
     uint112 private reserve0; // uses single storage slot, accessible via getReserves
     uint112 private reserve1; // uses single storage slot, accessible via getReserves

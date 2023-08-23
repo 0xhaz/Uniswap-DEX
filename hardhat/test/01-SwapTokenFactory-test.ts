@@ -38,14 +38,66 @@ describe("SwapPairTokensFactory", () => {
     );
     await expect(factory.createPair(tokens[0], tokens[1]))
       .to.emit(factory, "PairCreated")
-      .withArgs(tokens[0], tokens[1], create2Address, 1);
+      .withArgs(TEST_ADDRESSES[0], TEST_ADDRESSES[1], create2Address, 1);
 
     await expect(factory.createPair(tokens[0], tokens[1])).to.be.revertedWith(
-      "SwapPairTokensFactory::createPair: PAIR_EXIST"
+      "SwapPairTokensFactory::createPair: PAIR_EXISTS"
     );
 
     await expect(factory.createPair(tokens[1], tokens[0])).to.be.revertedWith(
-      "SwapPairTokensFactory::createPair: PAIR_EXIST"
+      "SwapPairTokensFactory::createPair: PAIR_EXISTS"
     );
+
+    expect(await factory.getPair(tokens[0], tokens[1])).to.equal(
+      create2Address
+    );
+    expect(await factory.getPair(tokens[1], tokens[0])).to.equal(
+      create2Address
+    );
+    expect(await factory.allPairs(0)).to.equal(create2Address);
+    expect(await factory.allPairsLength()).to.equal(1);
+
+    const pair = pairContract.attach(create2Address) as SwapPairTokens;
+    expect(await pair.factory()).to.equal(factoryAddress);
+    expect(await pair.token0()).to.equal(TEST_ADDRESSES[0]);
+    expect(await pair.token1()).to.equal(TEST_ADDRESSES[1]);
   };
+
+  it("createPair", async () => {
+    const { factory } = await loadFixture(fixture);
+    await createPair(factory, [...TEST_ADDRESSES]);
+  });
+
+  it("createPair: reversed tokens", async () => {
+    const { factory } = await loadFixture(fixture);
+    await createPair(factory, [...TEST_ADDRESSES].reverse());
+  });
+
+  it("createPair: gas", async () => {
+    const { factory } = await loadFixture(fixture);
+    const tx = await factory.createPair(...TEST_ADDRESSES);
+    const receipt = await tx.wait();
+    expect(receipt.gasUsed).to.equal(1822900);
+  });
+
+  it("setFeeTo", async () => {
+    const { factory, wallet, other } = await loadFixture(fixture);
+    await expect(
+      factory.connect(other).setFeeTo(other.address)
+    ).to.be.revertedWith("SwapPairTokensFactory::setFeeTo: FORBIDDEN");
+    await factory.setFeeTo(wallet.address);
+    expect(await factory.feeTo()).to.equal(wallet.address);
+  });
+
+  it("setFeeToSetter", async () => {
+    const { factory, wallet, other } = await loadFixture(fixture);
+    await expect(
+      factory.connect(other).setFeeToSetter(other.address)
+    ).to.be.revertedWith("SwapPairTokensFactory::setFeeToSetter: FORBIDDEN");
+    await factory.setFeeToSetter(other.address);
+    expect(await factory.feeToSetter()).to.equal(other.address);
+    await expect(factory.setFeeToSetter(wallet.address)).to.be.revertedWith(
+      "SwapPairTokensFactory::setFeeToSetter: FORBIDDEN"
+    );
+  });
 });
