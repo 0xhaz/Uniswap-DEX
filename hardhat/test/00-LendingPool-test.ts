@@ -41,7 +41,7 @@ describe("LendingPool", () => {
     tokenX = (await ERC20Mock.deploy()) as TokenX;
     await tokenX.deployed();
 
-    [deployer, owner, addr1, addr2, ...addrs] = await ethers.getSigners();
+    [deployer, owner, addr1, addr2] = await ethers.getSigners();
     lendingPool = (await LendingPool.deploy(tokenX.address)) as LendingPool;
     await lendingPool.deployed();
   });
