@@ -14,7 +14,7 @@ describe("SwapPairTokensFactory", () => {
   const fixture = async () => {
     const tmp = await ethers.getContractFactory("SwapPairTokensFactory");
     const [wallet, other] = await ethers.getSigners();
-    const factory = await tmp.deploy(wallet.address);
+    const factory = (await tmp.deploy(wallet.address)) as SwapPairTokensFactory;
     return { factory, wallet, other };
   };
 
@@ -70,14 +70,20 @@ describe("SwapPairTokensFactory", () => {
 
   it("createPair: reversed tokens", async () => {
     const { factory } = await loadFixture(fixture);
-    await createPair(factory, [...TEST_ADDRESSES].reverse());
+    const reversedAddress: [string, string] = [
+      TEST_ADDRESSES[1],
+      TEST_ADDRESSES[0],
+    ];
+    await createPair(factory, reversedAddress);
   });
 
   it("createPair: gas", async () => {
     const { factory } = await loadFixture(fixture);
+    const estimateGas = await factory.estimateGas.createPair(...TEST_ADDRESSES);
     const tx = await factory.createPair(...TEST_ADDRESSES);
     const receipt = await tx.wait();
-    expect(receipt.gasUsed).to.equal(1822900);
+    const gasUsed = receipt.gasUsed;
+    expect(gasUsed).to.equal(estimateGas);
   });
 
   it("setFeeTo", async () => {

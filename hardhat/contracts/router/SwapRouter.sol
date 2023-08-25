@@ -316,7 +316,31 @@ contract SwapRouter {
         TransferHelper.safeTransferETH(_to, amounts[amounts.length - 1]);
     }
 
-    function getReserver(
+    function swapExactTokensForETH(
+        uint256 _amountIn,
+        uint256 _amountOutMin,
+        address[] calldata _path,
+        address _to,
+        uint256 _deadline
+    ) external virtual ensure(_deadline) returns (uint256[] memory amounts) {
+        require(_path[_path.length - 1] == WETH, "INVALID_PATH");
+        amounts = SwapLibrary.getAmountsOut(factory, _amountIn, _path);
+        require(
+            amounts[amounts.length - 1] >= _amountOutMin,
+            "INSUFFICIENT_OUTPUT_AMOUNT"
+        );
+        TransferHelper.safeTransferFrom(
+            _path[0],
+            msg.sender,
+            SwapLibrary.pairFor(factory, _path[0], _path[1]),
+            amounts[0]
+        );
+        _swap(amounts, _path, address(this));
+        IWETH(WETH).withdraw(amounts[amounts.length - 1]);
+        TransferHelper.safeTransferETH(_to, amounts[amounts.length - 1]);
+    }
+
+    function getReserve(
         address _tokenA,
         address _tokenB
     ) public view returns (uint256 reserveA, uint256 reserveB) {

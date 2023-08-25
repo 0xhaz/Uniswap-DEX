@@ -181,10 +181,10 @@ contract SwapPairTokens is SwapTokens {
         {
             // scope for reserve{0,1}Adjusted, avoids stack too deep errors
             uint256 balance0Adjusted = (
-                balance0.mul(10000).sub(amount0In.mul(25))
+                balance0.mul(1000).sub(amount0In.mul(3))
             );
             uint256 balance1Adjusted = (
-                balance1.mul(10000).sub(amount1In.mul(25))
+                balance1.mul(1000).sub(amount1In.mul(3))
             );
             require(
                 balance0Adjusted.mul(balance1Adjusted) >=

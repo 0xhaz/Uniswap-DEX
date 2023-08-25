@@ -27,6 +27,11 @@ contract SwapTokens {
         return true;
     }
 
+    function transfer(address _to, uint256 _value) external returns (bool) {
+        _transfer(msg.sender, _to, _value);
+        return true;
+    }
+
     function transferFrom(
         address _from,
         address _to,

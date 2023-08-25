@@ -28,3 +28,5 @@ export function encodePrice(reserve0: bigint, reserve1: bigint) {
 }
 
 export const MINIMUM_LIQUIDITY = 10n ** 3n;
+
+export const Version = "1";
