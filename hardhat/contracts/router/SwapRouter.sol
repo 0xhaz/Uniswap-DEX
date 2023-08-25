@@ -268,6 +268,34 @@ contract SwapRouter {
         _swap(amounts, _path, _to);
     }
 
+    function swapExactETHForTokens(
+        uint256 _amountOutMin,
+        address[] calldata _path,
+        address _to,
+        uint256 _deadline
+    )
+        external
+        payable
+        virtual
+        ensure(_deadline)
+        returns (uint256[] memory amounts)
+    {
+        require(_path[0] == WETH, "INVALID_PATH");
+        amounts = SwapLibrary.getAmountsOut(factory, msg.value, _path);
+        require(
+            amounts[amounts.length - 1] >= _amountOutMin,
+            "INSUFFICIENT_OUTPUT_AMOUNT"
+        );
+        IWETH(WETH).deposit{value: amounts[0]}();
+        assert(
+            IWETH(WETH).transfer(
+                SwapLibrary.pairFor(factory, _path[0], _path[1]),
+                amounts[0]
+            )
+        );
+        _swap(amounts, _path, _to);
+    }
+
     function swapETHForExactTokens(
         uint256 _amountOut,
         address[] calldata _path,
