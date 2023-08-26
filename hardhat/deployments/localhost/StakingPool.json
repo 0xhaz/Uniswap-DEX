@@ -1,0 +1,367 @@
+{
+  "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_stakingToken",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_rewardToken",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "decimalFactor",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lastUpdateTime",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rewardPerToken",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rewardPerTokenStored",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rewardRate",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rewardToken",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "rewards",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        }
+      ],
+      "name": "stakeToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "staked",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "stakingToken",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "userRewardPerTokenPaid",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        }
+      ],
+      "name": "withdrawToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xef17e71dabee688a7dd419607c011b633622858eca343a3fa3d63aaaa964e13a",
+  "receipt": {
+    "to": null,
+    "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "contractAddress": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+    "transactionIndex": 0,
+    "gasUsed": "473646",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xbbf204155fa1b44cc9e235f44162f403f234ef6f43758f95100b1a2ddcf855b4",
+    "transactionHash": "0xef17e71dabee688a7dd419607c011b633622858eca343a3fa3d63aaaa964e13a",
+    "logs": [],
+    "blockNumber": 14,
+    "cumulativeGasUsed": "473646",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+    "0x0165878A594ca255338adfa4d48449f69242Eb8F"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "ff3f472e5438dd7d355c924648416203",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.19+commit.7dd6d404\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stakingToken\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_rewardToken\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"decimalFactor\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"lastUpdateTime\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rewardPerToken\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rewardPerTokenStored\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rewardRate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rewardToken\",\"outputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"rewards\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"}],\"name\":\"stakeToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"staked\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"stakingToken\",\"outputs\":[{\"internalType\":\"contract IERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"userRewardPerTokenPaid\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_user\",\"type\":\"address\"}],\"name\":\"withdrawToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"rewardPerToken()\":{\"details\":\"- To calculuate the amount of rewards per token staked\",\"returns\":{\"_0\":\"uint256 - The amount of rewards per token staked\"}},\"stakeToken(uint256,address)\":{\"details\":\"- to stake tokens into the pool\",\"params\":{\"_amount\":\"- the amount of tokens to stake\"}},\"withdrawToken(uint256,address)\":{\"details\":\"- to withdraw tokens from the pool\",\"params\":{\"_amount\":\"- the amount of tokens to withdraw\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/core/StakingPool.sol\":\"StakingPool\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/core/StakingPool.sol\":{\"content\":\"// SPDX-License-Identifier: SEE LICENSE IN LICENSE\\npragma solidity ^0.8.19;\\n\\nimport \\\"../interfaces/IERC20.sol\\\";\\n\\ncontract StakingPool {\\n    IERC20 public rewardToken;\\n    IERC20 public stakingToken;\\n    uint256 private _totalSupply;\\n    uint256 public rewardRate;\\n    uint256 public lastUpdateTime;\\n    uint256 public rewardPerTokenStored;\\n    uint256 public decimalFactor;\\n\\n    mapping(address => uint256) public rewards;\\n    mapping(address => uint256) public userRewardPerTokenPaid;\\n    mapping(address => uint256) public staked;\\n\\n    /// @dev - modifier that will calculate the amount of rewards earned and add it to the rewards mapping\\n    modifier updateReward(address _account) {\\n        rewardPerTokenStored = rewardPerToken();\\n        lastUpdateTime = block.timestamp;\\n        rewards[_account] = _rewardEarned(_account);\\n        userRewardPerTokenPaid[_account] = rewardPerTokenStored;\\n        _;\\n    }\\n\\n    constructor(address _stakingToken, address _rewardToken) {\\n        stakingToken = IERC20(_stakingToken);\\n        rewardToken = IERC20(_rewardToken);\\n\\n        uint256 rewardTokenDecimals = rewardToken.decimals();\\n        decimalFactor = 10 ** rewardTokenDecimals;\\n    }\\n\\n    /// @dev - to stake tokens into the pool\\n    /// @param _amount - the amount of tokens to stake\\n    function stakeToken(\\n        uint256 _amount,\\n        address _user\\n    ) external updateReward(_user) {\\n        require(_amount > 0, \\\"Cannot stake 0 tokens\\\");\\n        _totalSupply += _amount;\\n        staked[_user] += _amount;\\n        stakingToken.transferFrom(msg.sender, address(this), _amount);\\n    }\\n\\n    /// @dev - to withdraw tokens from the pool\\n    /// @param _amount - the amount of tokens to withdraw\\n    function withdrawToken(\\n        uint256 _amount,\\n        address _user\\n    ) external updateReward(_user) {\\n        require(_amount > 0, \\\"Cannot withdraw 0 tokens\\\");\\n        _totalSupply -= _amount;\\n        staked[_user] -= _amount;\\n        stakingToken.transfer(msg.sender, _amount);\\n    }\\n\\n    /// @dev - To calculuate the amount of rewards per token staked\\n    /// @return uint256 - The amount of rewards per token staked\\n    function rewardPerToken() public view returns (uint256) {\\n        if (_totalSupply == 0) {\\n            return rewardPerTokenStored;\\n        }\\n\\n        return\\n            rewardPerTokenStored +\\n            (((block.timestamp - lastUpdateTime) * rewardRate * decimalFactor) /\\n                _totalSupply);\\n    }\\n\\n    /**\\n     * @dev - to calculate the earned rewards for a user based on the amount of tokens staked\\n     * @param _account - the address of the user\\n     * @return uint256 - the amount of rewards earned\\n     */\\n\\n    function _rewardEarned(address _account) internal view returns (uint256) {\\n        return\\n            ((staked[_account] *\\n                (rewardPerToken() - userRewardPerTokenPaid[_account])) /\\n                decimalFactor) + rewards[_account];\\n    }\\n}\\n\",\"keccak256\":\"0x0c567871866b5f1639d8c46c344f0570a4f15f1c59efa2e676704a6ab6354585\",\"license\":\"SEE LICENSE IN LICENSE\"},\"contracts/interfaces/IERC20.sol\":{\"content\":\"// SPDX-License-Identifier: SEE LICENSE IN LICENSE\\npragma solidity ^0.8.19;\\n\\ninterface IERC20 {\\n    event Approval(\\n        address indexed owner,\\n        address indexed spender,\\n        uint256 value\\n    );\\n\\n    event Transfer(address indexed from, address indexed to, uint256 value);\\n\\n    function name() external view returns (string memory);\\n\\n    function symbol() external view returns (string memory);\\n\\n    function totalSupply() external view returns (uint256);\\n\\n    function decimals() external view returns (uint256);\\n\\n    function balanceOf(address _owner) external view returns (uint256);\\n\\n    function allowance(\\n        address _owner,\\n        address _spender\\n    ) external view returns (uint256);\\n\\n    function approve(address _spender, uint256 _value) external returns (bool);\\n\\n    function transfer(address _to, uint256 _value) external returns (bool);\\n\\n    function transferFrom(\\n        address _from,\\n        address _to,\\n        uint256 _value\\n    ) external returns (bool);\\n}\\n\",\"keccak256\":\"0x239f47b2f966a01ac0f60503dec17b3d50e7bd5aaaea4f3fe8c79909d9da3f90\",\"license\":\"SEE LICENSE IN LICENSE\"}},\"version\":1}",
+  "bytecode": "0x60806040523480156200001157600080fd5b50604051620008b4380380620008b4833981016040819052620000349162000100565b600180546001600160a01b038085166001600160a01b0319928316179092556000805492841692909116821781556040805163313ce56760e01b8152905191929163313ce567916004808201926020929091908290030181865afa158015620000a1573d6000803e3d6000fd5b505050506040513d601f19601f82011682018060405250810190620000c7919062000138565b9050620000d681600a62000267565b600655506200027c915050565b80516001600160a01b0381168114620000fb57600080fd5b919050565b600080604083850312156200011457600080fd5b6200011f83620000e3565b91506200012f60208401620000e3565b90509250929050565b6000602082840312156200014b57600080fd5b5051919050565b634e487b7160e01b600052601160045260246000fd5b600181815b80851115620001a95781600019048211156200018d576200018d62000152565b808516156200019b57918102915b93841c93908002906200016d565b509250929050565b600082620001c25750600162000261565b81620001d15750600062000261565b8160018114620001ea5760028114620001f55762000215565b600191505062000261565b60ff84111562000209576200020962000152565b50506001821b62000261565b5060208310610133831016604e8410600b84101617156200023a575081810a62000261565b62000246838362000168565b80600019048211156200025d576200025d62000152565b0290505b92915050565b6000620002758383620001b1565b9392505050565b610628806200028c6000396000f3fe608060405234801561001057600080fd5b50600436106100b45760003560e01c80639ee30600116100715780639ee3060014610169578063be4b17721461017e578063c8f33c9114610191578063cd3daf9d1461019a578063df136d65146101a2578063f7c618c1146101ab57600080fd5b80630700037d146100b95780636d6a6a4d146100ec57806372f702f3146100f55780637b0a47ee146101205780638b8763471461012957806398807d8414610149575b600080fd5b6100d96100c736600461050d565b60076020526000908152604090205481565b6040519081526020015b60405180910390f35b6100d960065481565b600154610108906001600160a01b031681565b6040516001600160a01b0390911681526020016100e3565b6100d960035481565b6100d961013736600461050d565b60086020526000908152604090205481565b6100d961015736600461050d565b60096020526000908152604090205481565b61017c61017736600461052f565b6101be565b005b61017c61018c36600461052f565b610312565b6100d960045481565b6100d961041e565b6100d960055481565b600054610108906001600160a01b031681565b806101c761041e565b600555426004556101d781610477565b6001600160a01b0382166000908152600760209081526040808320939093556005546008909152919020558261024c5760405162461bcd60e51b815260206004820152601560248201527443616e6e6f74207374616b65203020746f6b656e7360581b60448201526064015b60405180910390fd5b826002600082825461025e9190610571565b90915550506001600160a01b0382166000908152600960205260408120805485929061028b908490610571565b90915550506001546040516323b872dd60e01b8152336004820152306024820152604481018590526001600160a01b03909116906323b872dd906064015b6020604051808303816000875af11580156102e8573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061030c9190610584565b50505050565b8061031b61041e565b6005554260045561032b81610477565b6001600160a01b038216600090815260076020908152604080832093909355600554600890915291902055826103a35760405162461bcd60e51b815260206004820152601860248201527f43616e6e6f74207769746864726177203020746f6b656e7300000000000000006044820152606401610243565b82600260008282546103b591906105a6565b90915550506001600160a01b038216600090815260096020526040812080548592906103e29084906105a6565b909155505060015460405163a9059cbb60e01b8152336004820152602481018590526001600160a01b039091169063a9059cbb906044016102c9565b6000600254600003610431575060055490565b60025460065460035460045461044790426105a6565b61045191906105b9565b61045b91906105b9565b61046591906105d0565b6005546104729190610571565b905090565b6001600160a01b0381166000908152600760209081526040808320546006546008909352908320549091906104aa61041e565b6104b491906105a6565b6001600160a01b0385166000908152600960205260409020546104d791906105b9565b6104e191906105d0565b6104eb9190610571565b92915050565b80356001600160a01b038116811461050857600080fd5b919050565b60006020828403121561051f57600080fd5b610528826104f1565b9392505050565b6000806040838503121561054257600080fd5b82359150610552602084016104f1565b90509250929050565b634e487b7160e01b600052601160045260246000fd5b808201808211156104eb576104eb61055b565b60006020828403121561059657600080fd5b8151801515811461052857600080fd5b818103818111156104eb576104eb61055b565b80820281158282048414176104eb576104eb61055b565b6000826105ed57634e487b7160e01b600052601260045260246000fd5b50049056fea2646970667358221220d85a8f1ca1eb64c9a530987e6eeba7bb5d95abacc22f26f415c2d6647b804c0f64736f6c63430008130033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100b45760003560e01c80639ee30600116100715780639ee3060014610169578063be4b17721461017e578063c8f33c9114610191578063cd3daf9d1461019a578063df136d65146101a2578063f7c618c1146101ab57600080fd5b80630700037d146100b95780636d6a6a4d146100ec57806372f702f3146100f55780637b0a47ee146101205780638b8763471461012957806398807d8414610149575b600080fd5b6100d96100c736600461050d565b60076020526000908152604090205481565b6040519081526020015b60405180910390f35b6100d960065481565b600154610108906001600160a01b031681565b6040516001600160a01b0390911681526020016100e3565b6100d960035481565b6100d961013736600461050d565b60086020526000908152604090205481565b6100d961015736600461050d565b60096020526000908152604090205481565b61017c61017736600461052f565b6101be565b005b61017c61018c36600461052f565b610312565b6100d960045481565b6100d961041e565b6100d960055481565b600054610108906001600160a01b031681565b806101c761041e565b600555426004556101d781610477565b6001600160a01b0382166000908152600760209081526040808320939093556005546008909152919020558261024c5760405162461bcd60e51b815260206004820152601560248201527443616e6e6f74207374616b65203020746f6b656e7360581b60448201526064015b60405180910390fd5b826002600082825461025e9190610571565b90915550506001600160a01b0382166000908152600960205260408120805485929061028b908490610571565b90915550506001546040516323b872dd60e01b8152336004820152306024820152604481018590526001600160a01b03909116906323b872dd906064015b6020604051808303816000875af11580156102e8573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061030c9190610584565b50505050565b8061031b61041e565b6005554260045561032b81610477565b6001600160a01b038216600090815260076020908152604080832093909355600554600890915291902055826103a35760405162461bcd60e51b815260206004820152601860248201527f43616e6e6f74207769746864726177203020746f6b656e7300000000000000006044820152606401610243565b82600260008282546103b591906105a6565b90915550506001600160a01b038216600090815260096020526040812080548592906103e29084906105a6565b909155505060015460405163a9059cbb60e01b8152336004820152602481018590526001600160a01b039091169063a9059cbb906044016102c9565b6000600254600003610431575060055490565b60025460065460035460045461044790426105a6565b61045191906105b9565b61045b91906105b9565b61046591906105d0565b6005546104729190610571565b905090565b6001600160a01b0381166000908152600760209081526040808320546006546008909352908320549091906104aa61041e565b6104b491906105a6565b6001600160a01b0385166000908152600960205260409020546104d791906105b9565b6104e191906105d0565b6104eb9190610571565b92915050565b80356001600160a01b038116811461050857600080fd5b919050565b60006020828403121561051f57600080fd5b610528826104f1565b9392505050565b6000806040838503121561054257600080fd5b82359150610552602084016104f1565b90509250929050565b634e487b7160e01b600052601160045260246000fd5b808201808211156104eb576104eb61055b565b60006020828403121561059657600080fd5b8151801515811461052857600080fd5b818103818111156104eb576104eb61055b565b80820281158282048414176104eb576104eb61055b565b6000826105ed57634e487b7160e01b600052601260045260246000fd5b50049056fea2646970667358221220d85a8f1ca1eb64c9a530987e6eeba7bb5d95abacc22f26f415c2d6647b804c0f64736f6c63430008130033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "rewardPerToken()": {
+        "details": "- To calculuate the amount of rewards per token staked",
+        "returns": {
+          "_0": "uint256 - The amount of rewards per token staked"
+        }
+      },
+      "stakeToken(uint256,address)": {
+        "details": "- to stake tokens into the pool",
+        "params": {
+          "_amount": "- the amount of tokens to stake"
+        }
+      },
+      "withdrawToken(uint256,address)": {
+        "details": "- to withdraw tokens from the pool",
+        "params": {
+          "_amount": "- the amount of tokens to withdraw"
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 1765,
+        "contract": "contracts/core/StakingPool.sol:StakingPool",
+        "label": "rewardToken",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_contract(IERC20)4382"
+      },
+      {
+        "astId": 1768,
+        "contract": "contracts/core/StakingPool.sol:StakingPool",
+        "label": "stakingToken",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_contract(IERC20)4382"
+      },
+      {
+        "astId": 1770,
+        "contract": "contracts/core/StakingPool.sol:StakingPool",
+        "label": "_totalSupply",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 1772,
+        "contract": "contracts/core/StakingPool.sol:StakingPool",
+        "label": "rewardRate",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 1774,
+        "contract": "contracts/core/StakingPool.sol:StakingPool",
+        "label": "lastUpdateTime",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 1776,
+        "contract": "contracts/core/StakingPool.sol:StakingPool",
+        "label": "rewardPerTokenStored",
+        "offset": 0,
+        "slot": "5",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 1778,
+        "contract": "contracts/core/StakingPool.sol:StakingPool",
+        "label": "decimalFactor",
+        "offset": 0,
+        "slot": "6",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 1782,
+        "contract": "contracts/core/StakingPool.sol:StakingPool",
+        "label": "rewards",
+        "offset": 0,
+        "slot": "7",
+        "type": "t_mapping(t_address,t_uint256)"
+      },
+      {
+        "astId": 1786,
+        "contract": "contracts/core/StakingPool.sol:StakingPool",
+        "label": "userRewardPerTokenPaid",
+        "offset": 0,
+        "slot": "8",
+        "type": "t_mapping(t_address,t_uint256)"
+      },
+      {
+        "astId": 1790,
+        "contract": "contracts/core/StakingPool.sol:StakingPool",
+        "label": "staked",
+        "offset": 0,
+        "slot": "9",
+        "type": "t_mapping(t_address,t_uint256)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_contract(IERC20)4382": {
+        "encoding": "inplace",
+        "label": "contract IERC20",
+        "numberOfBytes": "20"
+      },
+      "t_mapping(t_address,t_uint256)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => uint256)",
+        "numberOfBytes": "32",
+        "value": "t_uint256"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}

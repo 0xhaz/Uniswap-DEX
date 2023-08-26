@@ -4,16 +4,16 @@ pragma solidity ^0.8.19;
 import "../interfaces/ILendingPool.sol";
 import "../interfaces/ILendingPoolFactory.sol";
 import "../interfaces/IERC20.sol";
-import "../interfaces/IRToken.sol";
+import "../interfaces/IWETH.sol";
 import "../libraries/TransferHelper.sol";
 
 contract LendingPoolRouter {
     address public immutable factory;
-    address public immutable WRTKN;
+    address public immutable WETH;
 
-    constructor(address _factory, address _WRTKN) {
+    constructor(address _factory, address _WETH) {
         factory = _factory;
-        WRTKN = _WRTKN;
+        WETH = _WETH;
     }
 
     function getPoolAddress(address _token) public view returns (address pool) {
@@ -95,49 +95,49 @@ contract LendingPoolRouter {
     function depositETH(uint256 _amount) public payable {
         require(_amount == msg.value, "Invalid amount");
 
-        address pool = getPoolAddress(WRTKN);
+        address pool = getPoolAddress(WETH);
 
-        IRToken(WRTKN).deposit{value: msg.value}();
-        TransferHelper.safeTransfer(WRTKN, pool, msg.value);
+        IWETH(WETH).deposit{value: msg.value}();
+        TransferHelper.safeTransfer(WETH, pool, msg.value);
     }
 
     function withdrawETH(uint256 _amount) public {
-        address pool = getPoolAddress(WRTKN);
+        address pool = getPoolAddress(WETH);
         require(pool != address(0), "Pool does not exist");
 
-        uint256 totalAmount = getWithdrawAmount(WRTKN, msg.sender, _amount);
+        uint256 totalAmount = getWithdrawAmount(WETH, msg.sender, _amount);
         ILendingPool(pool).withdraw(msg.sender, _amount);
 
-        IRToken(WRTKN).transferFrom(msg.sender, address(this), totalAmount);
-        IRToken(WRTKN).withdraw(totalAmount);
+        IWETH(WETH).transferFrom(msg.sender, address(this), totalAmount);
+        IWETH(WETH).withdraw(totalAmount);
 
         TransferHelper.safeTransferETH(msg.sender, _amount);
     }
 
     function borrowETH(uint256 _amount) public {
-        address pool = getPoolAddress(WRTKN);
+        address pool = getPoolAddress(WETH);
         require(pool != address(0), "Pool does not exist");
 
         ILendingPool(pool).borrow(_amount, msg.sender);
 
-        IRToken(WRTKN).approve(address(this), _amount);
-        IRToken(WRTKN).transferFrom(address(this), msg.sender, _amount);
+        IWETH(WETH).approve(address(this), _amount);
+        IWETH(WETH).transferFrom(address(this), msg.sender, _amount);
 
-        IRToken(WRTKN).withdraw(_amount);
+        IWETH(WETH).withdraw(_amount);
 
         TransferHelper.safeTransferETH(msg.sender, _amount);
     }
 
     function repayETH(uint256 _amount) public payable {
-        address pool = getPoolAddress(WRTKN);
+        address pool = getPoolAddress(WETH);
         require(pool != address(0), "Pool does not exist");
 
-        uint256 totalAmount = getRepayAmount(WRTKN, msg.sender, _amount);
+        uint256 totalAmount = getRepayAmount(WETH, msg.sender, _amount);
 
         require(msg.value >= totalAmount, "Invalid amount");
 
-        IRToken(WRTKN).deposit{value: msg.value}();
-        TransferHelper.safeTransfer(WRTKN, msg.sender, totalAmount);
+        IWETH(WETH).deposit{value: msg.value}();
+        TransferHelper.safeTransfer(WETH, msg.sender, totalAmount);
 
         ILendingPool(pool).repay(msg.sender, _amount);
 

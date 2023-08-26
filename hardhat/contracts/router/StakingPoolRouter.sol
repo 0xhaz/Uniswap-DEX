@@ -4,17 +4,17 @@ pragma solidity ^0.8.19;
 import "../interfaces/IStakingPool.sol";
 import "../interfaces/IStakingPoolFactory.sol";
 import "../interfaces/IERC20.sol";
-import "../interfaces/IRToken.sol";
+import "../interfaces/IWETH.sol";
 import "../libraries/TransferHelper.sol";
 
 contract StakingPoolRouter {
     address public immutable factory;
-    address public immutable WRTKN;
+    address public immutable WETH;
     address public immutable rtoken;
 
-    constructor(address _factory, address _WRTKN, address _rtoken) {
+    constructor(address _factory, address _WETH, address _rtoken) {
         factory = _factory;
-        WRTKN = _WRTKN;
+        WETH = _WETH;
         rtoken = _rtoken;
     }
 
@@ -85,28 +85,28 @@ contract StakingPoolRouter {
     function stakeETH(uint256 _amount) public payable {
         require(msg.value == _amount, "INVALID_AMOUNT");
 
-        IRToken(WRTKN).deposit{value: msg.value}();
-        TransferHelper.safeTransfer(WRTKN, msg.sender, _amount);
+        IWETH(WETH).deposit{value: msg.value}();
+        TransferHelper.safeTransfer(WETH, msg.sender, _amount);
 
-        stake(WRTKN, _amount);
+        stake(WETH, _amount);
     }
 
     function withdrawETH(uint256 _amount) public {
-        withdraw(WRTKN, _amount);
+        withdraw(WETH, _amount);
 
         TransferHelper.safeTransferFrom(
-            WRTKN,
+            WETH,
             msg.sender,
             address(this),
             _amount
         );
 
-        IRToken(WRTKN).withdraw(_amount);
+        IWETH(WETH).withdraw(_amount);
 
         TransferHelper.safeTransferETH(msg.sender, _amount);
     }
 
     function redeemRewardETH() public {
-        redeemReward(WRTKN);
+        redeemReward(WETH);
     }
 }

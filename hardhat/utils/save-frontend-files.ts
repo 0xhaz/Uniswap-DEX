@@ -8,7 +8,7 @@ const clientPath =
 const contractDir = clientPath + "/app/contracts";
 
 export function saveFrontEndFiles(contract: Contract, contractName: string) {
-  if (!fs.existSync(contractDir)) {
+  if (!fs.existsSync(contractDir)) {
     fs.mkdirSync(contractDir, { recursive: true });
     console.log("Directory created successfully!");
   }
