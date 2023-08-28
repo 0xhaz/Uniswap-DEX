@@ -131,12 +131,14 @@ const deployTokens: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   saveFrontEndFiles(USDTTokenContract, "USDT");
   saveFrontEndFiles(USDCTokenContract, "USDC");
   saveFrontEndFiles(RTokenContract, "RToken");
+  saveFrontEndFiles(WETHTokenContract, "WETH9");
 
   saveConfig([
     { name: "Link", address: LinkToken.address },
     { name: "USDT", address: USDTToken.address },
     { name: "USDC", address: USDCToken.address },
     { name: "RToken", address: RToken.address },
+    { name: "WETH9", address: WETHToken.address },
   ]);
 
   log("saved frontend files");
@@ -152,6 +154,8 @@ const deployTokens: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log(`USDC Token Verified: ${USDCToken.address}`);
     await verify(RToken.address, args);
     log(`RToken Token Verified: ${RToken.address}`);
+    await verify(WETHToken.address, args);
+    log(`WETH Token Verified: ${WETHToken.address}`);
 
     log("---------------------------------------------------------------");
   }

@@ -30,7 +30,7 @@ describe("LendingPool", () => {
   const repayAmount = tokens(10);
 
   const SECONDS_PER_DAY = 86400;
-  const LENDING_RATE = 0.1;
+  const LENDING_RATE = BigNumber.from(1);
   const BORROW_RATE = 0.3;
   const DAYS = 30;
 
@@ -305,29 +305,27 @@ describe("LendingPool", () => {
         await ethers.provider.send("evm_increaseTime", [oneDayInSeconds]);
 
         const withdrawAmount = tokens(100);
-        const interestFactor = BigNumber.from(10 ** 18);
+        const interestFactor = 1e18;
         const totalSupply = await lendingPool.totalSupply();
+        const interestRate = LENDING_RATE.mul(BigNumber.from(100)).div(10000);
 
-        const expectedInterest = withdrawAmount
+        const interest = withdrawAmount
           .mul(oneDayInSeconds)
-          .mul(LENDING_RATE)
-          .mul(interestFactor)
+          .mul(interestRate)
+          .div(365 * 24 * 60 * 60)
           .div(totalSupply);
 
-        const expectedInterestHuman = ethers.utils.formatUnits(
-          expectedInterest,
-          18
-        );
-
-        const expectedWithdrawAmount = withdrawAmount.add(expectedInterest);
+        const expectedWithdrawAmount = withdrawAmount.add(interest);
 
         const initialBalance = await tokenX.balanceOf(owner.address);
 
         await expect(
-          lendingPool.connect(owner).withdraw(owner.address, withdrawAmount)
+          lendingPool
+            .connect(owner)
+            .withdraw(owner.address, expectedWithdrawAmount)
         )
           .to.emit(lendingPool, "Withdraw")
-          .withArgs(owner.address, withdrawAmount);
+          .withArgs(owner.address, expectedWithdrawAmount);
 
         // const newBalance = await tokenX.balanceOf(owner.address);
         // expect(newBalance).to.equal(initialBalance.add(expectedWithdrawAmount));

@@ -6,17 +6,41 @@ import {
   darkTheme,
   midnightTheme,
 } from "@rainbow-me/rainbowkit";
-import { chain, configureChains, createClient, WagmiConfig } from "wagmi";
+import {
+  Chain,
+  chain,
+  configureChains,
+  createClient,
+  WagmiConfig,
+} from "wagmi";
 import { infuraProvider } from "wagmi/providers/infura";
+import { localhost, sepolia, hardhat } from "wagmi/chains";
 import merge from "lodash.merge";
+import { publicProvider } from "wagmi/providers/public";
 
 type WagmiProviderProps = {
   children: React.ReactNode;
 };
 
+const localFork: Chain = {
+  id: 31337,
+  name: "localhost:8545",
+  network: "localhost",
+  nativeCurrency: {
+    decimals: 18,
+    name: "localhost",
+    symbol: "ETH",
+  },
+  rpcUrls: {
+    default: "http://localhost:8545",
+  },
+};
+
 const { chains, provider } = configureChains(
-  [chain.goerli],
+  [localFork, sepolia],
+
   [
+    publicProvider(),
     infuraProvider({
       apiKey: process.env.NEXT_PUBLIC_INFURA_API_KEY,
     }),

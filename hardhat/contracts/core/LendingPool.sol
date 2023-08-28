@@ -160,7 +160,7 @@ contract LendingPool is ERC20 {
 
         /// @dev calculating the total amount with interest
         uint256 _amount = _calculateWithdrawAmount(_user, _withdrawAmount);
-        console.log(_amount);
+        // console.log(_amount);
         if (_amount == 0) revert LendingPool__InvalidAmount();
 
         /// @dev delete the record from the lendAmount mapping
