@@ -31,10 +31,10 @@ const Header = () => {
         <Image src="/uniswap.png" alt="logo" width={40} height={40} />
       </div>
 
-      <div className="flex items-center">
+      <div className="flex items-center justify-center lg:ml-24 ">
         <NavItems />
       </div>
-      <div className="flex">
+      <div className="flex ">
         <ConnectButton accountStatus={"full"} />
       </div>
 

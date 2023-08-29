@@ -3,10 +3,35 @@ import React, { useEffect, useRef, useState } from "react";
 import { CogIcon, ArrowSmDownIcon } from "@heroicons/react/outline";
 import toast, { Toaster } from "react-hot-toast";
 import { DEFAULT_VALUE, ETH } from "@/utils/SupportedCoins";
-import { toEth, toWei } from "../../utils/ether-utils";
 import { useAccount } from "wagmi";
 
+import {
+  CONTRACTS,
+  pathLINK_USDC,
+  pathLINK_USDT,
+  pathLINK_WETH,
+  pathUSDC_WETH,
+  pathUSDT_USDC,
+  pathUSDT_WETH,
+  tokens,
+} from "../constants/constants";
+
+import { toEth, toWei } from "../../utils/ether-utils";
+
+const token1 = tokens;
+const token2 = tokens;
+
+const swapRouterAddress = CONTRACTS.SWAP_ROUTER.address;
+const swapRouterAbi = CONTRACTS.SWAP_ROUTER.abi;
+const usdtAddress = CONTRACTS.USDT.address;
+const usdtAbi = CONTRACTS.USDT.abi;
+const usdcAddress = CONTRACTS.USDC.address;
+const usdcAbi = CONTRACTS.USDC.abi;
+const linkAddress = CONTRACTS.LINK.address;
+const linkAbi = CONTRACTS.LINK.abi;
+
 import SwapField from "./swapField";
+import TransactionStatus from "./transactionStatus";
 const SwapComponent = () => {
   const [srcToken, setSrcToken] = useState(ETH);
   const [destToken, setDestToken] = useState(DEFAULT_VALUE);
@@ -75,7 +100,7 @@ const SwapComponent = () => {
     setSwapBtnText(SWAP);
   }
 
-  function handleReverseExchange(e) {
+  function handleReverseExchange() {
     // Setting the isReversed value to prevent the input/output values being calculated in their respective side effects
     isReversed.current = true;
 
@@ -177,6 +202,19 @@ const SwapComponent = () => {
 
   useEffect(() => {
     if (
+      document.activeElement !== outputValueRef.current &&
+      document.activeElement.ariaLabel !== "srcToken" &&
+      !isReversed.current
+    )
+      populateOutputValue(inputValue);
+
+    setSrcTokenComp(<SwapField obj={srcTokenObj} ref={inputValueRef} />);
+
+    if (inputValue?.length === 0) setOutputValue("");
+  }, [inputValue, destToken]);
+
+  useEffect(() => {
+    if (
       document.activeElement !== inputValueRef.current &&
       document.activeElement.ariaLabel !== "destToken" &&
       !isReversed.current
@@ -199,7 +237,7 @@ const SwapComponent = () => {
       </div>
 
       <div className="relative bg-[#212429] p-4 py-6 rounded-xl mb-2 border-[2px] border-transparent hover:border-zinc-600">
-        {"srcTokenComp"}
+        {srcTokenComp}
 
         <ArrowSmDownIcon
           className="absolute left-1/2 -translate-x-1/2 -bottom-6 h-10 p-1 bg-[#212429] border-4 border-zinc-900 text-zinc-300 rounded-xl cursor-pointer hover:scale-110"
@@ -208,7 +246,7 @@ const SwapComponent = () => {
       </div>
 
       <div className="bg-[#212429] p-4 py-6 rounded-xl mt-2 border-[2px] border-transparent hover:border-zinc-600">
-        {"destTokenComp"}
+        {destTokenComp}
       </div>
 
       <button
@@ -221,7 +259,7 @@ const SwapComponent = () => {
         {swapBtnText}
       </button>
 
-      {/* {txPending && <TransactionStatus />} */}
+      {txPending && <TransactionStatus />}
       <Toaster />
     </div>
   );

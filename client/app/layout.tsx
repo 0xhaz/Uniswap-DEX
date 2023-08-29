@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Providers from "./context/Providers";
 import Header from "./components/header";
 import SwapComponent from "./components/swapComponent";
+import NavItems from "./components/navItems";
 
 export const metadata: Metadata = {
   title: "Defi Suite",

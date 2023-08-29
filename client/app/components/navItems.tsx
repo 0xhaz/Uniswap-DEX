@@ -6,19 +6,22 @@ const NavItems = () => {
   const POOL = "Pool";
   const STAKE = "Stake";
   const LENDING = "Lending";
+  const FAUCET = "Faucet";
 
   const [navItems, setNavItems] = useState(SWAP);
 
   function getNavIconClassName(name: string) {
     let className =
-      "p-1 px-4 cursor-pointer border-[4px] border-transparent flex items-center";
+      "p-1 px-4 cursor-pointer border-[4px] border-transparent flex items-center ";
     className +=
-      name === navItems ? " bg-zinc-800 border-zinc-900 rounded-full" : "";
+      name === navItems
+        ? " bg-zinc-800 w-[100px] justify-center border-zinc-900 rounded-full"
+        : "";
     return className;
   }
 
   return (
-    <div className="bg-zinc-900 h-fit flex items-center justify-around rounded-full mx-6">
+    <div className="bg-zinc-900 h-[50px] lg:w-[600px] flex items-center justify-between rounded-full mx-auto ">
       <Link href="/">
         <p
           className={getNavIconClassName(SWAP)}
@@ -49,6 +52,14 @@ const NavItems = () => {
           onClick={() => setNavItems(LENDING)}
         >
           {LENDING}
+        </p>
+      </Link>
+      <Link href="/faucet">
+        <p
+          className={getNavIconClassName(FAUCET)}
+          onClick={() => setNavItems(FAUCET)}
+        >
+          {FAUCET}
         </p>
       </Link>
     </div>
