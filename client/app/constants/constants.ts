@@ -28,76 +28,89 @@ import LENDING_POOL_ABI from "../contracts/LendingPool.json";
 import LENDING_POOL_FACTORY_ABI from "../contracts/LendingPoolFactory.json";
 import LENDING_POOL_ROUTER_ABI from "../contracts/LendingPoolRouter.json";
 
-export const CONTRACTS = {
+type Contract = {
+  [key: string]: {
+    address: string;
+    abi: any;
+  };
+};
+
+export const CONTRACTS: Contract = {
   USDT: {
-    address: USDT_ADDRESS,
-    abi: USDT_ABI,
+    address: USDT_ADDRESS.contractAddress,
+    abi: USDT_ABI.abi,
   },
   USDC: {
-    address: USDC_ADDRESS,
-    abi: USDC_ABI,
+    address: USDC_ADDRESS.contractAddress,
+    abi: USDC_ABI.abi,
   },
   LINK: {
-    address: LINK_ADDRESS,
-    abi: LINK_ABI,
+    address: LINK_ADDRESS.contractAddress,
+    abi: LINK_ABI.abi,
   },
   RTOKEN: {
-    address: RTOKEN_ADDRESS,
-    abi: RTOKEN_ABI,
+    address: RTOKEN_ADDRESS.contractAddress,
+    abi: RTOKEN_ABI.abi,
   },
   WETH: {
-    address: WETH_ADDRESS,
-    abi: WETH_ABI,
+    address: WETH_ADDRESS.contractAddress,
+    abi: WETH_ABI.abi,
   },
   SWAP_PAIR_TOKENS: {
-    address: SWAP_PAIR_TOKENS_ADDRESS,
-    abi: SWAP_PAIR_TOKENS_ABI,
+    address: SWAP_PAIR_TOKENS_ADDRESS.contractAddress,
+    abi: SWAP_PAIR_TOKENS_ABI.abi,
   },
   SWAP_ROUTER: {
-    address: SWAP_ROUTER_ADDRESS,
-    abi: SWAP_ROUTER_ABI,
+    address: SWAP_ROUTER_ADDRESS.contractAddress,
+    abi: SWAP_ROUTER_ABI.abi,
   },
   SWAP_FACTORY: {
-    address: SWAP_FACTORY_ADDRESS,
-    abi: SWAP_FACTORY_ABI,
+    address: SWAP_FACTORY_ADDRESS.contractAddress,
+    abi: SWAP_FACTORY_ABI.abi,
   },
   STAKING: {
-    address: STAKING_ADDRESS,
-    abi: STAKING_ABI,
+    address: STAKING_ADDRESS.contractAddress,
+    abi: STAKING_ABI.abi,
   },
   STAKING_FACTORY: {
-    address: STAKING_FACTORY_ADDRESS,
-    abi: STAKING_FACTORY_ABI,
+    address: STAKING_FACTORY_ADDRESS.contractAddress,
+    abi: STAKING_FACTORY_ABI.abi,
   },
   STAKING_ROUTER: {
-    address: STAKING_ROUTER_ADDRESS,
-    abi: STAKING_ROUTER_ABI,
+    address: STAKING_ROUTER_ADDRESS.contractAddress,
+    abi: STAKING_ROUTER_ABI.abi,
   },
   LENDING_POOL: {
-    address: LENDING_POOL_ADDRESS,
-    abi: LENDING_POOL_ABI,
+    address: LENDING_POOL_ADDRESS.contractAddress,
+    abi: LENDING_POOL_ABI.abi,
   },
   LENDING_POOL_FACTORY: {
-    address: LENDING_POOL_FACTORY_ADDRESS,
-    abi: LENDING_POOL_FACTORY_ABI,
+    address: LENDING_POOL_FACTORY_ADDRESS.contractAddress,
+    abi: LENDING_POOL_FACTORY_ABI.abi,
   },
   LENDING_POOL_ROUTER: {
-    address: LENDING_POOL_ROUTER_ADDRESS,
-    abi: LENDING_POOL_ROUTER_ABI,
+    address: LENDING_POOL_ROUTER_ADDRESS.contractAddress,
+    abi: LENDING_POOL_ROUTER_ABI.abi,
   },
 };
 
 export const pathLINK_USDT = [CONTRACTS.LINK.address, CONTRACTS.USDT.address];
+export const pathUSDT_LINK = [CONTRACTS.USDT.address, CONTRACTS.LINK.address];
 
 export const pathLINK_USDC = [CONTRACTS.LINK.address, CONTRACTS.USDC.address];
+export const pathUSDC_LINK = [CONTRACTS.USDC.address, CONTRACTS.LINK.address];
 
 export const pathLINK_WETH = [CONTRACTS.LINK.address, CONTRACTS.WETH.address];
+export const pathWETH_LINK = [CONTRACTS.WETH.address, CONTRACTS.LINK.address];
 
 export const pathUSDT_USDC = [CONTRACTS.USDT.address, CONTRACTS.USDC.address];
+export const pathUSDC_USDT = [CONTRACTS.USDC.address, CONTRACTS.USDT.address];
 
 export const pathUSDT_WETH = [CONTRACTS.USDT.address, CONTRACTS.WETH.address];
+export const pathWETH_USDT = [CONTRACTS.WETH.address, CONTRACTS.USDT.address];
 
 export const pathUSDC_WETH = [CONTRACTS.USDC.address, CONTRACTS.WETH.address];
+export const pathWETH_USDC = [CONTRACTS.WETH.address, CONTRACTS.USDC.address];
 
 export const tokens = [
   {

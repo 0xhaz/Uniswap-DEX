@@ -2,8 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import Providers from "./context/Providers";
 import Header from "./components/header";
-import SwapComponent from "./components/swapComponent";
-import NavItems from "./components/navItems";
+import { ContractProvider } from "./context";
 
 export const metadata: Metadata = {
   title: "Defi Suite",
@@ -19,11 +18,13 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Providers>
-          <div className="w-full h-screen flex flex-col items-center justify-center bg-[#2d242f]">
-            <Header />
+          <ContractProvider>
+            <div className="w-full h-screen flex flex-col items-center justify-center bg-[#2d242f]">
+              <Header />
 
-            {children}
-          </div>
+              {children}
+            </div>
+          </ContractProvider>
         </Providers>
       </body>
     </html>

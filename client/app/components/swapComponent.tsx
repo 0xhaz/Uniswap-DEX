@@ -3,16 +3,23 @@ import React, { useEffect, useRef, useState } from "react";
 import { CogIcon, ArrowSmDownIcon } from "@heroicons/react/outline";
 import toast, { Toaster } from "react-hot-toast";
 import { DEFAULT_VALUE, ETH } from "@/utils/SupportedCoins";
-import { useAccount } from "wagmi";
+import { useAccount, useContract, useProvider, useSigner } from "wagmi";
+import { useContractContext } from "../context";
 
 import {
   CONTRACTS,
   pathLINK_USDC,
+  pathUSDC_LINK,
   pathLINK_USDT,
+  pathUSDT_LINK,
   pathLINK_WETH,
+  pathWETH_LINK,
   pathUSDC_WETH,
+  pathWETH_USDC,
   pathUSDT_USDC,
+  pathUSDC_USDT,
   pathUSDT_WETH,
+  pathWETH_USDT,
   tokens,
 } from "../constants/constants";
 
@@ -21,22 +28,25 @@ import { toEth, toWei } from "../../utils/ether-utils";
 const token1 = tokens;
 const token2 = tokens;
 
-const swapRouterAddress = CONTRACTS.SWAP_ROUTER.address;
-const swapRouterAbi = CONTRACTS.SWAP_ROUTER.abi;
-const usdtAddress = CONTRACTS.USDT.address;
-const usdtAbi = CONTRACTS.USDT.abi;
-const usdcAddress = CONTRACTS.USDC.address;
-const usdcAbi = CONTRACTS.USDC.abi;
-const linkAddress = CONTRACTS.LINK.address;
-const linkAbi = CONTRACTS.LINK.abi;
-
 import SwapField from "./swapField";
 import TransactionStatus from "./transactionStatus";
+import { getContract } from "wagmi/actions";
+import { Contract, ethers } from "ethers";
 const SwapComponent = () => {
   const [srcToken, setSrcToken] = useState(ETH);
+  const [selectedToken1, setSelectedToken1] = useState(token1[0]);
+  const [selectedToken2, setSelectedToken2] = useState(token2[0]);
   const [destToken, setDestToken] = useState(DEFAULT_VALUE);
   const [inputValue, setInputValue] = useState<string>("");
   const [outputValue, setOutputValue] = useState<string>("");
+
+  const {
+    swapRouterContract,
+    usdcContract,
+    usdtContract,
+    linkContract,
+    wethContract,
+  } = useContractContext();
 
   const inputValueRef = useRef();
   const outputValueRef = useRef();
@@ -74,7 +84,23 @@ const SwapComponent = () => {
   const notifyError = (msg: string) => toast.error(msg, { duration: 6000 });
   const notifySuccess = () => toast.success("Transaction completed");
 
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
+  const provider = useProvider();
+  const { data: signer } = useSigner();
+
+  const [reserveA, setReserveA] = useState(0);
+  const [reserveB, setReserveB] = useState(0);
+  const [amountOne, setAmountOne] = useState(0);
+  const [amountTwo, setAmountTwo] = useState(0);
+  const [exactAmountIn, setExactAmountIn] = useState(false);
+  const [exactAmountOut, setExactAmountOut] = useState(false);
+  const [amountOut, setAmountOut] = useState(0);
+  const [amountIn, setAmountIn] = useState(0);
+
+  const getDeadline = () => {
+    const _deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes from the current Unix time
+    return _deadline;
+  };
 
   async function handleSwap() {
     if (srcToken === ETH && destToken !== ETH) {
@@ -167,6 +193,141 @@ const SwapComponent = () => {
       setInputValue("0");
     }
   }
+
+  const handleSwapSubmit = () => {
+    try {
+      if (
+        exactAmountIn &&
+        selectedToken1.symbol != "ETH" &&
+        selectedToken2.symbol != "ETH"
+      ) {
+        if (selectedToken1.symbol == "USDT") {
+          swapExactAmountOfTokens(amountOne, pathUSDT_USDC);
+        } else if (selectedToken1.symbol == "USDC") {
+          swapExactAmountOfTokens(amountOne, pathUSDC_USDT);
+        }
+      } else if (
+        exactAmountOut &&
+        selectedToken1.symbol != "ETH" &&
+        selectedToken2.symbol != "ETH"
+      ) {
+        if (selectedToken1.symbol == "USDT") {
+          swapTokensForExactAmount(amountTwo, pathUSDT_USDC);
+        } else if (selectedToken1.symbol == "USDC") {
+          swapExactAmountOfTokens(amountTwo, pathUSDC_USDT);
+        }
+      } else if (exactAmountIn) {
+        if (selectedToken1.symbol == "ETH" && selectedToken2.symbol != "ETH") {
+          if (selectedToken2.symbol == "USDT") {
+            swapExactAmountOfETHForTokens(amountOne, pathETH_USDT);
+          } else if (selectedToken2.symbol == "USDC") {
+            swapExactAmountOfETHForTokens(amountOne, pathETH_USDC);
+          }
+        } else if (
+          selectedToken1.symbol != "ETH" &&
+          selectedToken2.symbol == "ETH"
+        ) {
+          if (selectedToken1.symbol == "ETH") {
+            swapExactAmountOfTokensForETH(amountOne, pathETH_USDT);
+          } else if (selectedToken1.symbol == "USDC") {
+            swapExactAmountOfTokensForETH(amountOne, pathETH_USDC);
+          }
+        }
+      } else if (exactAmountOut) {
+        if (selectedToken1.symbol == "ETH" && selectedToken2.symbol != "ETH") {
+          if (selectedToken2.symbol == "USDT") {
+            swapETHForExactAmountOfTokens(amountTwo, pathETH_USDT);
+          } else if (selectedToken2.symbol == "USDC") {
+            swapETHForExactAmountOfTokens(amountTwo, pathETH_USDC);
+          }
+        } else if (
+          selectedToken1.symbol != "ETH" &&
+          selectedToken2.symbol == "ETH"
+        ) {
+          if (selectedToken1.symbol == "USDT") {
+            swapTokensForExactAmountOfETH(amountTwo, pathETH_USDT);
+          } else if (selectedToken1.symbol == "USDC") {
+            swapTokensForExactAmountOfETH(amountTwo, pathETH_USDC);
+          }
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const approveTokens = async (tokenInAddress, amountIn) => {
+    try {
+      const tokenContract = new Contract(tokenInAddress, usdtAbi, signer);
+
+      const tx = await tokenContract.approve(swapRouterA, toWei(amountIn));
+
+      await tx.wait();
+      return true;
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+  };
+
+  const swapExactAmountOfTokens = async (amountIn, path) => {
+    try {
+      if (amountIn) {
+        const deadline = getDeadline();
+        const _swapExactTokens = await contract.swapExactTokensForTokens(
+          toWei(amountIn),
+          1,
+          path,
+          address,
+          deadline
+        );
+        setTxPending(true);
+        await _swapExactTokens.wait();
+        setTxPending(false);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const swapTokensForExactAmount = async (amountOut, path) => {
+    try {
+      if (amountOut) {
+        const deadline = getDeadline();
+        const _swapTokensForExact = await contract.swapTokensForExactTokens(
+          toWei(amountOut),
+          1,
+          path,
+          address,
+          deadline
+        );
+        setTxPending(true);
+        await _swapTokensForExact.wait();
+        setTxPending(false);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const swapExactAmountOfEthForTokens = async (amountIn, path) => {
+    try {
+      if (amountIn) {
+        const deadline = getDeadline();
+        const _swapExactEthForTokens = await contract.swapExactETHForTokens(
+          1,
+          path,
+          address,
+          deadline
+        );
+        setTxPending(true);
+        await _swapExactEthForTokens.wait();
+        setTxPending(false);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   async function performSwap() {
     setTxPending(true);

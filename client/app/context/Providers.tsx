@@ -32,7 +32,7 @@ const localFork: Chain = {
 };
 
 const { chains, provider } = configureChains(
-  [localFork],
+  [localhost, sepolia, hardhat],
 
   [
     publicProvider(),

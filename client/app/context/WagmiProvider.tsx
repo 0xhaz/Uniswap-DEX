@@ -6,13 +6,7 @@ import {
   darkTheme,
   midnightTheme,
 } from "@rainbow-me/rainbowkit";
-import {
-  Chain,
-  chain,
-  configureChains,
-  createClient,
-  WagmiConfig,
-} from "wagmi";
+import { Chain, configureChains, createClient, WagmiConfig } from "wagmi";
 import { infuraProvider } from "wagmi/providers/infura";
 import { localhost, sepolia, hardhat } from "wagmi/chains";
 import merge from "lodash.merge";
@@ -37,7 +31,7 @@ const localFork: Chain = {
 };
 
 const { chains, provider } = configureChains(
-  [localFork, sepolia],
+  [localhost, sepolia, hardhat],
 
   [
     publicProvider(),
