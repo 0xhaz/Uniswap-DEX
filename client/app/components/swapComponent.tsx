@@ -1,55 +1,29 @@
-"use client";
-import React, { useEffect, useRef, useState } from "react";
-import { CogIcon, ArrowSmDownIcon } from "@heroicons/react/outline";
-import toast, { Toaster } from "react-hot-toast";
-import { DEFAULT_VALUE, ETH } from "@/utils/SupportedCoins";
-import { useAccount, useContract, useProvider, useSigner } from "wagmi";
-import { useContractContext } from "../context";
-
+import React, { useEffect, useState, useRef } from "react";
 import {
-  CONTRACTS,
-  pathLINK_USDC,
-  pathUSDC_LINK,
-  pathLINK_USDT,
-  pathUSDT_LINK,
-  pathLINK_WETH,
-  pathWETH_LINK,
-  pathUSDC_WETH,
-  pathWETH_USDC,
-  pathUSDT_USDC,
-  pathUSDC_USDT,
-  pathUSDT_WETH,
-  pathWETH_USDT,
-  tokens,
-} from "../constants/constants";
+  hasValidAllowance,
+  increaseAllowance,
+  swapEthToToken,
+  swapTokenToEth,
+  swapTokenToToken,
+} from "../../utils/queries";
 
-import { toEth, toWei } from "../../utils/ether-utils";
-
-const token1 = tokens;
-const token2 = tokens;
-
+import { CogIcon, ArrowSmDownIcon } from "@heroicons/react/outline";
 import SwapField from "./swapField";
 import TransactionStatus from "./transactionStatus";
-import { getContract } from "wagmi/actions";
-import { Contract, ethers } from "ethers";
+import toast, { Toaster } from "react-hot-toast";
+import { DEFAULT_VALUE, ETH } from "../../utils/SupportedCoins";
+import { toEth, toWei } from "../../utils/ether-utils";
+import { useAccount } from "wagmi";
+
 const SwapComponent = () => {
   const [srcToken, setSrcToken] = useState(ETH);
-  const [selectedToken1, setSelectedToken1] = useState(token1[0]);
-  const [selectedToken2, setSelectedToken2] = useState(token2[0]);
   const [destToken, setDestToken] = useState(DEFAULT_VALUE);
+
   const [inputValue, setInputValue] = useState<string>("");
   const [outputValue, setOutputValue] = useState<string>("");
 
-  const {
-    swapRouterContract,
-    usdcContract,
-    usdtContract,
-    linkContract,
-    wethContract,
-  } = useContractContext();
-
-  const inputValueRef = useRef();
-  const outputValueRef = useRef();
+  const inputValueRef = useRef<HTMLInputElement>(null);
+  const outputValueRef = useRef<HTMLInputElement>(null);
 
   const isReversed = useRef(false);
 
@@ -76,58 +50,98 @@ const SwapComponent = () => {
     setToken: setDestToken,
   };
 
-  const [srcTokenComp, setSrcTokenComp] = useState();
-  const [destTokenComp, setDestTokenComp] = useState();
+  const [srcTokenComp, setSrcTokenComp] = useState<JSX.Element | null>(null);
+  const [destTokenComp, setDestTokenComp] = useState<JSX.Element | null>(null);
+
   const [swapBtnText, setSwapBtnText] = useState(ENTER_AMOUNT);
   const [txPending, setTxPending] = useState(false);
 
-  const notifyError = (msg: string) => toast.error(msg, { duration: 6000 });
-  const notifySuccess = () => toast.success("Transaction completed");
+  const notifyError = msg => toast.error(msg, { duration: 6000 });
+  const notifySuccess = () => toast.success("Transaction completed.");
+  const address = "";
 
-  const { address, isConnected } = useAccount();
-  const provider = useProvider();
-  const { data: signer } = useSigner();
+  // Functions for functionality
 
-  const [reserveA, setReserveA] = useState(0);
-  const [reserveB, setReserveB] = useState(0);
-  const [amountOne, setAmountOne] = useState(0);
-  const [amountTwo, setAmountTwo] = useState(0);
-  const [exactAmountIn, setExactAmountIn] = useState(false);
-  const [exactAmountOut, setExactAmountOut] = useState(false);
-  const [amountOut, setAmountOut] = useState(0);
-  const [amountIn, setAmountIn] = useState(0);
+  useEffect(() => {
+    // Handling the text of the submit button
 
-  const getDeadline = () => {
-    const _deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes from the current Unix time
-    return _deadline;
-  };
+    if (!address) setSwapBtnText(CONNECT_WALLET);
+    else if (!inputValue || !outputValue) setSwapBtnText(ENTER_AMOUNT);
+    else setSwapBtnText(SWAP);
+  }, [inputValue, outputValue, address]);
 
-  async function handleSwap() {
-    if (srcToken === ETH && destToken !== ETH) {
-      // performSwap()
-    } else {
-      // Check whether there is allowance when the swap deals with tokenToETH/tokenToToken
-      setTxPending(true);
-      const result = await hasValidAllowance(address, srcToken, inputValue);
-      setTxPending(false);
+  useEffect(() => {
+    if (
+      document.activeElement &&
+      document.activeElement !== outputValueRef.current &&
+      document.activeElement.ariaLabel !== "srcToken" &&
+      !isReversed.current
+    )
+      populateOutputValue(inputValue);
 
-      if (result) performSwap();
-      else handInsufficientAllowance();
-    }
-  }
+    setSrcTokenComp(<SwapField obj={srcTokenObj} ref={inputValueRef} />);
 
-  async function handleIncreaseAllowance() {
-    // increase the allowance
-    setTxPending(true);
-    await increaseAllowance(srcToken, inputValue);
-    setTxPending(false);
+    if (inputValue?.length === 0) setOutputValue("");
+  }, [inputValue, destToken]);
 
-    // set the swapbtn to "Swap" again
-    setSwapBtnText(SWAP);
-  }
+  useEffect(() => {
+    if (
+      document.activeElement &&
+      document.activeElement !== inputValueRef.current &&
+      document.activeElement.ariaLabel !== "destToken" &&
+      !isReversed.current
+    )
+      populateInputValue(outputValue);
 
-  function handleReverseExchange() {
-    // Setting the isReversed value to prevent the input/output values being calculated in their respective side effects
+    setDestTokenComp(<SwapField obj={destTokenObj} ref={outputValueRef} />);
+
+    if (outputValue?.length === 0) setInputValue("");
+
+    // Resetting the isReversed value if its set
+    if (isReversed.current) isReversed.current = false;
+  }, [outputValue, srcToken]);
+
+  return (
+    <div className="bg-zinc-900 w-[35%] p-4 px-6 rounded-xl">
+      <div className="flex items-center justify-between py-4 px-1">
+        <p>Swap</p>
+        <CogIcon className="h-6" />
+      </div>
+      <div className="relative bg-[#212429] p-4 py-6 rounded-xl mb-2 border-[2px] border-transparent hover:border-zinc-600">
+        {srcTokenComp}
+
+        <ArrowSmDownIcon
+          className="absolute left-1/2 -translate-x-1/2 -bottom-6 h-10 p-1 bg-[#212429] border-4 border-zinc-900 text-zinc-300 rounded-xl cursor-pointer hover:scale-110"
+          onClick={handleReverseExchange}
+        />
+      </div>
+
+      <div className="bg-[#212429] p-4 py-6 rounded-xl mt-2 border-[2px] border-transparent hover:border-zinc-600">
+        {destTokenComp}
+      </div>
+
+      <button
+        className={getSwapBtnClassName()}
+        onClick={() => {
+          if (swapBtnText === INCREASE_ALLOWANCE)
+            console.log("increaseAllowance");
+          else if (swapBtnText === SWAP) console.log("Swap");
+        }}
+      >
+        {swapBtnText}
+      </button>
+
+      {txPending && <TransactionStatus />}
+
+      <Toaster />
+    </div>
+  );
+
+  // Front end functionality
+
+  function handleReverseExchange(e) {
+    // Setting the isReversed value to prevent the input/output values
+    // being calculated in their respective side - effects
     isReversed.current = true;
 
     // 1. Swap tokens (srcToken <-> destToken)
@@ -164,7 +178,7 @@ const SwapComponent = () => {
         const outValue = toEth(toWei(inputValue), 14);
         setOutputValue(outValue);
       } else if (srcToken !== ETH && destToken === ETH) {
-        const outValue = toEth(toWei(inputValue), 14);
+        const outValue = toEth(toWei(inputValue, 14));
         setOutputValue(outValue);
       }
     } catch (error) {
@@ -183,247 +197,23 @@ const SwapComponent = () => {
     try {
       if (srcToken !== ETH && destToken !== ETH) setInputValue(outputValue);
       else if (srcToken === ETH && destToken !== ETH) {
-        const inValue = toEth(toWei(outputValue), 14);
-        setInputValue(inValue);
+        const outValue = toEth(toWei(outputValue, 14));
+        setInputValue(outValue);
       } else if (srcToken !== ETH && destToken === ETH) {
-        const inValue = toEth(toWei(outputValue), 14);
-        setInputValue(inValue);
+        const outValue = toEth(toWei(outputValue), 14);
+        setInputValue(outValue);
       }
     } catch (error) {
       setInputValue("0");
     }
   }
 
-  const handleSwapSubmit = () => {
-    try {
-      if (
-        exactAmountIn &&
-        selectedToken1.symbol != "ETH" &&
-        selectedToken2.symbol != "ETH"
-      ) {
-        if (selectedToken1.symbol == "USDT") {
-          swapExactAmountOfTokens(amountOne, pathUSDT_USDC);
-        } else if (selectedToken1.symbol == "USDC") {
-          swapExactAmountOfTokens(amountOne, pathUSDC_USDT);
-        }
-      } else if (
-        exactAmountOut &&
-        selectedToken1.symbol != "ETH" &&
-        selectedToken2.symbol != "ETH"
-      ) {
-        if (selectedToken1.symbol == "USDT") {
-          swapTokensForExactAmount(amountTwo, pathUSDT_USDC);
-        } else if (selectedToken1.symbol == "USDC") {
-          swapExactAmountOfTokens(amountTwo, pathUSDC_USDT);
-        }
-      } else if (exactAmountIn) {
-        if (selectedToken1.symbol == "ETH" && selectedToken2.symbol != "ETH") {
-          if (selectedToken2.symbol == "USDT") {
-            swapExactAmountOfETHForTokens(amountOne, pathETH_USDT);
-          } else if (selectedToken2.symbol == "USDC") {
-            swapExactAmountOfETHForTokens(amountOne, pathETH_USDC);
-          }
-        } else if (
-          selectedToken1.symbol != "ETH" &&
-          selectedToken2.symbol == "ETH"
-        ) {
-          if (selectedToken1.symbol == "ETH") {
-            swapExactAmountOfTokensForETH(amountOne, pathETH_USDT);
-          } else if (selectedToken1.symbol == "USDC") {
-            swapExactAmountOfTokensForETH(amountOne, pathETH_USDC);
-          }
-        }
-      } else if (exactAmountOut) {
-        if (selectedToken1.symbol == "ETH" && selectedToken2.symbol != "ETH") {
-          if (selectedToken2.symbol == "USDT") {
-            swapETHForExactAmountOfTokens(amountTwo, pathETH_USDT);
-          } else if (selectedToken2.symbol == "USDC") {
-            swapETHForExactAmountOfTokens(amountTwo, pathETH_USDC);
-          }
-        } else if (
-          selectedToken1.symbol != "ETH" &&
-          selectedToken2.symbol == "ETH"
-        ) {
-          if (selectedToken1.symbol == "USDT") {
-            swapTokensForExactAmountOfETH(amountTwo, pathETH_USDT);
-          } else if (selectedToken1.symbol == "USDC") {
-            swapTokensForExactAmountOfETH(amountTwo, pathETH_USDC);
-          }
-        }
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const approveTokens = async (tokenInAddress, amountIn) => {
-    try {
-      const tokenContract = new Contract(tokenInAddress, usdtAbi, signer);
-
-      const tx = await tokenContract.approve(swapRouterA, toWei(amountIn));
-
-      await tx.wait();
-      return true;
-    } catch (error) {
-      console.log(error);
-      return false;
-    }
-  };
-
-  const swapExactAmountOfTokens = async (amountIn, path) => {
-    try {
-      if (amountIn) {
-        const deadline = getDeadline();
-        const _swapExactTokens = await contract.swapExactTokensForTokens(
-          toWei(amountIn),
-          1,
-          path,
-          address,
-          deadline
-        );
-        setTxPending(true);
-        await _swapExactTokens.wait();
-        setTxPending(false);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const swapTokensForExactAmount = async (amountOut, path) => {
-    try {
-      if (amountOut) {
-        const deadline = getDeadline();
-        const _swapTokensForExact = await contract.swapTokensForExactTokens(
-          toWei(amountOut),
-          1,
-          path,
-          address,
-          deadline
-        );
-        setTxPending(true);
-        await _swapTokensForExact.wait();
-        setTxPending(false);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const swapExactAmountOfEthForTokens = async (amountIn, path) => {
-    try {
-      if (amountIn) {
-        const deadline = getDeadline();
-        const _swapExactEthForTokens = await contract.swapExactETHForTokens(
-          1,
-          path,
-          address,
-          deadline
-        );
-        setTxPending(true);
-        await _swapExactEthForTokens.wait();
-        setTxPending(false);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  async function performSwap() {
-    setTxPending(true);
-
-    let receipt;
-
-    // if(srcToken === ETH && destToken !== ETH)
-    // receipt = await swapEthToToken(destToken, inputValue)
-    // else if(srcToken !== ETH && destToken === ETH)
-    // receipt = await swapTokenToEth(srcToken, inputValue)
-    // else receipt = await swapTokenToToken(srcToken, destToken, inputValue)
-
-    setTxPending(false);
-
-    // if (receipt && !receipt.hasOwnProperty("transactionHash"))
-    // notifyError(receipt.
-    // else notifySuccess();
-  }
-
   function handleInsufficientAllowance() {
     notifyError(
-      "Insufficient allowance. Please increase the allowance and try again."
+      "Insufficient allowance. Click 'Increase allowance' to increase it."
     );
     setSwapBtnText(INCREASE_ALLOWANCE);
   }
-
-  useEffect(() => {
-    // Handling the text of the submit button
-    if (!address) setSwapBtnText(CONNECT_WALLET);
-    else if (!inputValue || !outputValue) setSwapBtnText(ENTER_AMOUNT);
-    else setSwapBtnText(SWAP);
-  }, [inputValue, outputValue, address]);
-
-  useEffect(() => {
-    if (
-      document.activeElement !== outputValueRef.current &&
-      document.activeElement.ariaLabel !== "srcToken" &&
-      !isReversed.current
-    )
-      populateOutputValue(inputValue);
-
-    setSrcTokenComp(<SwapField obj={srcTokenObj} ref={inputValueRef} />);
-
-    if (inputValue?.length === 0) setOutputValue("");
-  }, [inputValue, destToken]);
-
-  useEffect(() => {
-    if (
-      document.activeElement !== inputValueRef.current &&
-      document.activeElement.ariaLabel !== "destToken" &&
-      !isReversed.current
-    )
-      populateInputValue(outputValue);
-
-    setDestTokenComp(<SwapField obj={destTokenObj} ref={outputValueRef} />);
-
-    if (outputValue?.length === 0) setInputValue("");
-
-    // Resetting the isReversed value if its set
-    if (isReversed.current) isReversed.current = false;
-  }, [outputValue, srcToken]);
-
-  return (
-    <div className="bg-zinc-900 w-[35%] p-4 px-6 rounded-xl">
-      <div className="flex items-center justify-between py-4 px-1">
-        <p>Swap</p>
-        <CogIcon className="h-6" />
-      </div>
-
-      <div className="relative bg-[#212429] p-4 py-6 rounded-xl mb-2 border-[2px] border-transparent hover:border-zinc-600">
-        {srcTokenComp}
-
-        <ArrowSmDownIcon
-          className="absolute left-1/2 -translate-x-1/2 -bottom-6 h-10 p-1 bg-[#212429] border-4 border-zinc-900 text-zinc-300 rounded-xl cursor-pointer hover:scale-110"
-          onClick={handleReverseExchange}
-        />
-      </div>
-
-      <div className="bg-[#212429] p-4 py-6 rounded-xl mt-2 border-[2px] border-transparent hover:border-zinc-600">
-        {destTokenComp}
-      </div>
-
-      <button
-        className={getSwapBtnClassName()}
-        onClick={() => {
-          if (swapBtnText === INCREASE_ALLOWANCE) handleIncreaseAllowance();
-          else if (swapBtnText === SWAP) handleSwap();
-        }}
-      >
-        {swapBtnText}
-      </button>
-
-      {txPending && <TransactionStatus />}
-      <Toaster />
-    </div>
-  );
 };
 
 export default SwapComponent;
