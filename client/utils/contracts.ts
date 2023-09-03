@@ -88,3 +88,11 @@ export const contract = (contractName: string): ethers.Contract => {
 
   return contract;
 };
+
+export const wethContract = () => {
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
+  const signer = provider.getSigner();
+  const contract = new ethers.Contract(weth.address, wethAbi, signer);
+
+  return contract;
+};

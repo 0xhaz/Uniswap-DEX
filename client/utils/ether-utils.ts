@@ -1,11 +1,21 @@
 import { ethers } from "ethers";
 
 export function toWei(amount: string, decimals = 18) {
-  const toWei = ethers.utils.parseUnits(amount, decimals);
-  return toWei.toString();
+  try {
+    const toWei = ethers.utils.parseUnits(amount, decimals);
+    return toWei.toString();
+  } catch (error) {
+    console.error("Error converting amount to Wei", error);
+    throw error;
+  }
 }
 
 export function toEth(amount: string, decimals = 18) {
-  const toEth = ethers.utils.formatUnits(amount, decimals);
-  return toEth.toString();
+  try {
+    const toEth = ethers.utils.formatUnits(amount, decimals);
+    return toEth.toString();
+  } catch (error) {
+    console.error("Error converting amount to Eth", error);
+    throw error;
+  }
 }

@@ -1,6 +1,6 @@
-import { BigNumber, ethers } from "ethers";
+import { BigNumber, ethers, providers } from "ethers";
 import { toEth, toWei } from "./ether-utils";
-import { tokenContract, contract } from "./contracts";
+import { tokenContract, contract, wethContract } from "./contracts";
 
 const getDeadline = () => {
   const deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes
@@ -8,6 +8,13 @@ const getDeadline = () => {
 };
 
 let address: string;
+
+const getAccount = async (): Promise<string> => {
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
+  const signer = provider.getSigner();
+  const address = await signer.getAddress();
+  return address;
+};
 
 export const approveTokens = async (
   tokenInAddress: string,
@@ -173,6 +180,23 @@ export const swapExactAmountOfTokensForEth = async (
   }
 };
 
+export const depositEthForWeth = async (amountIn: string) => {
+  try {
+    const amountInEth = ethers.utils.parseEther(amountIn);
+
+    await approveTokens("WETH", amountIn);
+
+    const weth = wethContract();
+    const tx = await weth.deposit({
+      from: await getAccount(),
+      value: amountInEth,
+    });
+    await tx.wait();
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 export const getAmountIn = async (
   amountB: string,
   reserveA: string,
@@ -181,8 +205,8 @@ export const getAmountIn = async (
   const swapRouter = contract("swapRouter");
   try {
     const response = await swapRouter?.getAmountIn(amountB, reserveA, reserveB);
-    console.log("Amount In: ", toEth(response));
-    return toEth(response);
+    console.log("Amount In: ", toWei(response));
+    return toWei(response);
   } catch (error) {
     console.log(error);
     return null;
@@ -201,8 +225,8 @@ export const getAmountOut = async (
       reserveA,
       reserveB
     );
-    console.log("Amount Out: ", toEth(response));
-    return toEth(response);
+    console.log("Amount Out: ", toWei(response));
+    return toWei(response);
   } catch (error) {
     console.log(error);
     return null;
@@ -239,14 +263,26 @@ export const getAmountsOut = async (amountIn: string, path: string[]) => {
   }
 };
 
-export function quote(amountIn: string, reserveA: string, reserveB: string) {
+export const quote = async (
+  amountIn: string,
+  reserveA: string,
+  reserveB: string
+) => {
   const swapRouter = contract("swapRouter");
   try {
-    const response = swapRouter?.quote(amountIn, reserveA, reserveB);
-    console.log("Quote: ", toEth(response));
-    return toEth(response);
+    const amountInWei = toWei(amountIn);
+    const reserveAWei = toWei(reserveA);
+    const reserveBWei = toWei(reserveB);
+    const response = await swapRouter?.quote(
+      amountInWei,
+      reserveAWei,
+      reserveBWei
+    );
+    const responseEth = toEth(response);
+    console.log("Quote: ", responseEth);
+    return responseEth;
   } catch (error) {
     console.log(error);
     return null;
   }
-}
+};

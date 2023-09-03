@@ -7,6 +7,7 @@ import {
   swapTokensForExactAmountOfEth,
   swapExactAmountOfTokensForEth,
   swapExactAmountOfTokens,
+  depositEthForWeth,
   getAmountIn,
   getAmountOut,
   getAmountsIn,
@@ -155,6 +156,21 @@ const SwapComponent = () => {
     setTxPending(true);
     let receipt;
     let path: string[] | null = null;
+    if (srcToken === ETH && destToken === "WETH") {
+      if (address) {
+        try {
+          setOutputValue(exactAmountIn);
+          await depositEthForWeth(exactAmountIn);
+          notifySuccess();
+        } catch (error) {
+          if (typeof error === "string") {
+            notifyError(error);
+          } else {
+            console.error(error);
+          }
+        }
+      }
+    }
     if (exactAmountIn && Number(exactAmountIn) > 0) {
       if (srcToken === ETH && destToken !== ETH) {
         path = getPathForTokenToETH(destToken);
@@ -231,7 +247,9 @@ const SwapComponent = () => {
   };
 
   const handleSwap = async () => {
-    if (exactAmountIn && Number(exactAmountIn) > 0) {
+    if (srcToken === ETH && destToken === "WETH") {
+      performSwap();
+    } else if (exactAmountIn && Number(exactAmountIn) > 0) {
       setIsExactAmountSet(true);
       if (srcToken === ETH && destToken !== ETH) {
         performSwap();
@@ -282,8 +300,8 @@ const SwapComponent = () => {
     const swapRouter = contract("swapRouter");
     try {
       const response = await swapRouter?.getReserve(tokenA, tokenB);
-      setReserveA(toEth(response.reserveA));
-      setReserveB(toEth(response.reserveB));
+      setReserveA(response.reserveA);
+      setReserveB(response.reserveB);
       console.log(toEth(response.reserveA), toEth(response.reserveB));
     } catch (error) {
       console.error(error);
@@ -336,14 +354,16 @@ const SwapComponent = () => {
   }, [srcToken, destToken]);
 
   useEffect(() => {
-    if (srcToken !== DEFAULT_VALUE && destToken !== DEFAULT_VALUE) {
-      const amountIn = isExactAmountSet ? exactAmountIn : inputValue;
-      const amountOut = isExactAmountOutSet ? exactAmountOut : outputValue;
+    const fetchQuote = async () => {
+      if (srcToken !== DEFAULT_VALUE && destToken !== DEFAULT_VALUE) {
+        const amountIn = isExactAmountSet ? exactAmountIn : inputValue;
 
-      const quoteResult = quote(amountIn, reserveA, reserveB);
+        const quoteResult = await quote(amountIn, reserveA, reserveB);
 
-      setEstimatedQuote(quoteResult);
-    }
+        setEstimatedQuote(quoteResult);
+      }
+    };
+    fetchQuote();
   }, [
     srcToken,
     destToken,
@@ -496,6 +516,8 @@ const SwapComponent = () => {
             setInputValue("0");
           }
         }
+      } else if (srcToken === ETH && destToken === "WETH") {
+        setInputValue(outputValue);
       }
     } catch (error) {
       setInputValue("0");
