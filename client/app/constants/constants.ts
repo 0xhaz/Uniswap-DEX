@@ -112,8 +112,6 @@ export const pathWETH_USDT = [CONTRACTS.WETH.address, CONTRACTS.USDT.address];
 export const pathUSDC_WETH = [CONTRACTS.USDC.address, CONTRACTS.WETH.address];
 export const pathWETH_USDC = [CONTRACTS.WETH.address, CONTRACTS.USDC.address];
 
-export const DEFAULT_VALUE = "Select a token";
-
 export type TokenProps = {
   key: string;
   name: string;
@@ -159,3 +157,14 @@ export const tokens: TokenProps[] = [
     logo: "/assets/eth_logo.png",
   },
 ];
+
+export const ETH = "ETH";
+export const USDT = "USDT";
+export const USDC = "USDC";
+export const LINK = "LINK";
+export const RTOKEN = "RTOKEN";
+export const WETH = "WETH";
+export const COINA = "CoinA";
+export const COINB = "CoinB";
+export const COINC = "CoinC";
+export const DEFAULT_VALUE = "Select a token";

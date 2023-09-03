@@ -9,6 +9,8 @@ interface SwapFieldProps {
     defaultValue: string;
     setToken: (token: string) => void;
     ignoreValue: string;
+    exactAmountIn: string;
+    setExactAmountIn: (value: string) => void;
   };
 }
 
@@ -21,6 +23,8 @@ const SwapField = React.forwardRef<HTMLInputElement, SwapFieldProps>(
       defaultValue,
       setToken,
       ignoreValue,
+      exactAmountIn,
+      setExactAmountIn,
     } = obj;
 
     return (
@@ -29,9 +33,10 @@ const SwapField = React.forwardRef<HTMLInputElement, SwapFieldProps>(
           ref={ref}
           className={getInputClassname()}
           type={"number"}
-          value={value}
+          value={exactAmountIn}
           placeholder={"0.0"}
           onChange={e => {
+            setExactAmountIn(e.target.value);
             setValue(e.target.value);
           }}
         />

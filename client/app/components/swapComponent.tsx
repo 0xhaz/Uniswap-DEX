@@ -1,23 +1,54 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
-  hasValidAllowance,
-  increaseAllowance,
-  swapEthToToken,
-  swapTokenToEth,
-  swapTokenToToken,
+  approveTokens,
+  swapTokensForExactAmount,
+  swapExactAmountOfEthForTokens,
+  swapEthForExactAmountOfTokens,
+  swapTokensForExactAmountOfEth,
+  swapExactAmountOfTokensForEth,
+  swapExactAmountOfTokens,
+  getAmountIn,
+  getAmountOut,
+  getAmountsIn,
+  getAmountsOut,
+  quote,
 } from "../../utils/queries";
-
+import { contract, tokenContract } from "@/utils/contracts";
 import { CogIcon, ArrowSmDownIcon } from "@heroicons/react/outline";
 import SwapField from "./swapField";
 import TransactionStatus from "./transactionStatus";
 import toast, { Toaster } from "react-hot-toast";
-import { DEFAULT_VALUE, ETH } from "../../utils/SupportedCoins";
+import {
+  DEFAULT_VALUE,
+  tokens,
+  ETH,
+  CONTRACTS,
+  pathLINK_USDC,
+  pathLINK_USDT,
+  pathLINK_WETH,
+  pathUSDC_LINK,
+  pathUSDC_USDT,
+  pathUSDC_WETH,
+  pathUSDT_LINK,
+  pathUSDT_USDC,
+  pathUSDT_WETH,
+  pathWETH_LINK,
+  pathWETH_USDC,
+  pathWETH_USDT,
+} from "../constants/constants";
 import { toEth, toWei } from "../../utils/ether-utils";
 import { useAccount } from "wagmi";
 
 const SwapComponent = () => {
-  const [srcToken, setSrcToken] = useState(ETH);
-  const [destToken, setDestToken] = useState(DEFAULT_VALUE);
+  const [srcToken, setSrcToken] = useState<string>("ETH");
+  const [destToken, setDestToken] = useState<string>(DEFAULT_VALUE);
+  const [exactAmountIn, setExactAmountIn] = useState<string>("");
+  const [exactAmountOut, setExactAmountOut] = useState<string>("");
+  const [isExactAmountSet, setIsExactAmountSet] = useState<boolean>(false);
+  const [isExactAmountOutSet, setIsExactAmountOutSet] =
+    useState<boolean>(false);
+  const [reserveA, setReserveA] = useState<string>("");
+  const [reserveB, setReserveB] = useState<string>("");
 
   const [inputValue, setInputValue] = useState<string>("");
   const [outputValue, setOutputValue] = useState<string>("");
@@ -39,6 +70,8 @@ const SwapComponent = () => {
     defaultValue: srcToken,
     ignoreValue: destToken,
     setToken: setSrcToken,
+    exactAmountIn: exactAmountIn,
+    setExactAmountIn: setExactAmountIn,
   };
 
   const destTokenObj = {
@@ -48,19 +81,214 @@ const SwapComponent = () => {
     defaultValue: destToken,
     ignoreValue: srcToken,
     setToken: setDestToken,
+    exactAmountIn: exactAmountOut,
+    setExactAmountIn: setExactAmountOut,
   };
 
   const [srcTokenComp, setSrcTokenComp] = useState<JSX.Element | null>(null);
   const [destTokenComp, setDestTokenComp] = useState<JSX.Element | null>(null);
+  const [estimatedQuote, setEstimatedQuote] = useState<string | null>(null);
 
   const [swapBtnText, setSwapBtnText] = useState(ENTER_AMOUNT);
   const [txPending, setTxPending] = useState(false);
 
-  const notifyError = msg => toast.error(msg, { duration: 6000 });
+  const notifyError = (msg: string) => toast.error(msg, { duration: 6000 });
   const notifySuccess = () => toast.success("Transaction completed.");
-  const address = "";
+  const { address } = useAccount();
+
+  // get pair path
+  function getPathForTokenToETH(srcToken: string): string[] | null {
+    // define a mapping of token addresses to their respective paths to ETH
+    const tokenToETHPaths = {
+      [CONTRACTS.USDT.address]: pathUSDT_WETH,
+      [CONTRACTS.USDC.address]: pathUSDC_WETH,
+      [CONTRACTS.LINK.address]: pathLINK_WETH,
+    };
+
+    // Check if a path exists for the given source token
+    if (srcToken in tokenToETHPaths) {
+      return tokenToETHPaths[srcToken];
+    }
+
+    return null;
+  }
+
+  function getPathForTokensToTokens(
+    srcToken: string,
+    destToken: string
+  ): string[] | null {
+    const tokenPairsToPath = {
+      [`${CONTRACTS.USDT.address}-${CONTRACTS.USDC.address}`]: pathUSDT_USDC,
+      [`${CONTRACTS.USDT.address}-${CONTRACTS.LINK.address}`]: pathUSDT_LINK,
+      [`${CONTRACTS.USDC.address}-${CONTRACTS.USDT.address}`]: pathUSDC_USDT,
+      [`${CONTRACTS.USDC.address}-${CONTRACTS.LINK.address}`]: pathUSDC_LINK,
+      [`${CONTRACTS.LINK.address}-${CONTRACTS.USDT.address}`]: pathLINK_USDT,
+      [`${CONTRACTS.LINK.address}-${CONTRACTS.USDC.address}`]: pathLINK_USDC,
+    };
+
+    const tokenPairKey = `${srcToken}-${destToken}`;
+
+    if (tokenPairKey in tokenPairsToPath) {
+      return tokenPairsToPath[tokenPairKey];
+    }
+
+    return null;
+  }
+
+  function getPathForETHToToken(destToken: string): string[] | null {
+    const ETHToTokenPaths = {
+      [CONTRACTS.USDT.address]: pathWETH_USDT,
+      [CONTRACTS.USDC.address]: pathWETH_USDC,
+      [CONTRACTS.LINK.address]: pathWETH_LINK,
+    };
+
+    if (destToken in ETHToTokenPaths) {
+      return ETHToTokenPaths[destToken];
+    }
+
+    return null;
+  }
 
   // Functions for functionality
+
+  const performSwap = async () => {
+    setTxPending(true);
+    let receipt;
+    let path: string[] | null = null;
+    if (exactAmountIn && Number(exactAmountIn) > 0) {
+      if (srcToken === ETH && destToken !== ETH) {
+        path = getPathForTokenToETH(destToken);
+
+        if (path) {
+          const concatenatedPath = path.join(",");
+          receipt = await swapExactAmountOfEthForTokens(
+            srcToken,
+            concatenatedPath
+          );
+        } else {
+          console.error("Invalid path");
+        }
+      } else if (srcToken !== ETH && destToken === ETH) {
+        path = getPathForTokenToETH(srcToken);
+        if (path) {
+          const concatenatedPath = path.join(",");
+          receipt = await swapExactAmountOfTokensForEth(
+            srcToken,
+            concatenatedPath
+          );
+        } else {
+          console.error("Invalid path");
+        }
+      } else if (srcToken !== ETH && destToken !== ETH) {
+        path = getPathForTokensToTokens(srcToken, destToken);
+
+        if (path) {
+          const concatenatedPath = path.join(",");
+          receipt = await swapExactAmountOfTokens(srcToken, concatenatedPath);
+        } else {
+          console.error("Invalid path");
+        }
+      }
+    } else if (exactAmountOut && Number(exactAmountOut) > 0) {
+      if (srcToken === ETH && destToken !== ETH) {
+        path = getPathForETHToToken(destToken);
+
+        if (path) {
+          const concatenatedPath = path.join(",");
+          receipt = await swapEthForExactAmountOfTokens(
+            srcToken,
+            concatenatedPath,
+            exactAmountOut
+          );
+        } else {
+          console.error("Invalid path");
+        }
+      } else if (srcToken !== ETH && destToken === ETH) {
+        path = getPathForTokenToETH(srcToken);
+
+        if (path) {
+          const concatenatedPath = path.join(",");
+          receipt = await swapTokensForExactAmountOfEth(
+            toWei(exactAmountOut),
+            concatenatedPath,
+            toWei(exactAmountIn),
+            srcToken
+          );
+        } else {
+          console.error("Invalid path");
+        }
+      } else if (srcToken !== ETH && destToken !== ETH) {
+        path = getPathForTokensToTokens(srcToken, destToken);
+
+        if (path) {
+          const concatenatedPath = path.join(",");
+          receipt = await swapTokensForExactAmount(destToken, concatenatedPath);
+        } else {
+          console.error("Invalid path");
+        }
+      }
+    }
+  };
+
+  const handleSwap = async () => {
+    if (exactAmountIn && Number(exactAmountIn) > 0) {
+      setIsExactAmountSet(true);
+      if (srcToken === ETH && destToken !== ETH) {
+        performSwap();
+      } else if (srcToken !== ETH && destToken === ETH) {
+        setTxPending(true);
+        const result = await approveTokens(srcToken, inputValue);
+        setTxPending(false);
+
+        if (result) {
+          const amountIn = await getAmountIn(
+            exactAmountOut,
+            reserveA,
+            reserveB
+          );
+          if (amountIn) {
+            setInputValue(amountIn.toString());
+          } else {
+            handleInsufficientAllowance();
+          }
+        } else handleInsufficientAllowance();
+      }
+    } else if (exactAmountOut && Number(exactAmountOut) > 0) {
+      setIsExactAmountOutSet(true);
+      if (srcToken === ETH && destToken !== ETH) {
+        performSwap();
+      } else if (srcToken !== ETH && destToken === ETH) {
+        setTxPending(true);
+        const result = await approveTokens(srcToken, inputValue);
+        setTxPending(false);
+
+        if (result) {
+          const amountOut = await getAmountOut(
+            exactAmountIn,
+            reserveA,
+            reserveB
+          );
+          if (amountOut) {
+            setOutputValue(amountOut.toString());
+          } else {
+            handleInsufficientAllowance();
+          }
+        } else handleInsufficientAllowance();
+      }
+    }
+  };
+
+  const getReserves = async (tokenA: string, tokenB: string) => {
+    const swapRouter = contract("swapRouter");
+    try {
+      const response = await swapRouter?.getReserve(tokenA, tokenB);
+      setReserveA(toEth(response.reserveA));
+      setReserveB(toEth(response.reserveB));
+      console.log(toEth(response.reserveA), toEth(response.reserveB));
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
     // Handling the text of the submit button
@@ -101,6 +329,32 @@ const SwapComponent = () => {
     if (isReversed.current) isReversed.current = false;
   }, [outputValue, srcToken]);
 
+  useEffect(() => {
+    if (srcToken != "0" && destToken != "0" && srcToken !== destToken) {
+      getReserves(srcToken, destToken);
+    }
+  }, [srcToken, destToken]);
+
+  useEffect(() => {
+    if (srcToken !== DEFAULT_VALUE && destToken !== DEFAULT_VALUE) {
+      const amountIn = isExactAmountSet ? exactAmountIn : inputValue;
+      const amountOut = isExactAmountOutSet ? exactAmountOut : outputValue;
+
+      const quoteResult = quote(amountIn, reserveA, reserveB);
+
+      setEstimatedQuote(quoteResult);
+    }
+  }, [
+    srcToken,
+    destToken,
+    exactAmountIn,
+    exactAmountOut,
+    inputValue,
+    outputValue,
+    reserveA,
+    reserveB,
+  ]);
+
   return (
     <div className="bg-zinc-900 w-[35%] p-4 px-6 rounded-xl">
       <div className="flex items-center justify-between py-4 px-1">
@@ -118,6 +372,11 @@ const SwapComponent = () => {
 
       <div className="bg-[#212429] p-4 py-6 rounded-xl mt-2 border-[2px] border-transparent hover:border-zinc-600">
         {destTokenComp}
+        {estimatedQuote !== null && (
+          <p className="text-zinc-400 text-sm mt-2">
+            Estimated Quote: {estimatedQuote} {destToken}
+          </p>
+        )}
       </div>
 
       <button
@@ -125,7 +384,7 @@ const SwapComponent = () => {
         onClick={() => {
           if (swapBtnText === INCREASE_ALLOWANCE)
             console.log("increaseAllowance");
-          else if (swapBtnText === SWAP) console.log("Swap");
+          else if (swapBtnText === SWAP) handleSwap();
         }}
       >
         {swapBtnText}
@@ -139,7 +398,9 @@ const SwapComponent = () => {
 
   // Front end functionality
 
-  function handleReverseExchange(e) {
+  function handleReverseExchange(
+    e: React.MouseEvent<SVGSVGElement, MouseEvent>
+  ) {
     // Setting the isReversed value to prevent the input/output values
     // being calculated in their respective side - effects
     isReversed.current = true;
@@ -164,7 +425,7 @@ const SwapComponent = () => {
     return className;
   }
 
-  function populateOutputValue() {
+  async function populateOutputValue(inputValue: string) {
     if (
       destToken === DEFAULT_VALUE ||
       srcToken === DEFAULT_VALUE ||
@@ -175,18 +436,34 @@ const SwapComponent = () => {
     try {
       if (srcToken !== ETH && destToken !== ETH) setOutputValue(inputValue);
       else if (srcToken === ETH && destToken !== ETH) {
-        const outValue = toEth(toWei(inputValue), 14);
-        setOutputValue(outValue);
+        const path = getPathForTokensToTokens(srcToken, destToken);
+        if (path) {
+          const outputAmounts = await getAmountsOut(toWei(inputValue), path);
+          if (outputAmounts && outputAmounts.length > 0) {
+            const outValue = toEth(outputAmounts[outputAmounts.length - 1]);
+            setOutputValue(outValue.toString());
+          } else {
+            setOutputValue("0");
+          }
+        }
       } else if (srcToken !== ETH && destToken === ETH) {
-        const outValue = toEth(toWei(inputValue, 14));
-        setOutputValue(outValue);
+        const path = getPathForTokensToTokens(srcToken, destToken);
+        if (path) {
+          const outputAmounts = await getAmountsOut(toWei(inputValue), path);
+          if (outputAmounts && outputAmounts.length > 0) {
+            const outValue = toEth(outputAmounts[outputAmounts.length - 1]);
+            setOutputValue(outValue.toString());
+          } else {
+            setOutputValue("0");
+          }
+        }
       }
     } catch (error) {
       setOutputValue("0");
     }
   }
 
-  function populateInputValue() {
+  async function populateInputValue(outputValue: string) {
     if (
       destToken === DEFAULT_VALUE ||
       srcToken === DEFAULT_VALUE ||
@@ -197,11 +474,28 @@ const SwapComponent = () => {
     try {
       if (srcToken !== ETH && destToken !== ETH) setInputValue(outputValue);
       else if (srcToken === ETH && destToken !== ETH) {
-        const outValue = toEth(toWei(outputValue, 14));
-        setInputValue(outValue);
+        const path = getPathForTokensToTokens(srcToken, destToken);
+
+        if (path) {
+          const inputAmounts = await getAmountsIn(toWei(outputValue), path);
+          if (inputAmounts && inputAmounts.length > 0) {
+            const inputValue = toEth(inputAmounts[0]);
+            setInputValue(inputValue.toString());
+          } else {
+            setInputValue("0");
+          }
+        }
       } else if (srcToken !== ETH && destToken === ETH) {
-        const outValue = toEth(toWei(outputValue), 14);
-        setInputValue(outValue);
+        const path = getPathForTokensToTokens(srcToken, destToken);
+        if (path) {
+          const inputAmounts = await getAmountsIn(toWei(outputValue), path);
+          if (inputAmounts && inputAmounts.length > 0) {
+            const inputValue = toEth(inputAmounts[0]);
+            setInputValue(inputValue.toString());
+          } else {
+            setInputValue("0");
+          }
+        }
       }
     } catch (error) {
       setInputValue("0");
