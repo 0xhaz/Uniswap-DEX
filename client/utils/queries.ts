@@ -37,6 +37,8 @@ export const approveTokens = async (
   }
 };
 
+////////////////////// SWAP //////////////////////
+
 export const swapExactAmountOfTokens = async (
   amountIn: string,
   path: string
@@ -284,5 +286,132 @@ export const quote = async (
   } catch (error) {
     console.log(error);
     return null;
+  }
+};
+
+////////////////////// LIQUIDITY //////////////////////
+
+export const addLiquidity = async (
+  valueOne: string,
+  valueTwo: string,
+  tokenOneAddress: string,
+  tokenTwoAddress: string
+) => {
+  const swapRouter = contract("swapRouter");
+  try {
+    if (tokenOneAddress && tokenTwoAddress && valueOne && valueTwo && address) {
+      await approveTokens(tokenOneAddress, valueOne);
+      await approveTokens(tokenTwoAddress, valueTwo);
+      const deadline = getDeadline();
+      const _addLiquidity = await swapRouter?.addLiquidity(
+        tokenOneAddress,
+        tokenTwoAddress,
+        toEth(valueOne),
+        toEth(valueTwo),
+        1,
+        1,
+        address,
+        deadline
+      );
+      await _addLiquidity.wait();
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const addLiquidityETH = async (
+  addressToken: string,
+  valueToken: string,
+  valueETH: string
+) => {
+  const swapRouter = contract("swapRouter");
+  try {
+    if (addressToken && valueToken && valueETH && address) {
+      await approveTokens(addressToken, valueToken);
+      const deadline = getDeadline();
+      const _addLiquidityETH = await swapRouter?.addLiquidityETH(
+        addressToken,
+        toEth(valueToken),
+        1,
+        1,
+        address,
+        deadline,
+        { value: toWei(valueETH) }
+      );
+      await _addLiquidityETH.wait();
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const removeLiquidity = async (
+  addressTokenOne: string,
+  addressTokenTwo: string,
+  liquidityAmount: string
+) => {
+  const swapRouter = contract("swapRouter");
+  try {
+    if (addressTokenOne && addressTokenTwo && liquidityAmount) {
+      const deadline = getDeadline();
+      const _removeLiquidity = await swapRouter?.removeLiquidity(
+        addressTokenOne,
+        addressTokenTwo,
+        toEth(liquidityAmount),
+        1,
+        1,
+        address,
+        deadline
+      );
+      await _removeLiquidity.wait();
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const removeLiquidityETH = async (
+  addressToken: string,
+  pairAddress: string,
+  liquidityAmount: string
+) => {
+  const swapRouter = contract("swapRouter");
+  try {
+    if (liquidityAmount) {
+      await approveTokens(pairAddress, toEth(liquidityAmount));
+
+      const deadline = getDeadline();
+      const _removeLiquidityETH = await swapRouter?.removeLiquidityETH(
+        addressToken,
+        toEth(liquidityAmount),
+        0,
+        0,
+        address,
+        deadline
+      );
+      await _removeLiquidityETH.wait();
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const getLiquidity = async (
+  addressTokenA: string,
+  addressTokenB: string
+) => {
+  const swapRouter = contract("swapRouter");
+  try {
+    const liquidity = await swapRouter?.getLiquidity(
+      address,
+      addressTokenA,
+      addressTokenB
+    );
+    const liquidityAmount = toEth(liquidity);
+    console.log("Liquidity: ", liquidityAmount);
+    return liquidityAmount;
+  } catch (error) {
+    console.error(error);
   }
 };

@@ -13,15 +13,14 @@ import {
   getAmountsIn,
   getAmountsOut,
   quote,
-} from "../../utils/queries";
-import { contract, tokenContract } from "@/utils/contracts";
+} from "@/utils/queries";
+import { contract } from "@/utils/contracts";
 import { CogIcon, ArrowSmDownIcon } from "@heroicons/react/outline";
 import SwapField from "./swapField";
 import TransactionStatus from "./transactionStatus";
 import toast, { Toaster } from "react-hot-toast";
 import {
   DEFAULT_VALUE,
-  tokens,
   ETH,
   CONTRACTS,
   pathLINK_USDC,
@@ -392,7 +391,7 @@ const SwapComponent = () => {
 
       <div className="bg-[#212429] p-4 py-6 rounded-xl mt-2 border-[2px] border-transparent hover:border-zinc-600">
         {destTokenComp}
-        {estimatedQuote !== null && (
+        {estimatedQuote !== null && destToken !== "WETH" && (
           <p className="text-zinc-400 text-sm mt-2">
             Estimated Quote: {estimatedQuote} {destToken}
           </p>
