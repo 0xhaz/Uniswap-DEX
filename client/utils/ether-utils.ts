@@ -10,9 +10,9 @@ export function toWei(amount: string, decimals = 18) {
   }
 }
 
-export function toEth(amount: string, decimals = 18) {
+export function toEth(amount: string) {
   try {
-    const toEth = ethers.utils.formatUnits(amount, decimals);
+    const toEth = ethers.utils.parseEther(amount);
     return toEth.toString();
   } catch (error) {
     console.error("Error converting amount to Eth", error);

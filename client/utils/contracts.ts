@@ -30,7 +30,7 @@ const lendingPoolFactoryAbi = CONTRACTS.LENDING_POOL_FACTORY.abi;
 const lendingPoolRouter = CONTRACTS.LENDING_POOL_ROUTER;
 const lendingPoolRouterAbi = CONTRACTS.LENDING_POOL_ROUTER.abi;
 
-const tokenContractMap = {
+export const tokenContractMap: Record<string, { address: string; abi: any }> = {
   USDT: { address: usdt.address, abi: usdtAbi },
   USDC: { address: usdc.address, abi: usdcAbi },
   LINK: { address: link.address, abi: linkAbi },
@@ -38,7 +38,7 @@ const tokenContractMap = {
   WETH: { address: weth.address, abi: wethAbi },
 };
 
-const contractMap = {
+export const contractMap = {
   swapPair: { address: swapPair.address, abi: swapPairAbi },
   swapRouter: { address: swapRouter.address, abi: swapRouterAbi },
   swapFactory: { address: swapFactory.address, abi: swapFactoryAbi },
@@ -56,19 +56,10 @@ const contractMap = {
   },
 };
 
-export const tokenContract = (tokenSymbol: string): ethers.Contract => {
-  const tokenInfo =
-    tokenContractMap[tokenSymbol as keyof typeof tokenContractMap];
-  if (!tokenInfo) {
-    throw new Error(`Token ${tokenSymbol} not supported`);
-  }
-
+export const tokenContract = (address: string, abi: any): ethers.Contract => {
   const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const contract = new ethers.Contract(
-    tokenInfo.address,
-    tokenInfo.abi,
-    provider
-  );
+  const signer = provider.getSigner();
+  const contract = new ethers.Contract(address, abi, signer);
 
   return contract;
 };

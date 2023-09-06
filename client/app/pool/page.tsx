@@ -12,7 +12,9 @@ import {
   useModal,
   Dropdown,
 } from "@nextui-org/react";
+import { contract } from "@/utils/contracts";
 import {
+  getBalance,
   addLiquidity,
   addLiquidityETH,
   removeLiquidity,
@@ -38,6 +40,7 @@ import {
   pathWETH_USDT,
 } from "../constants/constants";
 import Selector from "../components/selector";
+import { toEth, toWei } from "@/utils/ether-utils";
 
 const token1 = tokens;
 const token2 = tokens;
@@ -47,20 +50,24 @@ const Pool = () => {
   const [expand, setExpand] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [toggle, setToggle] = useState<boolean>(false);
-  const [selectedToken1, setSelectedToken1] = useState<string>("ETH");
-  const [selectedToken2, setSelectedToken2] = useState<string>("USDC");
+  const [selectedToken1, setSelectedToken1] = useState<string>(token1[0].name);
+  const [selectedToken2, setSelectedToken2] = useState<string>(token2[1].name);
   const [txPending, setTxPending] = useState<boolean>(false);
   const [selected, setSelected] = useState([...tokens]);
-  const [desiredAmountA, setDesiredAmountA] = useState<number>(0);
-  const [desiredAmountB, setDesiredAmountB] = useState<number>(0);
+  const [desiredAmountA, setDesiredAmountA] = useState<number | string>(0);
+  const [desiredAmountB, setDesiredAmountB] = useState<number | string>(0);
   const [liquidity, setLiquidity] = useState<string>("0");
   const [positions, setPositions] = useState<any[]>([]);
   const [reserveA, setReserveA] = useState<number>(0);
   const [reserveB, setReserveB] = useState<number>(0);
+  const [balanceToken1, setBalanceToken1] = useState<number | null>(null);
+  const [balanceToken2, setBalanceToken2] = useState<number | null>(null);
 
   const { address } = useAccount();
   const provider = useProvider();
   const { data: signer } = useSigner();
+
+  const renderTable = address !== undefined;
 
   // get pair path
   function getPathForTokenToETH(srcToken: string): string[] | null {
@@ -153,9 +160,138 @@ const Pool = () => {
   const handleModal = () => setExpand(true);
   const closeModal = () => setExpand(false);
 
-  const newPool = () => {
-    setToggle(!toggle);
+  // get reserves for a pair of tokens when user select both tokens
+  const getReserves = async (tokenA: string, tokenB: string) => {
+    const swapRouter = contract("swapRouter");
+    try {
+      const response = await swapRouter?.getReserves(tokenA, tokenB);
+      setReserveA(response.reserveA);
+      setReserveB(response.reserveB);
+    } catch (error) {
+      console.error(error);
+    }
   };
+
+  // quote amountA for amountB
+  const quoteA = async (
+    amountB: string,
+    reserveA: string,
+    reserveB: string
+  ) => {
+    const swapRouter = contract("swapRouter");
+    try {
+      if (amountB) {
+        const fetchQuote = await swapRouter?.quote(
+          toEth(amountB.toString()),
+          toEth(reserveA.toString()),
+          toEth(reserveB.toString())
+        );
+        setDesiredAmountA(toEth(fetchQuote));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // quote amountB for amountA
+  const quoteB = async (
+    amountA: string,
+    reserveA: string,
+    reserveB: string
+  ) => {
+    const swapRouter = contract("swapRouter");
+    try {
+      if (amountA) {
+        const fetchQuote = await swapRouter?.quote(
+          toEth(amountA.toString()),
+          toEth(reserveB.toString()),
+          toEth(reserveA.toString())
+        );
+        setDesiredAmountB(toEth(fetchQuote));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleAddLiquidity = async () => {
+    if (selectedToken1 === selectedToken2) {
+      alert("Please select different tokens");
+      return;
+    }
+
+    if (selectedToken1 && selectedToken2 && selectedToken1 != selectedToken2) {
+      if (selectedToken1 != "ETH" && selectedToken2 != "WETH") {
+        addLiquidity(
+          desiredAmountA.toString(),
+          desiredAmountB.toString(),
+          selectedToken1,
+          selectedToken2
+        );
+      } else if (selectedToken1 === "ETH") {
+        addLiquidityETH(
+          selectedToken2,
+          desiredAmountB.toString(),
+          desiredAmountA.toString()
+        );
+      } else if (selectedToken2 == "ETH") {
+        addLiquidityETH(
+          selectedToken1,
+          desiredAmountA.toString(),
+          desiredAmountB.toString()
+        );
+      }
+    }
+  };
+
+  const handleRemoveLiquidity = async (
+    token1Address: string,
+    token2Address: string,
+    pairAddress: string
+  ) => {
+    if (token1Address === token2Address) {
+      alert("Please select different tokens");
+      return;
+    }
+
+    if (
+      token1Address &&
+      token2Address &&
+      token1Address != token2Address &&
+      liquidity
+    ) {
+      if (token1Address != "ETH" && token2Address != "WETH") {
+        removeLiquidity(
+          token1Address,
+          token2Address,
+          pairAddress,
+          liquidity.toString()
+        );
+      } else if (token1Address === "ETH" && token2Address != "WETH") {
+        removeLiquidityETH(token2Address, pairAddress, liquidity.toString());
+      } else if (token1Address !== "ETH" && token2Address == "WETH") {
+        removeLiquidityETH(token1Address, pairAddress, liquidity.toString());
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (selectedToken1 !== "WETH") {
+      getBalance(selectedToken1, address).then(balance => {
+        setBalanceToken1(balance?.toString());
+      });
+    } else {
+      setBalanceToken1(null);
+    }
+
+    if (selectedToken2 !== "WETH") {
+      getBalance(selectedToken2, address).then(balance => {
+        setBalanceToken2(balance?.toString());
+      });
+    } else {
+      setBalanceToken2(null);
+    }
+  }, [selectedToken1, selectedToken2]);
   return (
     <>
       <div className="w-full mt-10 flex flex-col justify-center items-center px-2">
@@ -213,6 +349,11 @@ const Pool = () => {
                     />
                   </div>
                 </div>
+                {balanceToken1 !== null && (
+                  <div className="flex justify-end text-gray-400 text-sm">
+                    Balance: {balanceToken1}
+                  </div>
+                )}
               </div>
               <div className="bg-[#212429] p-4 py-2 rounded-xl mb-2 border-[2px] border-transparent hover:border-zinc-600">
                 <div className="flex  items-center rounded-xl">
@@ -231,6 +372,11 @@ const Pool = () => {
                     />
                   </div>
                 </div>
+                {balanceToken2 !== null && (
+                  <div className="flex justify-end text-gray-400 text-sm">
+                    Balance: {balanceToken1}
+                  </div>
+                )}
               </div>
               <div className="flex justify-center py-3">
                 <Button>Add Liquidity</Button>
@@ -240,70 +386,72 @@ const Pool = () => {
         </div>
       </div>
 
-      <div className="w-full flex justify-center items-start px-2">
-        <div className="overflow-x-auto relative w-full lg:w-7/12 rounded-md mx-auto text-white px-0 py-0 bg-[#212429] opacity-100 backdrop-blur-lg items-center justify-center mt-12 mb-32">
-          <h2 className="rounded-t-md text-xl font-semibold tracking-wide w-full  py-4 px-4 border-b border-gray-400">
-            Your Liquidity Positions
-          </h2>
-          <div className="lg:px-4 py-8 w-full">
-            <table className="w-full text-sm text-left text-gray-100">
-              <thead className="text-sm uppercase text-gray-100 border-b border-gray-500">
-                <tr>
-                  <th scope="col" className="py-3 px-6">
-                    Token A
-                  </th>
-                  <th scope="col" className="py-3 px-6">
-                    Token B
-                  </th>
-                  <th scope="col" className="py-3 px-6">
-                    Liquidity Balance
-                  </th>
-                  <th scope="col" className="py-3 px-6">
-                    Remove Liquidity
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b h-28 border-gray-500 text-gray-100">
-                  <th
-                    scope="row"
-                    className="py-4 px-6 font-medium whitespace-nowrap"
-                  >
-                    "tokenpairA"
-                  </th>
-                  <td className="py-4 px-6">"tokenPairB"</td>
-                  <td className="py-4 px-6">"liquidityBalance"</td>
-                  <td className="py-4 px-6">
-                    <Input
-                      type="number"
-                      className={`
-                ${toggleRemove ? `visible` : `hidden`}
-               mb-3 ml-1 justify-center items-center
-                innerWrapper: "bg-transparent"
-              `}
-                      placeholder="0"
-                      required
-                      onChange={e => setLiquidity(e.target.value)}
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        if (toggleRemove) {
-                          // handleRemoveLiquidity
-                        } else {
-                          setToggleRemove(!toggleRemove);
-                        }
-                      }}
-                    >
+      {renderTable && (
+        <div className="w-full flex justify-center items-start px-2">
+          <div className="overflow-x-auto relative w-full lg:w-7/12 rounded-md mx-auto text-white px-0 py-0 bg-[#212429] opacity-100 backdrop-blur-lg items-center justify-center mt-12 mb-32">
+            <h2 className="rounded-t-md text-xl font-semibold tracking-wide w-full  py-4 px-4 border-b border-gray-400">
+              Your Liquidity Positions
+            </h2>
+            <div className="lg:px-4 py-8 w-full">
+              <table className="w-full text-sm text-left text-gray-100">
+                <thead className="text-sm uppercase text-gray-100 border-b border-gray-500">
+                  <tr>
+                    <th scope="col" className="py-3 px-6">
+                      Token A
+                    </th>
+                    <th scope="col" className="py-3 px-6">
+                      Token B
+                    </th>
+                    <th scope="col" className="py-3 px-6">
+                      Liquidity Balance
+                    </th>
+                    <th scope="col" className="py-3 px-6">
                       Remove Liquidity
-                    </Button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b h-28 border-gray-500 text-gray-100">
+                    <th
+                      scope="row"
+                      className="py-4 px-6 font-medium whitespace-nowrap"
+                    >
+                      "tokenpairA"
+                    </th>
+                    <td className="py-4 px-6">"tokenPairB"</td>
+                    <td className="py-4 px-6">"liquidityBalance"</td>
+                    <td className="py-4 px-6">
+                      <Input
+                        type="number"
+                        className={`
+            ${toggleRemove ? `visible` : `hidden`}
+           mb-3 ml-1 justify-center items-center
+            innerWrapper: "bg-transparent"
+          `}
+                        placeholder="0"
+                        required
+                        onChange={e => setLiquidity(e.target.value)}
+                      />
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          if (toggleRemove) {
+                            // handleRemoveLiquidity
+                          } else {
+                            setToggleRemove(!toggleRemove);
+                          }
+                        }}
+                      >
+                        Remove Liquidity
+                      </Button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 };

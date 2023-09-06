@@ -1,6 +1,11 @@
 import { BigNumber, ethers, providers } from "ethers";
 import { toEth, toWei } from "./ether-utils";
-import { tokenContract, contract, wethContract } from "./contracts";
+import {
+  tokenContract,
+  contract,
+  wethContract,
+  tokenContractMap,
+} from "./contracts";
 
 const getDeadline = () => {
   const deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes
@@ -16,12 +21,20 @@ const getAccount = async (): Promise<string> => {
   return address;
 };
 
+/////////////////////// TOKENS ///////////////////////
+
 export const approveTokens = async (
   tokenInAddress: string,
   amountIn: string
 ) => {
   try {
-    const selectedTokenContract = tokenContract(tokenInAddress);
+    if (!(tokenInAddress in tokenContractMap)) {
+      throw new Error(`Token ${tokenInAddress} not supported`);
+      return null;
+    }
+    const { address, abi } = tokenContractMap[tokenInAddress];
+
+    const selectedTokenContract = tokenContract(address, abi);
     const swapRouterContract = contract("swapRouter");
 
     const tx = await selectedTokenContract.approve(
@@ -34,6 +47,30 @@ export const approveTokens = async (
   } catch (error) {
     console.log(error);
     return false;
+  }
+};
+
+export const getBalance = async (
+  tokenAddress: string,
+  walletAddress: string
+) => {
+  try {
+    if (!(tokenAddress in tokenContractMap)) {
+      throw new Error(`Token ${tokenAddress} not supported`);
+      return null;
+    }
+    const { address, abi } = tokenContractMap[tokenAddress];
+
+    const selectedTokenContract = tokenContract(address, abi);
+
+    const balance = await selectedTokenContract.balanceOf(walletAddress);
+
+    const balanceEth = ethers.utils.formatEther(balance);
+    console.log("Balance: ", balanceEth);
+    return balanceEth;
+  } catch (error) {
+    console.log(error);
+    return null;
   }
 };
 
@@ -349,6 +386,7 @@ export const addLiquidityETH = async (
 export const removeLiquidity = async (
   addressTokenOne: string,
   addressTokenTwo: string,
+  pairAddress: string,
   liquidityAmount: string
 ) => {
   const swapRouter = contract("swapRouter");
@@ -358,7 +396,7 @@ export const removeLiquidity = async (
       const _removeLiquidity = await swapRouter?.removeLiquidity(
         addressTokenOne,
         addressTokenTwo,
-        toEth(liquidityAmount),
+        toEth(liquidityAmount.toString()),
         1,
         1,
         address,
