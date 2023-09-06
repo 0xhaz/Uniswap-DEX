@@ -13,6 +13,7 @@ const getDeadline = () => {
 };
 
 let address: string;
+const provider = new ethers.providers.Web3Provider(window.ethereum as any);
 
 const getAccount = async (): Promise<string> => {
   const provider = new ethers.providers.Web3Provider(window.ethereum as any);
@@ -66,7 +67,19 @@ export const getBalance = async (
     const balance = await selectedTokenContract.balanceOf(walletAddress);
 
     const balanceEth = ethers.utils.formatEther(balance);
-    console.log("Balance: ", balanceEth);
+
+    return balanceEth;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+
+export const getEthBalance = async (walletAddress: string) => {
+  try {
+    const balance = await provider.getBalance(walletAddress);
+    const balanceEth = ethers.utils.formatEther(balance);
+
     return balanceEth;
   } catch (error) {
     console.log(error);

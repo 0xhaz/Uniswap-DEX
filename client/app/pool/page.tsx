@@ -15,6 +15,7 @@ import {
 import { contract } from "@/utils/contracts";
 import {
   getBalance,
+  getEthBalance,
   addLiquidity,
   addLiquidityETH,
   removeLiquidity,
@@ -62,6 +63,7 @@ const Pool = () => {
   const [reserveB, setReserveB] = useState<number>(0);
   const [balanceToken1, setBalanceToken1] = useState<number | null>(null);
   const [balanceToken2, setBalanceToken2] = useState<number | null>(null);
+  const [ethBalance, setEthBalance] = useState<number | null>(null);
 
   const { address } = useAccount();
   const provider = useProvider();
@@ -276,22 +278,30 @@ const Pool = () => {
   };
 
   useEffect(() => {
+    if (!address) return;
+
     if (selectedToken1 !== "WETH") {
-      getBalance(selectedToken1, address).then(balance => {
-        setBalanceToken1(balance?.toString());
+      getBalance(selectedToken1, address)?.then(balance => {
+        setBalanceToken1(parseFloat(balance ?? "0"));
       });
     } else {
       setBalanceToken1(null);
     }
 
     if (selectedToken2 !== "WETH") {
-      getBalance(selectedToken2, address).then(balance => {
-        setBalanceToken2(balance?.toString());
+      getBalance(selectedToken2, address)?.then(balance => {
+        setBalanceToken2(parseFloat(balance ?? "0"));
       });
     } else {
       setBalanceToken2(null);
     }
-  }, [selectedToken1, selectedToken2]);
+
+    if (selectedToken1 === "ETH" || selectedToken2 === "ETH") {
+      getEthBalance(address)?.then(balance => {
+        setEthBalance(parseFloat(balance ?? "0"));
+      });
+    }
+  }, [selectedToken1, selectedToken2, address]);
   return (
     <>
       <div className="w-full mt-10 flex flex-col justify-center items-center px-2">
@@ -349,7 +359,11 @@ const Pool = () => {
                     />
                   </div>
                 </div>
-                {balanceToken1 !== null && (
+                {selectedToken1 === "ETH" ? (
+                  <div className="flex justify-end text-gray-400 text-sm">
+                    Balance: {ethBalance}
+                  </div>
+                ) : (
                   <div className="flex justify-end text-gray-400 text-sm">
                     Balance: {balanceToken1}
                   </div>
@@ -372,9 +386,13 @@ const Pool = () => {
                     />
                   </div>
                 </div>
-                {balanceToken2 !== null && (
+                {selectedToken2 === "ETH" ? (
                   <div className="flex justify-end text-gray-400 text-sm">
-                    Balance: {balanceToken1}
+                    Balance: {ethBalance}
+                  </div>
+                ) : (
+                  <div className="flex justify-end text-gray-400 text-sm">
+                    Balance: {balanceToken2}
                   </div>
                 )}
               </div>
