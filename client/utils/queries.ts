@@ -1,5 +1,5 @@
 import { BigNumber, Contract, Signer, ethers, providers } from "ethers";
-import { toEth, toWei } from "./ether-utils";
+import { toEth, toWei, formatEth } from "./ether-utils";
 import {
   tokenContract,
   contract,
@@ -399,18 +399,18 @@ export const addLiquidityETH = async (
 };
 
 export const removeLiquidity = async (
-  addressTokenOne: string,
-  addressTokenTwo: string,
+  addressTokenA: string,
+  addressTokenB: string,
   pairAddress: string,
   liquidityAmount: string
 ) => {
   const swapRouter = contract("swapRouter");
   try {
-    if (addressTokenOne && addressTokenTwo && liquidityAmount) {
+    if (addressTokenA && addressTokenB && liquidityAmount) {
       const deadline = getDeadline();
       const _removeLiquidity = await swapRouter?.removeLiquidity(
-        addressTokenOne,
-        addressTokenTwo,
+        addressTokenA,
+        addressTokenB,
         toEth(liquidityAmount.toString()),
         1,
         1,
@@ -462,7 +462,7 @@ export const getLiquidity = async (
       addressTokenA,
       addressTokenB
     );
-    const liquidityAmount = toEth(liquidity);
+    const liquidityAmount = formatEth(liquidity);
     console.log("Liquidity: ", liquidityAmount);
     return liquidityAmount;
   } catch (error) {

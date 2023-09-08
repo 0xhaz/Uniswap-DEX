@@ -19,3 +19,13 @@ export function toEth(amount: string) {
     throw error;
   }
 }
+
+export function formatEth(amount: string) {
+  try {
+    const formatEth = ethers.utils.formatEther(amount);
+    return formatEth.toString();
+  } catch (error) {
+    console.error("Error formatting Eth", error);
+    throw error;
+  }
+}

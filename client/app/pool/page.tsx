@@ -1,5 +1,6 @@
 "use client";
 import { Fragment, useState, useEffect } from "react";
+import Image from "next/image";
 import { CheckIcon, ChevronDownIcon } from "@heroicons/react/solid";
 import { Dialog, Listbox, Transition } from "@headlessui/react";
 import { useAccount, useContract, useProvider, useSigner } from "wagmi";
@@ -48,7 +49,6 @@ import { toEth, toWei } from "@/utils/ether-utils";
 const swapRouter = contract("swapRouter");
 
 const Pool = () => {
-  const [toggleRemove, setToggleRemove] = useState<boolean>(false);
   const [expand, setExpand] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [toggle, setToggle] = useState<boolean>(false);
@@ -65,65 +65,15 @@ const Pool = () => {
   const [balanceToken1, setBalanceToken1] = useState<number | null>(null);
   const [balanceToken2, setBalanceToken2] = useState<number | null>(null);
   const [ethBalance, setEthBalance] = useState<number | null>(null);
+  const [showRemoveInput, setShowRemoveInput] = useState<boolean[]>(
+    new Array(positions.length).fill(false)
+  );
 
   const { address } = useAccount();
   const provider = useProvider();
   const { data: signer } = useSigner();
 
   const renderTable = address !== undefined;
-
-  // get pair path
-  function getPathForTokenToETH(srcToken: string): string[] | null {
-    // define a mapping of token addresses to their respective paths to ETH
-    const tokenToETHPaths = {
-      [CONTRACTS.USDT.address]: pathUSDT_WETH,
-      [CONTRACTS.USDC.address]: pathUSDC_WETH,
-      [CONTRACTS.LINK.address]: pathLINK_WETH,
-    };
-
-    // Check if a path exists for the given source token
-    if (srcToken in tokenToETHPaths) {
-      return tokenToETHPaths[srcToken];
-    }
-
-    return null;
-  }
-
-  function getPathForTokensToTokens(
-    srcToken: string,
-    destToken: string
-  ): string[] | null {
-    const tokenPairsToPath = {
-      [`${CONTRACTS.USDT.address}-${CONTRACTS.USDC.address}`]: pathUSDT_USDC,
-      [`${CONTRACTS.USDT.address}-${CONTRACTS.LINK.address}`]: pathUSDT_LINK,
-      [`${CONTRACTS.USDC.address}-${CONTRACTS.USDT.address}`]: pathUSDC_USDT,
-      [`${CONTRACTS.USDC.address}-${CONTRACTS.LINK.address}`]: pathUSDC_LINK,
-      [`${CONTRACTS.LINK.address}-${CONTRACTS.USDT.address}`]: pathLINK_USDT,
-      [`${CONTRACTS.LINK.address}-${CONTRACTS.USDC.address}`]: pathLINK_USDC,
-    };
-
-    const tokenPairKey = `${srcToken}-${destToken}`;
-
-    if (tokenPairKey in tokenPairsToPath) {
-      return tokenPairsToPath[tokenPairKey];
-    }
-
-    return null;
-  }
-
-  function getPathForETHToToken(destToken: string): string[] | null {
-    const ETHToTokenPaths = {
-      [CONTRACTS.USDT.address]: pathWETH_USDT,
-      [CONTRACTS.USDC.address]: pathWETH_USDC,
-      [CONTRACTS.LINK.address]: pathWETH_LINK,
-    };
-
-    if (destToken in ETHToTokenPaths) {
-      return ETHToTokenPaths[destToken];
-    }
-
-    return null;
-  }
 
   const tokenAddressToName = {
     [CONTRACTS.USDT.address]: "USDT",
@@ -132,9 +82,17 @@ const Pool = () => {
     [CONTRACTS.WETH.address]: "WETH",
   };
 
+  const getTokenPairId = (tokenA: string, tokenB: string) => {
+    const addresses = [tokenA, tokenB];
+    addresses.sort();
+    return addresses.join("-");
+  };
+
   const getPositions = async (id: string) => {
+    if (!address) return;
     try {
       const promises = [];
+      const uniquePairs = new Set();
 
       const paths = [
         pathLINK_USDC,
@@ -155,11 +113,27 @@ const Pool = () => {
         const path = paths[i];
         const tokenA = path[0];
         const tokenB = path[path.length - 1];
-        const balance = await getLiquidity(address, tokenA, tokenB);
+        const pairIdentifier = getTokenPairId(tokenA, tokenB);
+        const [addressTokenA, addressTokenB] = pairIdentifier.split("-");
 
-        // only add position with non-zero liquidity to user's positions
-        if (parseFloat(balance) > 0) {
-          promises.push({ liquidity: balance, pair: { tokenA, tokenB } });
+        if (
+          !uniquePairs.has(pairIdentifier) &&
+          !uniquePairs.has(`${addressTokenB}-${addressTokenA}`)
+        ) {
+          const balance = await getLiquidity(
+            address,
+            addressTokenA,
+            addressTokenB
+          );
+
+          if (typeof balance === "string" && !isNaN(parseFloat(balance))) {
+            // only add position with non-zero liquidity to user's positions
+            promises.push({ liquidity: balance, pair: { tokenA, tokenB } });
+          } else {
+            console.log("Invalid balance", balance);
+          }
+
+          uniquePairs.add(pairIdentifier);
         }
       }
 
@@ -228,29 +202,6 @@ const Pool = () => {
     }
   };
 
-  const getDeadline = () => {
-    const deadline = Math.floor(Date.now() / 1000) + 600;
-    return deadline;
-  };
-
-  const handleToken1Change = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedToken = tokens.find(
-      token => token.key === event.target.value
-    );
-    if (selectedToken) {
-      setSelectedToken1(selectedToken);
-    }
-  };
-
-  const handleToken2Change = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedToken = tokens.find(
-      token => token.key === event.target.value
-    );
-    if (selectedToken) {
-      setSelectedToken2(selectedToken);
-    }
-  };
-
   const handleAddLiquidity = async () => {
     if (selectedToken1 === selectedToken2) {
       alert("Please select different tokens");
@@ -301,12 +252,16 @@ const Pool = () => {
   const handleRemoveLiquidity = async (
     token1Address: string,
     token2Address: string,
-    pairAddress: string
+    pairAddress: string,
+    rowIndex: number
   ) => {
     if (token1Address === token2Address) {
       alert("Please select different tokens");
       return;
     }
+
+    console.log("Token 1 Address:", token1Address);
+    console.log("Token 2 Address:", token2Address);
 
     if (
       token1Address &&
@@ -326,6 +281,12 @@ const Pool = () => {
       } else if (token1Address !== "ETH" && token2Address == "WETH") {
         removeLiquidityETH(token1Address, pairAddress, liquidity.toString());
       }
+
+      setShowRemoveInput(prevState => [
+        ...prevState.slice(0, rowIndex),
+        false,
+        ...prevState.slice(rowIndex + 1),
+      ]);
     }
   };
 
@@ -482,16 +443,16 @@ const Pool = () => {
               <table className="w-full text-sm text-left text-gray-100">
                 <thead className="text-sm uppercase text-gray-100 border-b border-gray-500">
                   <tr>
-                    <th scope="col" className="py-3 px-6">
+                    <th scope="col" className="py-3 px-8">
                       Token A
                     </th>
-                    <th scope="col" className="py-3 px-6">
+                    <th scope="col" className="py-3 px-8">
                       Token B
                     </th>
                     <th scope="col" className="py-3 px-6">
                       Liquidity Balance
                     </th>
-                    <th scope="col" className="py-3 px-6">
+                    <th scope="col" className="py-3 px-12">
                       Remove Liquidity
                     </th>
                   </tr>
@@ -502,42 +463,81 @@ const Pool = () => {
                       key={index}
                       className="border-b h-28 border-gray-500 text-gray-100"
                     >
-                      <th
-                        scope="row"
-                        className="py-4 px-6 font-medium whitespace-nowrap"
-                      >
-                        {tokenAddressToName[position.pair.tokenA] ||
-                          position.pair.tokenA}{" "}
-                      </th>
-                      <td className="py-4 px-6">
-                        {tokenAddressToName[position.pair.tokenB] ||
-                          position.pair.tokenB}{" "}
-                      </td>
-                      <td className="py-4 px-6">{position.liquidity}</td>
-                      <td className="py-4 px-6">
-                        <Input
-                          type="number"
-                          className={`
-            ${toggleRemove ? `visible` : `hidden`}
-           mb-3 ml-1 justify-center items-center
-            innerWrapper: "bg-transparent"
-          `}
-                          placeholder="0"
-                          required
-                          onChange={e => setLiquidity(e.target.value)}
-                        />
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            if (toggleRemove) {
-                              // handleRemoveLiquidity
-                            } else {
-                              setToggleRemove(!toggleRemove);
+                      <td scope="row" className="py-4 px-7 font-medium ">
+                        <div className="flex items-center">
+                          <Image
+                            src={
+                              tokens.find(
+                                token => token.address === position.pair.tokenA
+                              )?.logo ?? ""
                             }
-                          }}
-                        >
-                          Remove Liquidity
-                        </Button>
+                            width={20}
+                            height={20}
+                            alt={`${position.pair.tokenA} logo`}
+                            style={{ marginRight: "10px" }}
+                          />
+                          {tokenAddressToName[position.pair.tokenA] ||
+                            position.pair.tokenA}
+                        </div>
+                      </td>
+                      <td className="py-4 px-7 font-medium">
+                        <div className="flex items-center">
+                          <Image
+                            src={
+                              tokens.find(
+                                token => token.address === position.pair.tokenB
+                              )?.logo ?? ""
+                            }
+                            width={20}
+                            height={20}
+                            alt={`${position.pair.tokenB} logo`}
+                            style={{ marginRight: "10px" }}
+                          />
+                          {tokenAddressToName[position.pair.tokenB] ||
+                            position.pair.tokenB}
+                        </div>
+                      </td>
+                      <td className="py-4 px-14 font-medium">
+                        {parseFloat(position.liquidity).toFixed(2)}
+                      </td>
+                      <td className="py-4 px-6">
+                        {showRemoveInput[index] ? (
+                          <>
+                            <Input
+                              type="number"
+                              className="mb-3 ml-1.5 justify-center items-center bg-transparent"
+                              placeholder="0.0"
+                              required
+                              onChange={e => setLiquidity(e.target.value)}
+                            />
+                            <Button
+                              type="button"
+                              onClick={() =>
+                                handleRemoveLiquidity(
+                                  position.pair.tokenA,
+                                  position.pair.tokenB,
+                                  position.pair.liquidity,
+                                  index
+                                )
+                              }
+                            >
+                              Confirm Removal
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            type="button"
+                            onClick={() =>
+                              setShowRemoveInput(prevState => [
+                                ...prevState.slice(0, index),
+                                true,
+                                ...prevState.slice(index + 1),
+                              ])
+                            }
+                          >
+                            Remove Liquidity
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}
