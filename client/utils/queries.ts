@@ -1,10 +1,11 @@
-import { BigNumber, ethers, providers } from "ethers";
+import { BigNumber, Contract, Signer, ethers, providers } from "ethers";
 import { toEth, toWei } from "./ether-utils";
 import {
   tokenContract,
   contract,
   wethContract,
   tokenContractMap,
+  contractMap,
 } from "./contracts";
 
 const getDeadline = () => {
@@ -12,41 +13,41 @@ const getDeadline = () => {
   return deadline;
 };
 
-let address: string;
-const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-
-const getAccount = async (): Promise<string> => {
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
-  const address = await signer.getAddress();
-  return address;
+const getAccount = async () => {
+  try {
+    const provider = new ethers.providers.Web3Provider(window.ethereum as any);
+    const signer = provider.getSigner();
+    const address = await signer.getAddress();
+    return address;
+  } catch (error) {
+    console.error("Error getting account", error);
+    return null;
+  }
 };
+
+const provider = new ethers.providers.Web3Provider(window.ethereum as any);
+let address: string;
 
 /////////////////////// TOKENS ///////////////////////
 
 export const approveTokens = async (
   tokenInAddress: string,
+  abi: any,
+  spenderAddress: Contract,
   amountIn: string
 ) => {
   try {
-    if (!(tokenInAddress in tokenContractMap)) {
-      throw new Error(`Token ${tokenInAddress} not supported`);
-      return null;
-    }
-    const { address, abi } = tokenContractMap[tokenInAddress];
+    const signer = provider.getSigner();
+    const swapRouter = contract("swapRouter");
 
-    const selectedTokenContract = tokenContract(address, abi);
-    const swapRouterContract = contract("swapRouter");
-
-    const tx = await selectedTokenContract.approve(
-      swapRouterContract,
-      toWei(amountIn)
-    );
-
+    const tx = await tokenContract(tokenInAddress, abi)
+      .connect(signer)
+      .approve(swapRouter.address, toEth(amountIn));
     await tx.wait();
-    return true;
+
+    console.log(`Approved ${tokenInAddress} for ${amountIn} tokens`);
   } catch (error) {
-    console.log(error);
+    console.error("Approval Error: ", error);
     return false;
   }
 };
@@ -342,17 +343,19 @@ export const quote = async (
 ////////////////////// LIQUIDITY //////////////////////
 
 export const addLiquidity = async (
-  valueOne: string,
-  valueTwo: string,
   tokenOneAddress: string,
-  tokenTwoAddress: string
+  tokenTwoAddress: string,
+  valueOne: string,
+  valueTwo: string
 ) => {
   const swapRouter = contract("swapRouter");
   try {
-    if (tokenOneAddress && tokenTwoAddress && valueOne && valueTwo && address) {
-      await approveTokens(tokenOneAddress, valueOne);
-      await approveTokens(tokenTwoAddress, valueTwo);
+    if (valueOne && valueTwo) {
       const deadline = getDeadline();
+      const userAddress = await getAccount();
+      console.log("tokenOneAddress: ", tokenOneAddress);
+      console.log("tokenTwoAddress: ", tokenTwoAddress);
+
       const _addLiquidity = await swapRouter?.addLiquidity(
         tokenOneAddress,
         tokenTwoAddress,
@@ -360,7 +363,7 @@ export const addLiquidity = async (
         toEth(valueTwo),
         1,
         1,
-        address,
+        userAddress,
         deadline
       );
       await _addLiquidity.wait();
@@ -377,20 +380,19 @@ export const addLiquidityETH = async (
 ) => {
   const swapRouter = contract("swapRouter");
   try {
-    if (addressToken && valueToken && valueETH && address) {
-      await approveTokens(addressToken, valueToken);
-      const deadline = getDeadline();
-      const _addLiquidityETH = await swapRouter?.addLiquidityETH(
-        addressToken,
-        toEth(valueToken),
-        1,
-        1,
-        address,
-        deadline,
-        { value: toWei(valueETH) }
-      );
-      await _addLiquidityETH.wait();
-    }
+    // await approveTokens(addressToken, valueToken);
+    const _valueETH = toEth(valueETH.toString());
+    const deadline = getDeadline();
+    const _addLiquidityETH = await swapRouter?.addLiquidityETH(
+      addressToken,
+      toEth(valueToken.toString()),
+      1,
+      1,
+      address,
+      deadline,
+      { value: _valueETH }
+    );
+    await _addLiquidityETH.wait();
   } catch (error) {
     console.error(error);
   }
@@ -449,13 +451,14 @@ export const removeLiquidityETH = async (
 };
 
 export const getLiquidity = async (
+  walletAddress: string,
   addressTokenA: string,
   addressTokenB: string
 ) => {
   const swapRouter = contract("swapRouter");
   try {
-    const liquidity = await swapRouter?.getLiquidity(
-      address,
+    const liquidity = await swapRouter?.getLiquidityAmount(
+      walletAddress,
       addressTokenA,
       addressTokenB
     );

@@ -117,6 +117,7 @@ export type TokenProps = {
   name: string;
   symbol?: string;
   address?: string;
+  abi?: any;
   logo: string;
 };
 
@@ -126,6 +127,7 @@ export const tokens: TokenProps[] = [
     name: "USDT",
     symbol: "USDT",
     address: CONTRACTS.USDT.address,
+    abi: CONTRACTS.USDT.abi,
     logo: "/assets/usdt_logo.png",
   },
   {
@@ -133,6 +135,7 @@ export const tokens: TokenProps[] = [
     name: "USDC",
     symbol: "USDC",
     address: CONTRACTS.USDC.address,
+    abi: CONTRACTS.USDC.abi,
     logo: "/assets/usdc_logo.png",
   },
   {
@@ -140,6 +143,7 @@ export const tokens: TokenProps[] = [
     name: "LINK",
     symbol: "LINK",
     address: CONTRACTS.LINK.address,
+    abi: CONTRACTS.LINK.abi,
     logo: "/assets/link_logo.png",
   },
   {
@@ -147,6 +151,7 @@ export const tokens: TokenProps[] = [
     name: "WETH",
     symbol: "WETH",
     address: CONTRACTS.WETH.address,
+    abi: CONTRACTS.WETH.abi,
     logo: "/assets/eth_logo.png",
   },
   {
@@ -154,6 +159,7 @@ export const tokens: TokenProps[] = [
     name: "ETH",
     symbol: "ETH",
     address: CONTRACTS.WETH.address,
+    abi: CONTRACTS.WETH.abi,
     logo: "/assets/eth_logo.png",
   },
 ];

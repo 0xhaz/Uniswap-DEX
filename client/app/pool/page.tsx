@@ -12,7 +12,7 @@ import {
   useModal,
   Dropdown,
 } from "@nextui-org/react";
-import { contract } from "@/utils/contracts";
+import { contract, tokenContract } from "@/utils/contracts";
 import {
   getBalance,
   getEthBalance,
@@ -21,6 +21,7 @@ import {
   removeLiquidity,
   removeLiquidityETH,
   getLiquidity,
+  approveTokens,
 } from "@/utils/queries";
 import {
   CONTRACTS,
@@ -39,20 +40,20 @@ import {
   pathWETH_LINK,
   pathWETH_USDC,
   pathWETH_USDT,
+  USDC,
 } from "../constants/constants";
 import Selector from "../components/selector";
 import { toEth, toWei } from "@/utils/ether-utils";
 
-const token1 = tokens;
-const token2 = tokens;
+const swapRouter = contract("swapRouter");
 
 const Pool = () => {
   const [toggleRemove, setToggleRemove] = useState<boolean>(false);
   const [expand, setExpand] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [toggle, setToggle] = useState<boolean>(false);
-  const [selectedToken1, setSelectedToken1] = useState<string>(token1[0].name);
-  const [selectedToken2, setSelectedToken2] = useState<string>(token2[1].name);
+  const [selectedToken1, setSelectedToken1] = useState<TokenProps>(tokens[0]);
+  const [selectedToken2, setSelectedToken2] = useState<TokenProps>(tokens[1]);
   const [txPending, setTxPending] = useState<boolean>(false);
   const [selected, setSelected] = useState([...tokens]);
   const [desiredAmountA, setDesiredAmountA] = useState<number | string>(0);
@@ -124,6 +125,13 @@ const Pool = () => {
     return null;
   }
 
+  const tokenAddressToName = {
+    [CONTRACTS.USDT.address]: "USDT",
+    [CONTRACTS.USDC.address]: "USDC",
+    [CONTRACTS.LINK.address]: "LINK",
+    [CONTRACTS.WETH.address]: "WETH",
+  };
+
   const getPositions = async (id: string) => {
     try {
       const promises = [];
@@ -147,8 +155,12 @@ const Pool = () => {
         const path = paths[i];
         const tokenA = path[0];
         const tokenB = path[path.length - 1];
-        const balance = await getLiquidity(tokenA, tokenB);
-        promises.push({ liquidity: balance, pair: { tokenA, tokenB } });
+        const balance = await getLiquidity(address, tokenA, tokenB);
+
+        // only add position with non-zero liquidity to user's positions
+        if (parseFloat(balance) > 0) {
+          promises.push({ liquidity: balance, pair: { tokenA, tokenB } });
+        }
       }
 
       const positions = await Promise.all(promises);
@@ -216,29 +228,69 @@ const Pool = () => {
     }
   };
 
+  const getDeadline = () => {
+    const deadline = Math.floor(Date.now() / 1000) + 600;
+    return deadline;
+  };
+
+  const handleToken1Change = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedToken = tokens.find(
+      token => token.key === event.target.value
+    );
+    if (selectedToken) {
+      setSelectedToken1(selectedToken);
+    }
+  };
+
+  const handleToken2Change = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedToken = tokens.find(
+      token => token.key === event.target.value
+    );
+    if (selectedToken) {
+      setSelectedToken2(selectedToken);
+    }
+  };
+
   const handleAddLiquidity = async () => {
     if (selectedToken1 === selectedToken2) {
       alert("Please select different tokens");
       return;
     }
 
+    const token1Address = selectedToken1.address || "";
+    const token2Address = selectedToken2.address || "";
+
     if (selectedToken1 && selectedToken2 && selectedToken1 != selectedToken2) {
-      if (selectedToken1 != "ETH" && selectedToken2 != "WETH") {
-        addLiquidity(
-          desiredAmountA.toString(),
-          desiredAmountB.toString(),
-          selectedToken1,
-          selectedToken2
+      if (selectedToken1.key != "ETH" && selectedToken2.key != "ETH") {
+        await approveTokens(
+          token1Address,
+          selectedToken1.abi,
+          swapRouter,
+          desiredAmountA.toString()
         );
-      } else if (selectedToken1 === "ETH") {
-        addLiquidityETH(
-          selectedToken2,
+
+        await approveTokens(
+          token2Address,
+          selectedToken2.abi,
+          swapRouter,
+          desiredAmountB.toString()
+        );
+
+        await addLiquidity(
+          token1Address,
+          token2Address,
+          desiredAmountA.toString(),
+          desiredAmountB.toString()
+        );
+      } else if (selectedToken1.key === "ETH") {
+        await addLiquidityETH(
+          token2Address,
           desiredAmountB.toString(),
           desiredAmountA.toString()
         );
-      } else if (selectedToken2 == "ETH") {
-        addLiquidityETH(
-          selectedToken1,
+      } else if (selectedToken2.key == "ETH") {
+        await addLiquidityETH(
+          token1Address,
           desiredAmountA.toString(),
           desiredAmountB.toString()
         );
@@ -280,28 +332,37 @@ const Pool = () => {
   useEffect(() => {
     if (!address) return;
 
-    if (selectedToken1 !== "WETH") {
-      getBalance(selectedToken1, address)?.then(balance => {
-        setBalanceToken1(parseFloat(balance ?? "0"));
+    if (selectedToken1.key !== "WETH") {
+      getBalance(selectedToken1.key ?? "", address)?.then(balance => {
+        const parsedBalance = parseFloat(balance ?? "0").toFixed(2);
+        setBalanceToken1(Number(parsedBalance));
       });
     } else {
       setBalanceToken1(null);
     }
 
-    if (selectedToken2 !== "WETH") {
-      getBalance(selectedToken2, address)?.then(balance => {
-        setBalanceToken2(parseFloat(balance ?? "0"));
+    if (selectedToken2.key !== "WETH") {
+      getBalance(selectedToken2.key ?? "", address)?.then(balance => {
+        const parsedBalance = parseFloat(balance ?? "0").toFixed(2);
+        setBalanceToken2(Number(parsedBalance));
       });
     } else {
       setBalanceToken2(null);
     }
 
-    if (selectedToken1 === "ETH" || selectedToken2 === "ETH") {
+    if (selectedToken1.key === "ETH" || selectedToken2.key === "ETH") {
       getEthBalance(address)?.then(balance => {
-        setEthBalance(parseFloat(balance ?? "0"));
+        const parsedBalance = parseFloat(balance ?? "0").toFixed(2);
+        setEthBalance(Number(parsedBalance));
       });
     }
   }, [selectedToken1, selectedToken2, address]);
+
+  useEffect(() => {
+    if (!address) return;
+    // fetch liquidity positions and update state
+    getPositions(address);
+  }, [address]);
   return (
     <>
       <div className="w-full mt-10 flex flex-col justify-center items-center px-2">
@@ -352,14 +413,15 @@ const Pool = () => {
                   />
                   <div className="absolute right-10  ">
                     <Selector
-                      id={"token1"}
+                      id="token1"
                       setToken={setSelectedToken1}
-                      defaultValue={selectedToken1}
-                      ignoreValue={selectedToken2}
+                      defaultValue={selectedToken1.name}
+                      ignoreValue={selectedToken2.name}
+                      tokens={tokens}
                     />
                   </div>
                 </div>
-                {selectedToken1 === "ETH" ? (
+                {selectedToken1.key === "ETH" ? (
                   <div className="flex justify-end text-gray-400 text-sm">
                     Balance: {ethBalance}
                   </div>
@@ -379,14 +441,15 @@ const Pool = () => {
                   />
                   <div className="absolute right-10 ">
                     <Selector
-                      id={"token2"}
+                      id="token2"
                       setToken={setSelectedToken2}
-                      defaultValue={selectedToken2}
-                      ignoreValue={selectedToken1}
+                      defaultValue={selectedToken2.name}
+                      ignoreValue={selectedToken1.name}
+                      tokens={tokens}
                     />
                   </div>
                 </div>
-                {selectedToken2 === "ETH" ? (
+                {selectedToken2.key === "ETH" ? (
                   <div className="flex justify-end text-gray-400 text-sm">
                     Balance: {ethBalance}
                   </div>
@@ -397,7 +460,12 @@ const Pool = () => {
                 )}
               </div>
               <div className="flex justify-center py-3">
-                <Button>Add Liquidity</Button>
+                <button
+                  className="p-4 m-4 w-full my-2 rounded-xl bg-blue-700 text-white"
+                  onClick={handleAddLiquidity}
+                >
+                  Add Liquidity
+                </button>
               </div>
             </Modal.Body>
           </Modal>
@@ -429,41 +497,50 @@ const Pool = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b h-28 border-gray-500 text-gray-100">
-                    <th
-                      scope="row"
-                      className="py-4 px-6 font-medium whitespace-nowrap"
+                  {positions.map((position, index) => (
+                    <tr
+                      key={index}
+                      className="border-b h-28 border-gray-500 text-gray-100"
                     >
-                      "tokenpairA"
-                    </th>
-                    <td className="py-4 px-6">"tokenPairB"</td>
-                    <td className="py-4 px-6">"liquidityBalance"</td>
-                    <td className="py-4 px-6">
-                      <Input
-                        type="number"
-                        className={`
+                      <th
+                        scope="row"
+                        className="py-4 px-6 font-medium whitespace-nowrap"
+                      >
+                        {tokenAddressToName[position.pair.tokenA] ||
+                          position.pair.tokenA}{" "}
+                      </th>
+                      <td className="py-4 px-6">
+                        {tokenAddressToName[position.pair.tokenB] ||
+                          position.pair.tokenB}{" "}
+                      </td>
+                      <td className="py-4 px-6">{position.liquidity}</td>
+                      <td className="py-4 px-6">
+                        <Input
+                          type="number"
+                          className={`
             ${toggleRemove ? `visible` : `hidden`}
            mb-3 ml-1 justify-center items-center
             innerWrapper: "bg-transparent"
           `}
-                        placeholder="0"
-                        required
-                        onChange={e => setLiquidity(e.target.value)}
-                      />
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          if (toggleRemove) {
-                            // handleRemoveLiquidity
-                          } else {
-                            setToggleRemove(!toggleRemove);
-                          }
-                        }}
-                      >
-                        Remove Liquidity
-                      </Button>
-                    </td>
-                  </tr>
+                          placeholder="0"
+                          required
+                          onChange={e => setLiquidity(e.target.value)}
+                        />
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            if (toggleRemove) {
+                              // handleRemoveLiquidity
+                            } else {
+                              setToggleRemove(!toggleRemove);
+                            }
+                          }}
+                        >
+                          Remove Liquidity
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

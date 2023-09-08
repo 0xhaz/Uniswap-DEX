@@ -7,23 +7,34 @@ import { TokenProps, tokens, DEFAULT_VALUE } from "../constants/constants";
 interface SelectorProps {
   defaultValue: string;
   ignoreValue: string;
-  setToken: (token: string) => void;
+  setToken: (token: TokenProps) => void;
   id: string;
+  tokens?: TokenProps[];
 }
 
-const Selector = ({
+const Selector: React.FC<SelectorProps> = ({
   defaultValue,
   ignoreValue,
   setToken,
   id,
+  tokens,
 }: SelectorProps) => {
   const [selectedItem, setSelectedItem] = useState<string | number | null>(
     defaultValue
   );
   const [menuItems, setMenuItems] = useState(getFilteredItems(ignoreValue));
 
+  const handleTokenChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedToken = tokens?.find(
+      token => token.key === event.target.value
+    );
+    if (selectedToken) {
+      setToken(selectedToken);
+    }
+  };
+
   function getFilteredItems(ignoreValue: string) {
-    return tokens.filter(item => item["key"] !== ignoreValue);
+    return (tokens || []).filter(item => item["key"] !== ignoreValue);
   }
 
   useEffect(() => {
@@ -64,9 +75,14 @@ const Selector = ({
       <Dropdown.Menu
         aria-label="Dynamic Actions"
         items={menuItems}
-        onAction={key => {
-          setSelectedItem(key);
-          setToken(key.toString());
+        onAction={selectedTokenKey => {
+          const selectedToken = menuItems.find(
+            item => item.key === selectedTokenKey
+          );
+          if (selectedToken) {
+            setSelectedItem(selectedTokenKey);
+            setToken(selectedToken);
+          }
         }}
       >
         {menuItems.map(item => (

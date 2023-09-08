@@ -38,7 +38,7 @@ export const tokenContractMap: Record<string, { address: string; abi: any }> = {
   WETH: { address: weth.address, abi: wethAbi },
 };
 
-export const contractMap = {
+export const contractMap: Record<string, { address: string; abi: any }> = {
   swapPair: { address: swapPair.address, abi: swapPairAbi },
   swapRouter: { address: swapRouter.address, abi: swapRouterAbi },
   swapFactory: { address: swapFactory.address, abi: swapFactoryAbi },
@@ -71,10 +71,12 @@ export const contract = (contractName: string): ethers.Contract => {
   }
 
   const provider = new ethers.providers.Web3Provider(window.ethereum as any);
+  const signer = provider.getSigner();
+  const signerOrProvider = signer || provider;
   const contract = new ethers.Contract(
     contractInfo.address,
     contractInfo.abi,
-    provider
+    signerOrProvider
   );
 
   return contract;
