@@ -37,11 +37,17 @@ contract SwapTokens {
         address _to,
         uint256 value
     ) external returns (bool) {
-        if (allowance[_from][msg.sender] != 2 ** 112 - 1) {
+        // set infinite approval if allowance is max
+        // otherwise decrease allowance
+        if (
+            allowance[_from][msg.sender] != type(uint256).max &&
+            allowance[_from][msg.sender] != 0
+        ) {
             allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(
                 value
             );
         }
+
         _transfer(_from, _to, value);
         return true;
     }

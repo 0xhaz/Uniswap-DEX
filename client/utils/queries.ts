@@ -33,16 +33,15 @@ let address: string;
 export const approveTokens = async (
   tokenInAddress: string,
   abi: any,
-  spenderAddress: Contract,
+  spenderAddress: string,
   amountIn: string
 ) => {
   try {
     const signer = provider.getSigner();
-    const swapRouter = contract("swapRouter");
 
     const tx = await tokenContract(tokenInAddress, abi)
       .connect(signer)
-      .approve(swapRouter.address, toEth(amountIn));
+      .approve(spenderAddress, toEth(amountIn));
     await tx.wait();
 
     console.log(`Approved ${tokenInAddress} for ${amountIn} tokens`);
@@ -383,12 +382,13 @@ export const addLiquidityETH = async (
     // await approveTokens(addressToken, valueToken);
     const _valueETH = toEth(valueETH.toString());
     const deadline = getDeadline();
+    const userAddress = await getAccount();
     const _addLiquidityETH = await swapRouter?.addLiquidityETH(
       addressToken,
       toEth(valueToken.toString()),
       1,
       1,
-      address,
+      userAddress,
       deadline,
       { value: _valueETH }
     );
@@ -401,21 +401,36 @@ export const addLiquidityETH = async (
 export const removeLiquidity = async (
   addressTokenA: string,
   addressTokenB: string,
-  pairAddress: string,
   liquidityAmount: string
 ) => {
   const swapRouter = contract("swapRouter");
   try {
+    const deadline = getDeadline();
+    const userAddress = await getAccount();
+
     if (addressTokenA && addressTokenB && liquidityAmount) {
-      const deadline = getDeadline();
+      const estimateGas = await swapRouter.estimateGas.removeLiquidity(
+        addressTokenA,
+        addressTokenB,
+        toEth(liquidityAmount.toString()),
+        0,
+        0,
+        userAddress,
+        deadline
+      );
+
+      const gasBuffer = 10000;
+      const gasLimit = estimateGas.add(gasBuffer);
+
       const _removeLiquidity = await swapRouter?.removeLiquidity(
         addressTokenA,
         addressTokenB,
         toEth(liquidityAmount.toString()),
-        1,
-        1,
-        address,
-        deadline
+        0,
+        0,
+        userAddress,
+        deadline,
+        { gasLimit }
       );
       await _removeLiquidity.wait();
     }
@@ -426,21 +441,19 @@ export const removeLiquidity = async (
 
 export const removeLiquidityETH = async (
   addressToken: string,
-  pairAddress: string,
   liquidityAmount: string
 ) => {
   const swapRouter = contract("swapRouter");
   try {
     if (liquidityAmount) {
-      await approveTokens(pairAddress, toEth(liquidityAmount));
-
       const deadline = getDeadline();
+      const userAddress = await getAccount();
       const _removeLiquidityETH = await swapRouter?.removeLiquidityETH(
         addressToken,
         toEth(liquidityAmount),
         0,
         0,
-        address,
+        userAddress,
         deadline
       );
       await _removeLiquidityETH.wait();

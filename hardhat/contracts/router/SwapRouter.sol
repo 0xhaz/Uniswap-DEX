@@ -167,7 +167,7 @@ contract SwapRouter {
         returns (uint256 amountA, uint256 amountB)
     {
         address pair = SwapLibrary.pairFor(factory, _tokenA, _tokenB);
-        ISwapPairTokens(pair).transferFrom(msg.sender, pair, _liquidity);
+        ISwapPairTokens(pair).transferFrom(msg.sender, pair, _liquidity); // send liquidity to pair
         (uint256 amount0, uint256 amount1) = ISwapPairTokens(pair).burn(_to);
         (address token0, ) = SwapLibrary.sortTokens(_tokenA, _tokenB);
         (amountA, amountB) = _tokenA == token0

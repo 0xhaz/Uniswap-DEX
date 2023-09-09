@@ -506,7 +506,7 @@ describe("SwapRouter", () => {
         ethers.constants.MaxUint256
       );
       const receipt = await tx.wait();
-      expect(receipt!.gasUsed).to.equal(110740, "gas used");
+      expect(receipt!.gasUsed).to.equal(110889, "gas used");
     });
   });
 
@@ -716,7 +716,7 @@ describe("SwapRouter", () => {
         { value: swapAmount }
       );
       const receipt = await tx.wait();
-      expect(receipt!.gasUsed).to.equal(148371, "gas used");
+      expect(receipt!.gasUsed).to.equal(148520, "gas used");
     }).retries(3);
   });
 

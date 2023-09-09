@@ -311,7 +311,7 @@ describe("SwapPairTokens", () => {
     );
     const tx = await pair.swap(expectedOutputAmount, 0, wallet.address, "0x");
     const receipt = await tx.wait();
-    expect(receipt.gasUsed).to.equal(75974);
+    expect(receipt.gasUsed).to.equal(76029);
   });
 
   // burn - burn liquidity tokens and return the underlying tokens to the user
