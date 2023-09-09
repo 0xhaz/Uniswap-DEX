@@ -44,7 +44,7 @@ import {
   USDC,
 } from "../constants/constants";
 import Selector from "../components/selector";
-import { toEth, toWei } from "@/utils/ether-utils";
+import { formatEth, toEth, toWei } from "@/utils/ether-utils";
 
 const swapRouter = contract("swapRouter");
 
@@ -162,7 +162,7 @@ const Pool = () => {
   const getReserves = async (tokenA: string, tokenB: string) => {
     const swapRouter = contract("swapRouter");
     try {
-      const response = await swapRouter?.getReserves(tokenA, tokenB);
+      const response = await swapRouter?.getReserve(tokenA, tokenB);
       return {
         reserveA: response?.reserveA,
         reserveB: response?.reserveB,
@@ -186,22 +186,24 @@ const Pool = () => {
           token1Address,
           token2Address
         );
-        setReserveA(toEth(reserveA.toString()));
-        setReserveB(toEth(reserveB.toString()));
+        setReserveA(formatEth(reserveA));
+        setReserveB(formatEth(reserveB));
+        console.log("reserveA", reserveA);
+        console.log("reserveB", reserveB);
       } else if (selectedToken1.key === "ETH") {
         const { reserveA, reserveB } = await getReserves(
           token2Address,
           token1Address
         );
-        setReserveA(toEth(reserveA.toString()));
-        setReserveB(toEth(reserveB.toString()));
+        setReserveA(formatEth(reserveA));
+        setReserveB(formatEth(reserveB));
       } else if (selectedToken2.key == "ETH") {
         const { reserveA, reserveB } = await getReserves(
           token1Address,
           token2Address
         );
-        setReserveA(toEth(reserveA.toString()));
-        setReserveB(toEth(reserveB.toString()));
+        setReserveA(formatEth(reserveA));
+        setReserveB(formatEth(reserveB));
       }
     }
   };
@@ -279,6 +281,8 @@ const Pool = () => {
           desiredAmountA.toString(),
           desiredAmountB.toString()
         );
+
+        await fetchReserves();
       } else if (selectedToken1.key === "ETH") {
         await approveTokens(
           token2Address,
@@ -291,6 +295,8 @@ const Pool = () => {
           desiredAmountB.toString(),
           desiredAmountA.toString()
         );
+
+        await fetchReserves();
       } else if (selectedToken2.key == "ETH") {
         await approveTokens(
           token1Address,
@@ -303,6 +309,8 @@ const Pool = () => {
           desiredAmountA.toString(),
           desiredAmountB.toString()
         );
+
+        await fetchReserves();
       }
     }
   };
@@ -310,6 +318,7 @@ const Pool = () => {
   const handleRemoveLiquidity = async (
     inputToken1Address: string,
     inputToken2Address: string,
+    pairLiquidity: string,
     rowIndex: number
   ) => {
     if (inputToken1Address === inputToken2Address) {
@@ -404,7 +413,8 @@ const Pool = () => {
     if (!address) return;
     // fetch liquidity positions and update state
     getPositions(address);
-  }, [address]);
+    fetchReserves();
+  }, [address, selectedToken1, selectedToken2]);
   return (
     <>
       <div className="w-full mt-10  flex flex-col justify-center items-center px-2 ">
@@ -525,13 +535,19 @@ const Pool = () => {
                 <table className="w-full text-sm text-left text-gray-100">
                   <thead className="text-sm uppercase text-gray-100 border-b border-gray-500">
                     <tr>
-                      <th scope="col" className="py-3 px-8">
+                      <th scope="col" className="py-3 px-4">
                         Token A
                       </th>
-                      <th scope="col" className="py-3 px-8">
+                      <th scope="col" className="py-3 px-4">
                         Token B
                       </th>
-                      <th scope="col" className="py-3 px-6">
+                      <th scope="col" className="py-3 px-10">
+                        Reserve A
+                      </th>
+                      <th scope="col" className="py-3 px-4">
+                        Reserve B
+                      </th>
+                      <th scope="col" className="py-3 px-13">
                         Liquidity Balance
                       </th>
                       <th scope="col" className="py-3 px-12">
@@ -545,8 +561,8 @@ const Pool = () => {
                         key={index}
                         className="border-b h-28 border-gray-500 text-gray-100"
                       >
-                        <td scope="row" className="py-4 px-7 font-medium ">
-                          <div className="flex items-center">
+                        <td scope="row" className="py-4 px-6 font-medium ">
+                          <div className="flex items-center -ml-2">
                             <Image
                               src={
                                 tokens.find(
@@ -563,8 +579,8 @@ const Pool = () => {
                               position.pair.tokenA}
                           </div>
                         </td>
-                        <td className="py-4 px-7 font-medium">
-                          <div className="flex items-center">
+                        <td className="py-4 px-6 font-medium">
+                          <div className="flex items-center -ml-2">
                             <Image
                               src={
                                 tokens.find(
@@ -581,7 +597,9 @@ const Pool = () => {
                               position.pair.tokenB}
                           </div>
                         </td>
-                        <td className="py-4 px-14 font-medium">
+                        <td className="py-4 px-14 font-medium">{reserveA}</td>
+                        <td className="py-4 px-10  font-medium ">{reserveB}</td>
+                        <td className="py-4 px-10 font-medium">
                           {parseFloat(position.liquidity).toFixed(2)}
                         </td>
                         <td className="py-4 px-6">
