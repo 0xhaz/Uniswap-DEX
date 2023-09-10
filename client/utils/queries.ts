@@ -475,8 +475,9 @@ export const getLiquidity = async (
       addressTokenA,
       addressTokenB
     );
+
     const liquidityAmount = formatEth(liquidity);
-    console.log("Liquidity: ", liquidityAmount);
+
     return liquidityAmount;
   } catch (error) {
     console.error(error);

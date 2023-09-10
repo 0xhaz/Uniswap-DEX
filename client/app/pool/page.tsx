@@ -80,8 +80,12 @@ const Pool = () => {
     [CONTRACTS.WETH.address]: "WETH",
   };
 
-  const getPathForTokens = (tokenA: string, tokenB: string) => {
-    const potentialPaths = [
+  const getPositions = async (id: string) => {
+    if (!address) return;
+
+    const positions = [];
+
+    const paths = [
       pathLINK_USDC,
       pathLINK_USDT,
       pathLINK_WETH,
@@ -96,64 +100,42 @@ const Pool = () => {
       pathWETH_USDT,
     ];
 
-    const sortedKeys = [tokenA, tokenB].sort();
-    const sortedPath = sortedKeys.join("-");
-    const selectedPath = potentialPaths.find(
-      path => path[0] + "-" + path[1] === sortedPath
-    );
+    for (const [addressTokenA, addressTokenB] of paths) {
+      try {
+        const liquidity = await getLiquidity(
+          address,
+          addressTokenA,
+          addressTokenB
+        );
 
-    return selectedPath || [];
-  };
+        // Map token addresses to token names or symbols
+        const tokenA = tokenAddressToName[addressTokenA] || addressTokenA;
+        const tokenB = tokenAddressToName[addressTokenB] || addressTokenB;
 
-  const getPositions = async (id: string) => {
-    if (!address) return;
-    try {
-      const promises = [];
-      const uniquePairs = new Set();
+        // Create an object with Token A and Token B
+        const position = {
+          tokenA,
+          tokenB,
+          liquidity,
+        };
 
-      const paths = [
-        pathLINK_USDC,
-        pathLINK_USDT,
-        pathLINK_WETH,
-        pathUSDC_LINK,
-        pathUSDC_USDT,
-        pathUSDC_WETH,
-        pathUSDT_LINK,
-        pathUSDT_USDC,
-        pathUSDT_WETH,
-        pathWETH_LINK,
-        pathWETH_USDC,
-        pathWETH_USDT,
-      ];
-
-      for (let i = 0; i < paths.length; i++) {
-        const path = paths[i];
-        const tokenA = path[0];
-        const tokenB = path[path.length - 1];
-
-        const balance = await getLiquidity(address, tokenA, tokenB);
-
-        if (typeof balance === "string" && !isNaN(parseFloat(balance))) {
-          const selectedPath = getPathForTokens(tokenA, tokenB);
-          // only add position with non-zero liquidity to user's positions
-          if (path === selectedPath) {
-            promises.push({
-              liquidity: balance,
-              pair: { tokenA, tokenB },
-            });
-          }
-        }
+        // Push the position object into the positions array
+        positions.push(position);
+      } catch (error) {
+        console.error(
+          `Error fetching liquidity for path ${addressTokenA}, ${addressTokenB}:`,
+          error
+        );
       }
-
-      const positions = await Promise.all(promises);
-
-      console.log("positions", positions);
-
-      setPositions(positions);
-    } catch (e) {
-      console.log(e);
     }
+
+    setPositions(positions);
+    console.log("positions", positions);
   };
+
+  const positionsWithLiquidity = positions.filter(
+    position => parseFloat(position.liquidity) > 0
+  );
 
   const handleModal = () => setExpand(true);
   const closeModal = () => setExpand(false);
@@ -556,7 +538,7 @@ const Pool = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {positions.map((position, index) => (
+                    {positionsWithLiquidity.map((position, index) => (
                       <tr
                         key={index}
                         className="border-b h-28 border-gray-500 text-gray-100"
@@ -566,17 +548,16 @@ const Pool = () => {
                             <Image
                               src={
                                 tokens.find(
-                                  token =>
-                                    token.address === position.pair.tokenA
+                                  token => token.name === position.tokenA
                                 )?.logo ?? ""
                               }
                               width={20}
                               height={20}
-                              alt={`${position.pair.tokenA} logo`}
+                              alt={`${position.tokenA} logo`}
                               style={{ marginRight: "10px" }}
                             />
-                            {tokenAddressToName[position.pair.tokenA] ||
-                              position.pair.tokenA}
+                            {tokenAddressToName[position.tokenA] ||
+                              position.tokenA}
                           </div>
                         </td>
                         <td className="py-4 px-6 font-medium">
@@ -584,17 +565,16 @@ const Pool = () => {
                             <Image
                               src={
                                 tokens.find(
-                                  token =>
-                                    token.address === position.pair.tokenB
+                                  token => token.name === position.tokenB
                                 )?.logo ?? ""
                               }
                               width={20}
                               height={20}
-                              alt={`${position.pair.tokenB} logo`}
+                              alt={`${position.tokenB} logo`}
                               style={{ marginRight: "10px" }}
                             />
-                            {tokenAddressToName[position.pair.tokenB] ||
-                              position.pair.tokenB}
+                            {tokenAddressToName[position.tokenB] ||
+                              position.tokenB}
                           </div>
                         </td>
                         <td className="py-4 px-14 font-medium">{reserveA}</td>
@@ -616,8 +596,8 @@ const Pool = () => {
                                 type="button"
                                 onClick={() =>
                                   handleRemoveLiquidity(
-                                    position.pair.tokenA,
-                                    position.pair.tokenB,
+                                    position.tokenA,
+                                    position.tokenB,
                                     position.liquidity,
                                     index
                                   )
