@@ -112,6 +112,36 @@ export const pathWETH_USDT = [CONTRACTS.WETH.address, CONTRACTS.USDT.address];
 export const pathUSDC_WETH = [CONTRACTS.USDC.address, CONTRACTS.WETH.address];
 export const pathWETH_USDC = [CONTRACTS.WETH.address, CONTRACTS.USDC.address];
 
+export const pathLINK_ETH = [CONTRACTS.LINK.address, CONTRACTS.WETH.address];
+export const pathETH_LINK = [CONTRACTS.WETH.address, CONTRACTS.LINK.address];
+
+export const pathUSDT_ETH = [CONTRACTS.USDT.address, CONTRACTS.WETH.address];
+export const pathETH_USDT = [CONTRACTS.WETH.address, CONTRACTS.USDT.address];
+
+export const pathUSDC_ETH = [CONTRACTS.USDC.address, CONTRACTS.WETH.address];
+export const pathETH_USDC = [CONTRACTS.WETH.address, CONTRACTS.USDC.address];
+
+export const tokenPairs = [
+  pathLINK_USDT,
+  pathUSDT_LINK,
+  pathLINK_USDC,
+  pathUSDC_LINK,
+  pathLINK_WETH,
+  pathWETH_LINK,
+  pathUSDT_USDC,
+  pathUSDC_USDT,
+  pathUSDT_WETH,
+  pathWETH_USDT,
+  pathUSDC_WETH,
+  pathWETH_USDC,
+  pathLINK_ETH,
+  pathETH_LINK,
+  pathUSDT_ETH,
+  pathETH_USDT,
+  pathUSDC_ETH,
+  pathETH_USDC,
+];
+
 export type TokenProps = {
   key: string;
   name: string;
@@ -119,6 +149,7 @@ export type TokenProps = {
   address?: string;
   abi?: any;
   logo: string;
+  reserve?: string;
 };
 
 export const tokens: TokenProps[] = [
@@ -129,6 +160,7 @@ export const tokens: TokenProps[] = [
     address: CONTRACTS.USDT.address,
     abi: CONTRACTS.USDT.abi,
     logo: "/assets/usdt_logo.png",
+    reserve: "0",
   },
   {
     key: "USDC",
@@ -137,6 +169,7 @@ export const tokens: TokenProps[] = [
     address: CONTRACTS.USDC.address,
     abi: CONTRACTS.USDC.abi,
     logo: "/assets/usdc_logo.png",
+    reserve: "0",
   },
   {
     key: "LINK",
@@ -145,6 +178,7 @@ export const tokens: TokenProps[] = [
     address: CONTRACTS.LINK.address,
     abi: CONTRACTS.LINK.abi,
     logo: "/assets/link_logo.png",
+    reserve: "0",
   },
   {
     key: "WETH",
@@ -153,6 +187,7 @@ export const tokens: TokenProps[] = [
     address: CONTRACTS.WETH.address,
     abi: CONTRACTS.WETH.abi,
     logo: "/assets/eth_logo.png",
+    reserve: "0",
   },
   {
     key: "ETH",
@@ -161,6 +196,7 @@ export const tokens: TokenProps[] = [
     address: CONTRACTS.WETH.address,
     abi: CONTRACTS.WETH.abi,
     logo: "/assets/eth_logo.png",
+    reserve: "0",
   },
 ];
 

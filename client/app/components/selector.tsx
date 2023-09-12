@@ -5,8 +5,8 @@ import { Dropdown } from "@nextui-org/react";
 import { TokenProps, tokens, DEFAULT_VALUE } from "../constants/constants";
 
 interface SelectorProps {
-  defaultValue: string;
-  ignoreValue: string;
+  defaultValue: TokenProps | null;
+  ignoreValue: string | null;
   setToken: (token: TokenProps) => void;
   id: string;
   tokens?: TokenProps[];
@@ -20,9 +20,11 @@ const Selector: React.FC<SelectorProps> = ({
   tokens,
 }: SelectorProps) => {
   const [selectedItem, setSelectedItem] = useState<string | number | null>(
-    defaultValue
+    defaultValue ? defaultValue.name : null
   );
-  const [menuItems, setMenuItems] = useState(getFilteredItems(ignoreValue));
+  const [menuItems, setMenuItems] = useState(
+    getFilteredItems(ignoreValue || "")
+  );
 
   const handleTokenChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedToken = tokens?.find(
@@ -38,11 +40,11 @@ const Selector: React.FC<SelectorProps> = ({
   }
 
   useEffect(() => {
-    setSelectedItem(defaultValue);
+    setSelectedItem(defaultValue ? defaultValue.key : null);
   }, [defaultValue]);
 
   useEffect(() => {
-    setMenuItems(getFilteredItems(ignoreValue));
+    setMenuItems(getFilteredItems(ignoreValue || ""));
   }, [ignoreValue]);
 
   return (

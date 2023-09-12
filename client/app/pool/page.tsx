@@ -28,20 +28,7 @@ import {
   CONTRACTS,
   tokens,
   TokenProps,
-  DEFAULT_VALUE,
-  pathLINK_USDC,
-  pathLINK_USDT,
-  pathLINK_WETH,
-  pathUSDC_LINK,
-  pathUSDC_USDT,
-  pathUSDC_WETH,
-  pathUSDT_LINK,
-  pathUSDT_USDC,
-  pathUSDT_WETH,
-  pathWETH_LINK,
-  pathWETH_USDC,
-  pathWETH_USDT,
-  USDC,
+  tokenPairs,
 } from "../constants/constants";
 import Selector from "../components/selector";
 import { formatEth, toEth, toWei } from "@/utils/ether-utils";
@@ -52,8 +39,12 @@ const Pool = () => {
   const [expand, setExpand] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [toggle, setToggle] = useState<boolean>(false);
-  const [selectedToken1, setSelectedToken1] = useState<TokenProps>(tokens[0]);
-  const [selectedToken2, setSelectedToken2] = useState<TokenProps>(tokens[1]);
+  const [selectedToken1, setSelectedToken1] = useState<TokenProps | null>(
+    tokens[0]
+  );
+  const [selectedToken2, setSelectedToken2] = useState<TokenProps | null>(
+    tokens[1]
+  );
   const [txPending, setTxPending] = useState<boolean>(false);
   const [selected, setSelected] = useState([...tokens]);
   const [desiredAmountA, setDesiredAmountA] = useState<number | string>(0);
@@ -80,57 +71,65 @@ const Pool = () => {
     [CONTRACTS.WETH.address]: "WETH",
   };
 
-  const getPositions = async (id: string) => {
+  const selectTokenPair = (tokenA: TokenProps, tokenB: TokenProps) => {
+    const selectedPair = tokenPairs.find(
+      pair =>
+        (pair[0] === tokenA.address && pair[1] === tokenB.address) ||
+        (pair[0] === tokenB.address && pair[1] === tokenA.address)
+    );
+
+    if (selectedPair) {
+      setSelectedToken1(
+        tokens.find(token => token.address === selectedPair[0]) || null
+      );
+      setSelectedToken2(
+        tokens.find(token => token.address === selectedPair[1]) || null
+      );
+    } else {
+      setSelectedToken1(null);
+      setSelectedToken2(null);
+    }
+  };
+
+  const getPositions = async (address: string) => {
     if (!address) return;
 
     const positions = [];
+    const processedPairs = new Set();
 
-    const paths = [
-      pathLINK_USDC,
-      pathLINK_USDT,
-      pathLINK_WETH,
-      pathUSDC_LINK,
-      pathUSDC_USDT,
-      pathUSDC_WETH,
-      pathUSDT_LINK,
-      pathUSDT_USDC,
-      pathUSDT_WETH,
-      pathWETH_LINK,
-      pathWETH_USDC,
-      pathWETH_USDT,
-    ];
+    for (let i = 0; i < tokenPairs.length; i++) {
+      const [tokenA, tokenB] = tokenPairs[i];
+      const sortedPair = [tokenA, tokenB].sort();
+      const pairIdentifier = sortedPair.join("-");
 
-    for (const [addressTokenA, addressTokenB] of paths) {
       try {
-        const liquidity = await getLiquidity(
-          address,
-          addressTokenA,
-          addressTokenB
-        );
+        if (!processedPairs.has(pairIdentifier)) {
+          const liquidity = await getLiquidity(
+            address,
+            sortedPair[0],
+            sortedPair[1]
+          );
+          console.log("TokenA:", sortedPair[0]);
+          console.log("TokenB:", sortedPair[1]);
+          console.log("Liquidity:", liquidity);
 
-        // Map token addresses to token names or symbols
-        const tokenA = tokenAddressToName[addressTokenA] || addressTokenA;
-        const tokenB = tokenAddressToName[addressTokenB] || addressTokenB;
+          if (parseFloat(liquidity) > 0) {
+            positions.push({
+              tokenA: tokenAddressToName[sortedPair[0]] || sortedPair[0],
+              tokenB: tokenAddressToName[sortedPair[1]] || sortedPair[1],
+              liquidity,
+            });
+          }
+        }
 
-        // Create an object with Token A and Token B
-        const position = {
-          tokenA,
-          tokenB,
-          liquidity,
-        };
-
-        // Push the position object into the positions array
-        positions.push(position);
+        processedPairs.add(pairIdentifier);
       } catch (error) {
-        console.error(
-          `Error fetching liquidity for path ${addressTokenA}, ${addressTokenB}:`,
-          error
-        );
+        console.error(error);
       }
     }
 
+    console.log(positions);
     setPositions(positions);
-    console.log("positions", positions);
   };
 
   const positionsWithLiquidity = positions.filter(
@@ -163,30 +162,9 @@ const Pool = () => {
       const token1Address = selectedToken1.address || "";
       const token2Address = selectedToken2.address || "";
 
-      if (selectedToken1.key != "ETH" && selectedToken2.key != "ETH") {
-        const { reserveA, reserveB } = await getReserves(
-          token1Address,
-          token2Address
-        );
-        setReserveA(formatEth(reserveA));
-        setReserveB(formatEth(reserveB));
-        console.log("reserveA", reserveA);
-        console.log("reserveB", reserveB);
-      } else if (selectedToken1.key === "ETH") {
-        const { reserveA, reserveB } = await getReserves(
-          token2Address,
-          token1Address
-        );
-        setReserveA(formatEth(reserveA));
-        setReserveB(formatEth(reserveB));
-      } else if (selectedToken2.key == "ETH") {
-        const { reserveA, reserveB } = await getReserves(
-          token1Address,
-          token2Address
-        );
-        setReserveA(formatEth(reserveA));
-        setReserveB(formatEth(reserveB));
-      }
+      const reserves = await getReserves(token1Address, token2Address);
+      setReserveA(formatEth(reserves.reserveA));
+      setReserveB(formatEth(reserves.reserveB));
     }
   };
 
@@ -238,21 +216,47 @@ const Pool = () => {
       return;
     }
 
-    const token1Address = selectedToken1.address || "";
-    const token2Address = selectedToken2.address || "";
+    const token1Address = selectedToken1?.address || "";
+    const token2Address = selectedToken2?.address || "";
 
-    if (selectedToken1 && selectedToken2 && selectedToken1 != selectedToken2) {
-      if (selectedToken1.key != "ETH" && selectedToken2.key != "ETH") {
+    const possiblePairs = [
+      [token1Address, token2Address],
+      [token2Address, token1Address],
+    ];
+
+    let validPairIndex = -1;
+
+    for (const [tokenA, tokenB] of possiblePairs) {
+      validPairIndex = tokenPairs.findIndex(pair => {
+        return pair[0] === tokenA && pair[1] === tokenB;
+      });
+
+      if (validPairIndex !== -1) {
+        break;
+      }
+    }
+
+    console.log("validPairIndex", validPairIndex);
+
+    if (validPairIndex !== -1) {
+      const [tokenA, tokenB] = tokenPairs[validPairIndex];
+
+      const tokenAName = tokenAddressToName[tokenA] || tokenA;
+      const tokenBName = tokenAddressToName[tokenB] || tokenB;
+
+      console.log("tokenAName", tokenAName);
+      console.log("tokenBName", tokenBName);
+      if (selectedToken1?.key !== "ETH" && selectedToken2?.key !== "ETH") {
         await approveTokens(
           token1Address,
-          selectedToken1.abi,
+          selectedToken1?.abi,
           swapRouter.address,
           desiredAmountA.toString()
         );
 
         await approveTokens(
           token2Address,
-          selectedToken2.abi,
+          selectedToken2?.abi,
           swapRouter.address,
           desiredAmountB.toString()
         );
@@ -265,10 +269,10 @@ const Pool = () => {
         );
 
         await fetchReserves();
-      } else if (selectedToken1.key === "ETH") {
+      } else if (selectedToken1?.key === "ETH") {
         await approveTokens(
           token2Address,
-          selectedToken2.abi,
+          selectedToken2?.abi,
           swapRouter.address,
           desiredAmountB.toString()
         );
@@ -279,10 +283,10 @@ const Pool = () => {
         );
 
         await fetchReserves();
-      } else if (selectedToken2.key == "ETH") {
+      } else if (selectedToken2?.key === "ETH") {
         await approveTokens(
           token1Address,
-          selectedToken1.abi,
+          selectedToken1?.abi,
           swapRouter.address,
           desiredAmountA.toString()
         );
@@ -294,6 +298,8 @@ const Pool = () => {
 
         await fetchReserves();
       }
+    } else {
+      alert("Please select the correct token pair from your valid pairs");
     }
   };
 
@@ -310,18 +316,18 @@ const Pool = () => {
 
     if (!address) return;
 
-    console.log("inputToken1Address", inputToken1Address);
-    console.log("inputToken2Address", inputToken2Address);
-    console.log("liquidity", liquidity);
-
     if (
       inputToken1Address &&
       inputToken2Address &&
       inputToken1Address != inputToken2Address &&
       liquidity
     ) {
+      console.log("Contents of tokens array:", tokens);
       const token1 = tokens.find(token => token.address === inputToken1Address);
       const token2 = tokens.find(token => token.address === inputToken2Address);
+
+      console.log("token1", token1);
+      console.log("token2", token2);
 
       if (!token1 || !token2) {
         alert("Invalid token address");
@@ -347,11 +353,11 @@ const Pool = () => {
         liquidity
       );
 
-      if (token1Address != "ETH" && token2Address != "WETH") {
+      if (token1Address != "ETH" && token2Address != "ETH") {
         removeLiquidity(token1Address, token2Address, liquidity);
-      } else if (token1Address === "ETH" && token2Address != "WETH") {
+      } else if (token1Address === "ETH" && token2Address != "ETH") {
         removeLiquidityETH(token2Address, liquidity);
-      } else if (token1Address !== "ETH" && token2Address == "WETH") {
+      } else if (token1Address !== "ETH" && token2Address == "ETH") {
         removeLiquidityETH(token1Address, liquidity);
       }
 
@@ -362,11 +368,33 @@ const Pool = () => {
     }
   };
 
+  const handleToken1Change = (token: TokenProps) => {
+    setSelectedToken1(token);
+    if (selectedToken2) {
+      selectTokenPair(token, selectedToken2);
+    }
+  };
+
+  const handleToken2Change = (token: TokenProps) => {
+    setSelectedToken2(token);
+    if (selectedToken1) {
+      selectTokenPair(selectedToken1, token);
+    }
+  };
+
+  const handleTokenSelection = (token: TokenProps, isToken1: boolean) => {
+    if (isToken1) {
+      setSelectedToken1(token);
+    } else {
+      setSelectedToken2(token);
+    }
+  };
+
   useEffect(() => {
     if (!address) return;
 
-    if (selectedToken1.key !== "WETH") {
-      getBalance(selectedToken1.key ?? "", address)?.then(balance => {
+    if (selectedToken1?.key !== "ETH") {
+      getBalance(selectedToken1?.key ?? "", address)?.then(balance => {
         const parsedBalance = parseFloat(balance ?? "0").toFixed(2);
         setBalanceToken1(Number(parsedBalance));
       });
@@ -374,8 +402,8 @@ const Pool = () => {
       setBalanceToken1(null);
     }
 
-    if (selectedToken2.key !== "WETH") {
-      getBalance(selectedToken2.key ?? "", address)?.then(balance => {
+    if (selectedToken2?.key !== "ETH") {
+      getBalance(selectedToken2?.key ?? "", address)?.then(balance => {
         const parsedBalance = parseFloat(balance ?? "0").toFixed(2);
         setBalanceToken2(Number(parsedBalance));
       });
@@ -383,7 +411,7 @@ const Pool = () => {
       setBalanceToken2(null);
     }
 
-    if (selectedToken1.key === "ETH" || selectedToken2.key === "ETH") {
+    if (selectedToken1?.key === "ETH" || selectedToken2?.key === "ETH") {
       getEthBalance(address)?.then(balance => {
         const parsedBalance = parseFloat(balance ?? "0").toFixed(2);
         setEthBalance(Number(parsedBalance));
@@ -399,7 +427,7 @@ const Pool = () => {
   }, [address, selectedToken1, selectedToken2]);
   return (
     <>
-      <div className="w-full mt-10  flex flex-col justify-center items-center px-2 ">
+      <div className="w-full mt-48 flex flex-col justify-center items-center px-2 ">
         <div className="w-full flex justify-around">
           <h1 className="text-zinc-300 text-3xl font-semibold">Pools</h1>
           <Button auto onPress={handleModal}>
@@ -448,14 +476,14 @@ const Pool = () => {
                   <div className="absolute right-10  ">
                     <Selector
                       id="token1"
-                      setToken={setSelectedToken1}
-                      defaultValue={selectedToken1.name}
-                      ignoreValue={selectedToken2.name}
+                      setToken={token => handleTokenSelection(token, true)}
+                      defaultValue={selectedToken1 || null}
+                      ignoreValue={selectedToken2 ? selectedToken2.name : null}
                       tokens={tokens}
                     />
                   </div>
                 </div>
-                {selectedToken1.key === "ETH" ? (
+                {selectedToken1?.key === "ETH" ? (
                   <div className="flex justify-end text-gray-400 text-sm">
                     Balance: {ethBalance}
                   </div>
@@ -476,14 +504,14 @@ const Pool = () => {
                   <div className="absolute right-10 ">
                     <Selector
                       id="token2"
-                      setToken={setSelectedToken2}
-                      defaultValue={selectedToken2.name}
-                      ignoreValue={selectedToken1.name}
+                      setToken={token => handleTokenSelection(token, false)}
+                      defaultValue={selectedToken2 || null}
+                      ignoreValue={selectedToken1 ? selectedToken1.name : null}
                       tokens={tokens}
                     />
                   </div>
                 </div>
-                {selectedToken2.key === "ETH" ? (
+                {selectedToken2?.key === "ETH" ? (
                   <div className="flex justify-end text-gray-400 text-sm">
                     Balance: {ethBalance}
                   </div>

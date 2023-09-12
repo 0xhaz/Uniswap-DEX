@@ -37,7 +37,13 @@ contract SwapRouter {
         address _tokenB
     ) public view returns (uint256 liquidityAmount) {
         address pair = ISwapFactory(factory).getPair(_tokenA, _tokenB);
-        liquidityAmount = ISwapPairTokens(pair).balanceOf(_user);
+        uint256 balance = ISwapPairTokens(pair).balanceOf(_user);
+
+        if (balance > 0) {
+            liquidityAmount = balance;
+        } else {
+            liquidityAmount = 0;
+        }
     }
 
     /**

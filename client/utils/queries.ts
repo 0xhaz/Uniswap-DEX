@@ -341,6 +341,49 @@ export const quote = async (
 
 ////////////////////// LIQUIDITY //////////////////////
 
+export const liquidityExistsForPair = async (
+  tokenOneAddress: string,
+  tokenTwoAddress: string,
+  userAddress: string
+) => {
+  const swapFactory = contract("swapFactory");
+  const signer = provider.getSigner();
+  try {
+    const pairAddress = await swapFactory?.getPair(
+      tokenOneAddress,
+      tokenTwoAddress
+    );
+
+    const pairContract = new Contract(
+      pairAddress,
+      [
+        "function balanceOf(address) view returns (uint)",
+        "function token0() view returns (address)",
+        "function token1() view returns (address)",
+      ],
+      signer
+    );
+
+    const balance = await pairContract?.balanceOf(userAddress);
+    const token0Address = await pairContract?.token0();
+    const token1Address = await pairContract?.token1();
+
+    if (balance && BigNumber.from(balance).gt(BigNumber.from(0))) {
+      return {
+        pairAddress,
+        balance: balance.toString(),
+        token0Address,
+        token1Address,
+      };
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
 export const addLiquidity = async (
   tokenOneAddress: string,
   tokenTwoAddress: string,
@@ -477,9 +520,13 @@ export const getLiquidity = async (
     );
 
     const liquidityAmount = formatEth(liquidity);
+    // console.log("Liquidity Amount: ", liquidityAmount);
+    // console.log("Token A Address: ", addressTokenA);
+    // console.log("Token B Address: ", addressTokenB);
 
     return liquidityAmount;
   } catch (error) {
     console.error(error);
+    return "0";
   }
 };
