@@ -1,5 +1,6 @@
 import React from "react";
 import Selector from "./selector";
+import { tokens, TokenProps } from "../constants/constants";
 
 interface SwapFieldProps {
   obj: {
@@ -27,6 +28,8 @@ const SwapField = React.forwardRef<HTMLInputElement, SwapFieldProps>(
       setExactAmountIn,
     } = obj;
 
+    const defaultTokenProps = tokens.find(token => token.key === defaultValue);
+
     return (
       <div className="flex items-center rounded-xl">
         <input
@@ -43,9 +46,10 @@ const SwapField = React.forwardRef<HTMLInputElement, SwapFieldProps>(
 
         <Selector
           id={id}
-          setToken={setToken}
-          defaultValue={defaultValue}
+          setToken={(token: TokenProps) => setToken(token.key)}
+          defaultValue={defaultTokenProps || null}
           ignoreValue={ignoreValue}
+          tokens={tokens}
         />
       </div>
     );

@@ -23,18 +23,7 @@ import {
   DEFAULT_VALUE,
   ETH,
   CONTRACTS,
-  pathLINK_USDC,
-  pathLINK_USDT,
-  pathLINK_WETH,
-  pathUSDC_LINK,
-  pathUSDC_USDT,
-  pathUSDC_WETH,
-  pathUSDT_LINK,
-  pathUSDT_USDC,
-  pathUSDT_WETH,
-  pathWETH_LINK,
-  pathWETH_USDC,
-  pathWETH_USDT,
+  tokenPairs,
 } from "../constants/constants";
 import { toEth, toWei } from "../../utils/ether-utils";
 import { useAccount } from "wagmi";
@@ -98,16 +87,12 @@ const SwapComponent = () => {
 
   // get pair path
   function getPathForTokenToETH(srcToken: string): string[] | null {
-    // define a mapping of token addresses to their respective paths to ETH
-    const tokenToETHPaths = {
-      [CONTRACTS.USDT.address]: pathUSDT_WETH,
-      [CONTRACTS.USDC.address]: pathUSDC_WETH,
-      [CONTRACTS.LINK.address]: pathLINK_WETH,
-    };
+    const [tokenA, tokenB] = tokenPairs.find(
+      pair => pair[0] === srcToken && pair[1] === ETH
+    ) || [null, null];
 
-    // Check if a path exists for the given source token
-    if (srcToken in tokenToETHPaths) {
-      return tokenToETHPaths[srcToken];
+    if (tokenA && tokenB) {
+      return [tokenA, tokenB];
     }
 
     return null;
@@ -117,33 +102,24 @@ const SwapComponent = () => {
     srcToken: string,
     destToken: string
   ): string[] | null {
-    const tokenPairsToPath = {
-      [`${CONTRACTS.USDT.address}-${CONTRACTS.USDC.address}`]: pathUSDT_USDC,
-      [`${CONTRACTS.USDT.address}-${CONTRACTS.LINK.address}`]: pathUSDT_LINK,
-      [`${CONTRACTS.USDC.address}-${CONTRACTS.USDT.address}`]: pathUSDC_USDT,
-      [`${CONTRACTS.USDC.address}-${CONTRACTS.LINK.address}`]: pathUSDC_LINK,
-      [`${CONTRACTS.LINK.address}-${CONTRACTS.USDT.address}`]: pathLINK_USDT,
-      [`${CONTRACTS.LINK.address}-${CONTRACTS.USDC.address}`]: pathLINK_USDC,
-    };
+    const [tokenA, tokenB] = tokenPairs.find(
+      pair => pair[0] === srcToken && pair[1] === destToken
+    ) || [null, null];
 
-    const tokenPairKey = `${srcToken}-${destToken}`;
-
-    if (tokenPairKey in tokenPairsToPath) {
-      return tokenPairsToPath[tokenPairKey];
+    if (tokenA && tokenB) {
+      return [tokenA, tokenB];
     }
 
     return null;
   }
 
   function getPathForETHToToken(destToken: string): string[] | null {
-    const ETHToTokenPaths = {
-      [CONTRACTS.USDT.address]: pathWETH_USDT,
-      [CONTRACTS.USDC.address]: pathWETH_USDC,
-      [CONTRACTS.LINK.address]: pathWETH_LINK,
-    };
+    const [tokenA, tokenB] = tokenPairs.find(
+      pair => pair[0] === ETH && pair[1] === destToken
+    ) || [null, null];
 
-    if (destToken in ETHToTokenPaths) {
-      return ETHToTokenPaths[destToken];
+    if (tokenA && tokenB) {
+      return [tokenA, tokenB];
     }
 
     return null;

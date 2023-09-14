@@ -190,8 +190,6 @@ export const swapTokensForExactAmountOfEth = async (
 ) => {
   try {
     if (amountOut) {
-      const selectedTokenContract = tokenContract(path);
-      await approveTokens(selectedTokenAddress, toEth(toWei(amountIn)));
       const _deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const _swapTokensForExactETH = await swapRouter?.swapTokensForExactETH(
@@ -235,8 +233,6 @@ export const swapExactAmountOfTokensForEth = async (
 export const depositEthForWeth = async (amountIn: string) => {
   try {
     const amountInEth = ethers.utils.parseEther(amountIn);
-
-    await approveTokens("WETH", amountIn);
 
     const weth = wethContract();
     const tx = await weth.deposit({
@@ -322,7 +318,7 @@ export const quote = async (
 ) => {
   const swapRouter = contract("swapRouter");
   try {
-    const amountInWei = toWei(amountIn);
+    const amountInWei = formatEth(amountIn);
     const reserveAWei = toWei(reserveA);
     const reserveBWei = toWei(reserveB);
     const response = await swapRouter?.quote(

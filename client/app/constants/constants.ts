@@ -123,24 +123,27 @@ export const pathETH_USDC = [CONTRACTS.WETH.address, CONTRACTS.USDC.address];
 
 export const tokenPairs = [
   pathLINK_USDT,
-  pathUSDT_LINK,
   pathLINK_USDC,
-  pathUSDC_LINK,
   pathLINK_WETH,
-  pathWETH_LINK,
-  pathUSDT_USDC,
-  pathUSDC_USDT,
-  pathUSDT_WETH,
-  pathWETH_USDT,
-  pathUSDC_WETH,
-  pathWETH_USDC,
   pathLINK_ETH,
-  pathETH_LINK,
+  pathUSDT_USDC,
+  pathUSDT_WETH,
   pathUSDT_ETH,
-  pathETH_USDT,
+  pathUSDC_WETH,
+  pathUSDT_ETH,
   pathUSDC_ETH,
-  pathETH_USDC,
 ];
+
+export const ETH = "ETH";
+export const USDT = "USDT";
+export const USDC = "USDC";
+export const LINK = "LINK";
+export const RTOKEN = "RTOKEN";
+export const WETH = "WETH";
+export const COINA = "CoinA";
+export const COINB = "CoinB";
+export const COINC = "CoinC";
+export const DEFAULT_VALUE = "Select a token";
 
 export type TokenProps = {
   key: string;
@@ -148,7 +151,7 @@ export type TokenProps = {
   symbol?: string;
   address?: string;
   abi?: any;
-  logo: string;
+  logo?: string;
   reserve?: string;
 };
 
@@ -198,15 +201,13 @@ export const tokens: TokenProps[] = [
     logo: "/assets/eth_logo.png",
     reserve: "0",
   },
+  {
+    key: DEFAULT_VALUE,
+    name: DEFAULT_VALUE,
+    symbol: DEFAULT_VALUE,
+    address: "",
+    abi: [],
+    logo: "",
+    reserve: "0",
+  },
 ];
-
-export const ETH = "ETH";
-export const USDT = "USDT";
-export const USDC = "USDC";
-export const LINK = "LINK";
-export const RTOKEN = "RTOKEN";
-export const WETH = "WETH";
-export const COINA = "CoinA";
-export const COINB = "CoinB";
-export const COINC = "CoinC";
-export const DEFAULT_VALUE = "Select a token";

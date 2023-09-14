@@ -36,7 +36,9 @@ const Selector: React.FC<SelectorProps> = ({
   };
 
   function getFilteredItems(ignoreValue: string) {
-    return (tokens || []).filter(item => item["key"] !== ignoreValue);
+    return (tokens || [])
+      .filter(item => item["key"] !== DEFAULT_VALUE)
+      .filter(item => item["key"] !== ignoreValue);
   }
 
   useEffect(() => {
@@ -95,7 +97,7 @@ const Selector: React.FC<SelectorProps> = ({
           >
             <div style={{ display: "flex", alignItems: "center" }}>
               <Image
-                src={item.logo}
+                src={item.logo || ""}
                 alt={item.name}
                 width={20}
                 height={20}

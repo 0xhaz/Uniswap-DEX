@@ -1,10 +1,7 @@
 "use client";
 import { Fragment, useState, useEffect } from "react";
 import Image from "next/image";
-import { CheckIcon, ChevronDownIcon } from "@heroicons/react/solid";
-import { Dialog, Listbox, Transition } from "@headlessui/react";
 import { useAccount, useContract, useProvider, useSigner } from "wagmi";
-import { Contract, ethers } from "ethers";
 import {
   Button,
   Input,
@@ -37,8 +34,6 @@ const swapRouter = contract("swapRouter");
 
 const Pool = () => {
   const [expand, setExpand] = useState<boolean>(false);
-  const [visible, setVisible] = useState<boolean>(false);
-  const [toggle, setToggle] = useState<boolean>(false);
   const [selectedToken1, setSelectedToken1] = useState<TokenProps | null>(
     tokens[0]
   );
@@ -46,7 +41,6 @@ const Pool = () => {
     tokens[1]
   );
   const [txPending, setTxPending] = useState<boolean>(false);
-  const [selected, setSelected] = useState([...tokens]);
   const [desiredAmountA, setDesiredAmountA] = useState<number | string>(0);
   const [desiredAmountB, setDesiredAmountB] = useState<number | string>(0);
   const [liquidity, setLiquidity] = useState<string>("0");
@@ -57,10 +51,10 @@ const Pool = () => {
   const [balanceToken2, setBalanceToken2] = useState<number | null>(null);
   const [ethBalance, setEthBalance] = useState<number | null>(null);
   const [showRemoveInput, setShowRemoveInput] = useState<boolean[]>([]);
+  const [selectedToken1Options, setSelectedToken1Options] = useState(tokens);
+  const [selectedToken2Options, setSelectedToken2Options] = useState(tokens);
 
   const { address } = useAccount();
-  const provider = useProvider();
-  const { data: signer } = useSigner();
 
   const renderTable = address !== undefined;
 
@@ -69,6 +63,13 @@ const Pool = () => {
     [CONTRACTS.USDC.address]: "USDC",
     [CONTRACTS.LINK.address]: "LINK",
     [CONTRACTS.WETH.address]: "WETH",
+  };
+
+  const tokenNameToAddress: { [key: string]: string } = {
+    USDT: CONTRACTS.USDT.address,
+    USDC: CONTRACTS.USDC.address,
+    LINK: CONTRACTS.LINK.address,
+    WETH: CONTRACTS.WETH.address,
   };
 
   const selectTokenPair = (tokenA: TokenProps, tokenB: TokenProps) => {
@@ -99,42 +100,44 @@ const Pool = () => {
 
     for (let i = 0; i < tokenPairs.length; i++) {
       const [tokenA, tokenB] = tokenPairs[i];
-      const sortedPair = [tokenA, tokenB].sort();
-      const pairIdentifier = sortedPair.join("-");
 
       try {
-        if (!processedPairs.has(pairIdentifier)) {
-          const liquidity = await getLiquidity(
-            address,
-            sortedPair[0],
-            sortedPair[1]
-          );
-          console.log("TokenA:", sortedPair[0]);
-          console.log("TokenB:", sortedPair[1]);
-          console.log("Liquidity:", liquidity);
+        const pairIdentifier = `${tokenA}-${tokenB}`;
 
-          if (parseFloat(liquidity) > 0) {
+        if (!processedPairs.has(pairIdentifier)) {
+          const liquidityAtoB = await getLiquidity(address, tokenA, tokenB);
+
+          if (parseFloat(liquidityAtoB) > 0) {
             positions.push({
-              tokenA: tokenAddressToName[sortedPair[0]] || sortedPair[0],
-              tokenB: tokenAddressToName[sortedPair[1]] || sortedPair[1],
-              liquidity,
+              tokenA: tokenAddressToName[tokenA] || tokenA,
+              tokenB: tokenAddressToName[tokenB] || tokenB,
+              liquidity: parseFloat(liquidityAtoB),
             });
+
+            processedPairs.add(pairIdentifier);
           }
         }
-
-        processedPairs.add(pairIdentifier);
       } catch (error) {
         console.error(error);
       }
     }
 
-    console.log(positions);
+    console.log("Final positions: ", positions);
     setPositions(positions);
   };
 
-  const positionsWithLiquidity = positions.filter(
-    position => parseFloat(position.liquidity) > 0
-  );
+  const positionsWithLiquidity = positions
+    .filter(position => parseFloat(position.liquidity) > 0)
+    .map(position => {
+      const tokenAName = tokenAddressToName[position.tokenA] || position.tokenA;
+      const tokenBName = tokenAddressToName[position.tokenB] || position.tokenB;
+
+      return {
+        ...position,
+        tokenA: tokenAName,
+        tokenB: tokenBName,
+      };
+    });
 
   const handleModal = () => setExpand(true);
   const closeModal = () => setExpand(false);
@@ -211,6 +214,9 @@ const Pool = () => {
   };
 
   const handleAddLiquidity = async () => {
+    console.log("Selected Token 1 (Before Check): ", selectedToken1);
+    console.log("Selected Token 2 (Before Check): ", selectedToken2);
+
     if (selectedToken1 === selectedToken2) {
       alert("Please select different tokens");
       return;
@@ -219,33 +225,15 @@ const Pool = () => {
     const token1Address = selectedToken1?.address || "";
     const token2Address = selectedToken2?.address || "";
 
-    const possiblePairs = [
-      [token1Address, token2Address],
-      [token2Address, token1Address],
-    ];
+    const selectedPair = [token1Address, token2Address];
 
-    let validPairIndex = -1;
-
-    for (const [tokenA, tokenB] of possiblePairs) {
-      validPairIndex = tokenPairs.findIndex(pair => {
-        return pair[0] === tokenA && pair[1] === tokenB;
-      });
-
-      if (validPairIndex !== -1) {
-        break;
-      }
-    }
+    const validPairIndex = tokenPairs.findIndex(pair => {
+      return pair[0] === selectedPair[0] && pair[1] === selectedPair[1];
+    });
 
     console.log("validPairIndex", validPairIndex);
 
     if (validPairIndex !== -1) {
-      const [tokenA, tokenB] = tokenPairs[validPairIndex];
-
-      const tokenAName = tokenAddressToName[tokenA] || tokenA;
-      const tokenBName = tokenAddressToName[tokenB] || tokenB;
-
-      console.log("tokenAName", tokenAName);
-      console.log("tokenBName", tokenBName);
       if (selectedToken1?.key !== "ETH" && selectedToken2?.key !== "ETH") {
         await approveTokens(
           token1Address,
@@ -304,11 +292,14 @@ const Pool = () => {
   };
 
   const handleRemoveLiquidity = async (
-    inputToken1Address: string,
-    inputToken2Address: string,
+    inputToken1Name: string,
+    inputToken2Name: string,
     pairLiquidity: string,
     rowIndex: number
   ) => {
+    const inputToken1Address = tokenNameToAddress[inputToken1Name];
+    const inputToken2Address = tokenNameToAddress[inputToken2Name];
+
     if (inputToken1Address === inputToken2Address) {
       alert("Please select different tokens");
       return;
@@ -322,42 +313,57 @@ const Pool = () => {
       inputToken1Address != inputToken2Address &&
       liquidity
     ) {
-      console.log("Contents of tokens array:", tokens);
-      const token1 = tokens.find(token => token.address === inputToken1Address);
-      const token2 = tokens.find(token => token.address === inputToken2Address);
+      const isPairValid = tokenPairs.some(
+        ([tokenA, tokenB]) =>
+          (tokenA === inputToken1Address && tokenB === inputToken2Address) ||
+          (tokenB === inputToken1Address && tokenA === inputToken2Address)
+      );
 
-      console.log("token1", token1);
-      console.log("token2", token2);
+      console.log("Input Pair: ", inputToken1Address, inputToken2Address);
+      console.log("Valid Pairs: ", tokenPairs);
+      console.log("Is Pair Valid: ", isPairValid);
 
-      if (!token1 || !token2) {
-        alert("Invalid token address");
+      if (!isPairValid) {
+        alert("Please select the correct token pair from your valid pairs");
         return;
       }
 
-      const token1Address: any = token1.address || "";
-      const token1Abi = token1.abi || {};
-      const token2Address: any = token2.address || "";
-      const token2Abi = token2.abi || {};
+      const token1 = tokens.find(token => token.address === inputToken1Address);
+      const token2 = tokens.find(token => token.address === inputToken2Address);
+
+      console.log("Token 1: ", token1);
+      console.log("Token 2: ", token2);
+
+      if (!token1 || !token2) {
+        alert("Please select the correct token pair from your valid pairs");
+        return;
+      }
+
+      const token1Address = token1.address ?? "";
+      const token2Address = token2.address ?? "";
+
+      console.log("Token 1 Address: ", token1Address);
+      console.log("Token 2 Address: ", token2Address);
 
       await approveTokens(
         token1Address,
-        token1Abi,
+        token1.abi,
         swapRouter.address,
         liquidity
       );
 
       await approveTokens(
         token2Address,
-        token2Abi,
+        token2.abi,
         swapRouter.address,
         liquidity
       );
 
-      if (token1Address != "ETH" && token2Address != "ETH") {
+      if (token1.key !== "ETH" && token2.key !== "ETH") {
         removeLiquidity(token1Address, token2Address, liquidity);
-      } else if (token1Address === "ETH" && token2Address != "ETH") {
-        removeLiquidityETH(token2Address, liquidity);
-      } else if (token1Address !== "ETH" && token2Address == "ETH") {
+      } else if (token1.key === "ETH" && token2.key !== "ETH") {
+        removeLiquidityETH(token1Address, liquidity);
+      } else if (token1.key !== "ETH" && token2.key === "ETH") {
         removeLiquidityETH(token1Address, liquidity);
       }
 
@@ -368,26 +374,48 @@ const Pool = () => {
     }
   };
 
-  const handleToken1Change = (token: TokenProps) => {
-    setSelectedToken1(token);
-    if (selectedToken2) {
-      selectTokenPair(token, selectedToken2);
-    }
-  };
-
-  const handleToken2Change = (token: TokenProps) => {
-    setSelectedToken2(token);
-    if (selectedToken1) {
-      selectTokenPair(selectedToken1, token);
-    }
-  };
-
   const handleTokenSelection = (token: TokenProps, isToken1: boolean) => {
     if (isToken1) {
       setSelectedToken1(token);
+
+      if (token) {
+        setSelectedToken2Options(
+          tokens.filter(t => t !== token && t !== selectedToken2)
+        );
+      } else {
+        setSelectedToken2Options(tokens);
+      }
     } else {
       setSelectedToken2(token);
+
+      if (token) {
+        setSelectedToken1Options(
+          tokens.filter(t => t !== token && t !== selectedToken1)
+        );
+      } else {
+        setSelectedToken1Options(tokens);
+      }
     }
+  };
+
+  const isTokenPairAvailable = (
+    token: TokenProps,
+    selectedToken: TokenProps | null
+  ) => {
+    if (!selectedToken1) return true;
+
+    const selectedTokenAddress = selectedToken1.address;
+    const tokenAddress = token.address;
+
+    const pairAvailable =
+      tokenPairs.some(
+        ([a, b]) => a === selectedTokenAddress && b === tokenAddress
+      ) ||
+      tokenPairs.some(
+        ([a, b]) => a === tokenAddress && b === selectedTokenAddress
+      );
+
+    return pairAvailable;
   };
 
   useEffect(() => {
@@ -507,7 +535,9 @@ const Pool = () => {
                       setToken={token => handleTokenSelection(token, false)}
                       defaultValue={selectedToken2 || null}
                       ignoreValue={selectedToken1 ? selectedToken1.name : null}
-                      tokens={tokens}
+                      tokens={tokens.filter(token =>
+                        isTokenPairAvailable(token, selectedToken1)
+                      )}
                     />
                   </div>
                 </div>
@@ -545,22 +575,16 @@ const Pool = () => {
                 <table className="w-full text-sm text-left text-gray-100">
                   <thead className="text-sm uppercase text-gray-100 border-b border-gray-500">
                     <tr>
-                      <th scope="col" className="py-3 px-4">
+                      <th scope="col" className="py-3 px-10">
                         Token A
                       </th>
-                      <th scope="col" className="py-3 px-4">
+                      <th scope="col" className="py-3 px-10">
                         Token B
                       </th>
                       <th scope="col" className="py-3 px-10">
-                        Reserve A
-                      </th>
-                      <th scope="col" className="py-3 px-4">
-                        Reserve B
-                      </th>
-                      <th scope="col" className="py-3 px-13">
                         Liquidity Balance
                       </th>
-                      <th scope="col" className="py-3 px-12">
+                      <th scope="col" className="py-3 px-14">
                         Remove Liquidity
                       </th>
                     </tr>
@@ -571,8 +595,8 @@ const Pool = () => {
                         key={index}
                         className="border-b h-28 border-gray-500 text-gray-100"
                       >
-                        <td scope="row" className="py-4 px-6 font-medium ">
-                          <div className="flex items-center -ml-2">
+                        <td scope="row" className="py-4 px-10 font-medium ">
+                          <div className="flex items-center ">
                             <Image
                               src={
                                 tokens.find(
@@ -584,12 +608,11 @@ const Pool = () => {
                               alt={`${position.tokenA} logo`}
                               style={{ marginRight: "10px" }}
                             />
-                            {tokenAddressToName[position.tokenA] ||
-                              position.tokenA}
+                            {position.tokenA}
                           </div>
                         </td>
-                        <td className="py-4 px-6 font-medium">
-                          <div className="flex items-center -ml-2">
+                        <td className="py-3 px-10 font-medium">
+                          <div className="flex items-center ">
                             <Image
                               src={
                                 tokens.find(
@@ -601,13 +624,11 @@ const Pool = () => {
                               alt={`${position.tokenB} logo`}
                               style={{ marginRight: "10px" }}
                             />
-                            {tokenAddressToName[position.tokenB] ||
-                              position.tokenB}
+                            {position.tokenB}
                           </div>
                         </td>
-                        <td className="py-4 px-14 font-medium">{reserveA}</td>
-                        <td className="py-4 px-10  font-medium ">{reserveB}</td>
-                        <td className="py-4 px-10 font-medium">
+
+                        <td className="py-3 px-16 font-medium">
                           {parseFloat(position.liquidity).toFixed(2)}
                         </td>
                         <td className="py-4 px-6">
@@ -639,7 +660,9 @@ const Pool = () => {
                               type="button"
                               onClick={() =>
                                 setShowRemoveInput(prevState => {
-                                  const newState = [...prevState];
+                                  const newState = Array.isArray(prevState)
+                                    ? [...prevState]
+                                    : [];
                                   newState[index] = true;
                                   return newState;
                                 })
