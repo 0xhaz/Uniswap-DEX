@@ -14,7 +14,7 @@ import {
   getAmountsOut,
   quote,
 } from "@/utils/queries";
-import { contract } from "@/utils/contracts";
+import { contract, tokenContract, tokenContractMap } from "@/utils/contracts";
 import { CogIcon, ArrowSmDownIcon } from "@heroicons/react/outline";
 import SwapField from "./swapField";
 import TransactionStatus from "./transactionStatus";
@@ -27,6 +27,8 @@ import {
 } from "../constants/constants";
 import { toEth, toWei } from "../../utils/ether-utils";
 import { useAccount } from "wagmi";
+
+const swapRouter = contract("swapRouter");
 
 const SwapComponent = () => {
   const [srcToken, setSrcToken] = useState<string>("ETH");
@@ -230,21 +232,33 @@ const SwapComponent = () => {
         performSwap();
       } else if (srcToken !== ETH && destToken === ETH) {
         setTxPending(true);
-        const result = await approveTokens(srcToken, inputValue);
-        setTxPending(false);
+        const tokenInfo = tokenContractMap[srcToken];
 
-        if (result) {
-          const amountIn = await getAmountIn(
-            exactAmountOut,
-            reserveA,
-            reserveB
+        if (tokenInfo) {
+          const { address: srcTokenAddress, abi: srcTokenAbi } = tokenInfo;
+          const result = await approveTokens(
+            srcTokenAddress,
+            srcTokenAbi,
+            swapRouter.address,
+            inputValue
           );
-          if (amountIn) {
-            setInputValue(amountIn.toString());
-          } else {
-            handleInsufficientAllowance();
-          }
-        } else handleInsufficientAllowance();
+          setTxPending(false);
+
+          if (result) {
+            const amountIn = await getAmountIn(
+              exactAmountOut,
+              reserveA,
+              reserveB
+            );
+            if (amountIn) {
+              setInputValue(amountIn.toString());
+            } else {
+              handleInsufficientAllowance();
+            }
+          } else handleInsufficientAllowance();
+        } else {
+          console.error("Invalid token");
+        }
       }
     } else if (exactAmountOut && Number(exactAmountOut) > 0) {
       setIsExactAmountOutSet(true);
@@ -252,21 +266,33 @@ const SwapComponent = () => {
         performSwap();
       } else if (srcToken !== ETH && destToken === ETH) {
         setTxPending(true);
-        const result = await approveTokens(srcToken, inputValue);
-        setTxPending(false);
+        const tokenInfo = tokenContractMap[srcToken];
 
-        if (result) {
-          const amountOut = await getAmountOut(
-            exactAmountIn,
-            reserveA,
-            reserveB
+        if (tokenInfo) {
+          const { address: srcTokenAddress, abi: srcTokenAbi } = tokenInfo;
+          const result = await approveTokens(
+            srcTokenAddress,
+            srcTokenAbi,
+            swapRouter.address,
+            inputValue
           );
-          if (amountOut) {
-            setOutputValue(amountOut.toString());
-          } else {
-            handleInsufficientAllowance();
-          }
-        } else handleInsufficientAllowance();
+          setTxPending(false);
+
+          if (result) {
+            const amountOut = await getAmountOut(
+              exactAmountIn,
+              reserveA,
+              reserveB
+            );
+            if (amountOut) {
+              setOutputValue(amountOut.toString());
+            } else {
+              handleInsufficientAllowance();
+            }
+          } else handleInsufficientAllowance();
+        } else {
+          console.error("Invalid token");
+        }
       }
     }
   };
