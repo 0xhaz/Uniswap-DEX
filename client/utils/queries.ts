@@ -98,7 +98,7 @@ export const swapExactAmountOfTokens = async (
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const _swapExactTokens = await swapRouter?.swapExactTokensForTokens(
-        toWei(amountIn),
+        toEth(amountIn),
         1,
         path,
         address,
@@ -121,7 +121,7 @@ export const swapTokensForExactAmount = async (
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const _swapTokensForExact = await swapRouter?.swapTokensForExactTokens(
-        toWei(amountOut),
+        toEth(amountOut),
         1,
         path,
         address,
@@ -168,7 +168,7 @@ export const swapEthForExactAmountOfTokens = async (
       const _deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const _swapEthForExactTokens = await swapRouter?.swapETHForExactTokens(
-        toWei(amountOut),
+        toEth(amountOut),
         path,
         address,
         _deadline,
@@ -193,7 +193,7 @@ export const swapTokensForExactAmountOfEth = async (
       const _deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const _swapTokensForExactETH = await swapRouter?.swapTokensForExactETH(
-        toWei(amountOut),
+        toEth(amountOut),
         1,
         path,
         address,
@@ -216,7 +216,7 @@ export const swapExactAmountOfTokensForEth = async (
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const _swapExactTokensForEth = await swapRouter?.swapExactTokensForETH(
-        toWei(amountIn),
+        toEth(amountIn),
         1,
         path,
         address,
@@ -232,16 +232,48 @@ export const swapExactAmountOfTokensForEth = async (
 
 export const depositEthForWeth = async (amountIn: string) => {
   try {
-    const amountInEth = ethers.utils.parseEther(amountIn);
+    const amountInEth = toEth(amountIn);
+    const address = await getAccount();
+
+    console.log("Depositing ETH for WETH...");
+    console.log("Amount in ETH:", amountInEth);
+    console.log("From Address:", address);
 
     const weth = wethContract();
     const tx = await weth.deposit({
-      from: await getAccount(),
+      from: address,
       value: amountInEth,
     });
+    console.log("Transaction Hash:", tx.hash);
     await tx.wait();
+
+    const wethBalance = await weth.balanceOf(address);
+
+    console.log("WETH Balance:", formatEth(wethBalance));
   } catch (error) {
-    console.log(error);
+    console.log("error depositing eth for weth", error);
+    throw error;
+  }
+};
+
+export const withdrawWethForEth = async (amountIn: string) => {
+  try {
+    const amountInEth = toEth(amountIn);
+    const address = await getAccount();
+
+    const weth = wethContract();
+    const tx = await weth.withdraw(amountInEth, {
+      from: address,
+    });
+    console.log("Transaction Hash:", tx.hash);
+    await tx.wait();
+
+    const wethBalance = await weth.balanceOf(address);
+
+    console.log("WETH Balance:", formatEth(wethBalance));
+  } catch (error) {
+    console.log("error withdrawing weth for eth", error);
+    throw error;
   }
 };
 
@@ -252,9 +284,13 @@ export const getAmountIn = async (
 ) => {
   const swapRouter = contract("swapRouter");
   try {
-    const response = await swapRouter?.getAmountIn(amountB, reserveA, reserveB);
-    console.log("Amount In: ", toWei(response));
-    return toWei(response);
+    const response = await swapRouter?.getAmountIn(
+      toEth(amountB),
+      toEth(reserveA),
+      toEth(reserveB)
+    );
+    console.log("Amount In: ", formatEth(response));
+    return formatEth(response);
   } catch (error) {
     console.log(error);
     return null;
@@ -269,12 +305,12 @@ export const getAmountOut = async (
   const swapRouter = contract("swapRouter");
   try {
     const response = await swapRouter?.getAmountOut(
-      amountA,
-      reserveA,
-      reserveB
+      toEth(amountA),
+      toEth(reserveA),
+      toEth(reserveB)
     );
-    console.log("Amount Out: ", toWei(response));
-    return toWei(response);
+    console.log("Amount Out: ", formatEth(response));
+    return formatEth(response);
   } catch (error) {
     console.log(error);
     return null;
@@ -289,7 +325,7 @@ export const getAmountsIn = async (amountOut: string, path: string[]) => {
       "Amounts In: ",
       response.map((amount: string) => toEth(amount))
     );
-    return response.map((amount: string) => toEth(amount));
+    return response.map((amount: string) => formatEth(amount));
   } catch (error) {
     console.log(error);
     return null;
@@ -304,7 +340,7 @@ export const getAmountsOut = async (amountIn: string, path: string[]) => {
       "Amounts Out: ",
       response.map((amount: string) => toEth(amount))
     );
-    return response.map((amount: string) => toEth(amount));
+    return response.map((amount: string) => formatEth(amount));
   } catch (error) {
     console.log(error);
     return null;
@@ -318,20 +354,19 @@ export const quote = async (
 ) => {
   const swapRouter = contract("swapRouter");
   try {
-    const amountInWei = formatEth(amountIn);
-    const reserveAWei = toWei(reserveA);
-    const reserveBWei = toWei(reserveB);
+    const amountInWei = toEth(amountIn);
+    const reserveAWei = toEth(reserveA);
+    const reserveBWei = toEth(reserveB);
     const response = await swapRouter?.quote(
       amountInWei,
       reserveAWei,
       reserveBWei
     );
-    const responseEth = toEth(response);
+    const responseEth = formatEth(response.toString());
     console.log("Quote: ", responseEth);
     return responseEth;
   } catch (error) {
     console.log(error);
-    return null;
   }
 };
 

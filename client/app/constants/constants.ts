@@ -152,7 +152,6 @@ export type TokenProps = {
   address?: string;
   abi?: any;
   logo?: string;
-  reserve?: string;
 };
 
 export const tokens: TokenProps[] = [
@@ -163,7 +162,6 @@ export const tokens: TokenProps[] = [
     address: CONTRACTS.USDT.address,
     abi: CONTRACTS.USDT.abi,
     logo: "/assets/usdt_logo.png",
-    reserve: "0",
   },
   {
     key: "USDC",
@@ -172,7 +170,6 @@ export const tokens: TokenProps[] = [
     address: CONTRACTS.USDC.address,
     abi: CONTRACTS.USDC.abi,
     logo: "/assets/usdc_logo.png",
-    reserve: "0",
   },
   {
     key: "LINK",
@@ -181,7 +178,6 @@ export const tokens: TokenProps[] = [
     address: CONTRACTS.LINK.address,
     abi: CONTRACTS.LINK.abi,
     logo: "/assets/link_logo.png",
-    reserve: "0",
   },
   {
     key: "WETH",
@@ -190,7 +186,6 @@ export const tokens: TokenProps[] = [
     address: CONTRACTS.WETH.address,
     abi: CONTRACTS.WETH.abi,
     logo: "/assets/eth_logo.png",
-    reserve: "0",
   },
   {
     key: "ETH",
@@ -199,7 +194,6 @@ export const tokens: TokenProps[] = [
     address: CONTRACTS.WETH.address,
     abi: CONTRACTS.WETH.abi,
     logo: "/assets/eth_logo.png",
-    reserve: "0",
   },
   {
     key: DEFAULT_VALUE,
@@ -208,6 +202,5 @@ export const tokens: TokenProps[] = [
     address: "",
     abi: [],
     logo: "",
-    reserve: "0",
   },
 ];
