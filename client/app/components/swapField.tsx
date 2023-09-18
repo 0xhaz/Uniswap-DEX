@@ -4,10 +4,10 @@ import { tokens, TokenProps } from "../constants/constants";
 
 interface SwapFieldProps {
   id: string;
-  value: string;
+  value: number | string;
   setValue: (value: string) => void;
   defaultValue: string;
-  setToken: (token: string) => void;
+  setToken: (token: TokenProps) => void;
   ignoreValue: string;
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
@@ -34,7 +34,7 @@ const SwapField = ({
 
       <Selector
         id={"swap"}
-        setToken={(token: TokenProps) => setToken(token.key)}
+        setToken={(token: TokenProps) => setToken(token)}
         defaultValue={defaultTokenProps || null}
         ignoreValue={ignoreValue}
         tokens={tokens}

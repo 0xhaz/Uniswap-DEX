@@ -147,10 +147,15 @@ const Pool = () => {
     const swapRouter = contract("swapRouter");
     try {
       const response = await swapRouter?.getReserve(tokenA, tokenB);
-      return {
-        reserveA: response?.reserveA,
-        reserveB: response?.reserveB,
-      };
+
+      console.log("Reserve A: ", formatEth(response?.reserveA));
+      console.log("Reserve B: ", formatEth(response?.reserveB));
+      // return {
+      //   reserveA: response?.reserveA,
+      //   reserveB: response?.reserveB,
+      // };
+      setReserveA(formatEth(response?.reserveA));
+      setReserveB(formatEth(response?.reserveB));
     } catch (error) {
       console.error(error);
       return {
@@ -160,16 +165,18 @@ const Pool = () => {
     }
   };
 
-  const fetchReserves = async () => {
-    if (selectedToken1 && selectedToken2 && selectedToken1 != selectedToken2) {
-      const token1Address = selectedToken1.address || "";
-      const token2Address = selectedToken2.address || "";
+  // const fetchReserves = async () => {
+  //   if (selectedToken1 && selectedToken2 && selectedToken1 != selectedToken2) {
+  //     const token1Address = selectedToken1.address || "";
+  //     const token2Address = selectedToken2.address || "";
 
-      const reserves = await getReserves(token1Address, token2Address);
-      setReserveA(formatEth(reserves.reserveA));
-      setReserveB(formatEth(reserves.reserveB));
-    }
-  };
+  //     const reserves = await getReserves(token1Address, token2Address);
+  //     setReserveA(formatEth(reserves.reserveA));
+  //     setReserveB(formatEth(reserves.reserveB));
+  //     console.log("Reserves A: ", reserves.reserveA);
+  //     console.log("Reserves B: ", reserves.reserveB);
+  //   }
+  // };
 
   // quote amountA for amountB
   const quoteA = async (
@@ -256,7 +263,7 @@ const Pool = () => {
           desiredAmountB.toString()
         );
 
-        await fetchReserves();
+        // await fetchReserves();
       } else if (selectedToken1?.key === "ETH") {
         await approveTokens(
           token2Address,
@@ -270,7 +277,7 @@ const Pool = () => {
           desiredAmountA.toString()
         );
 
-        await fetchReserves();
+        // await fetchReserves();
       } else if (selectedToken2?.key === "ETH") {
         await approveTokens(
           token1Address,
@@ -284,7 +291,7 @@ const Pool = () => {
           desiredAmountB.toString()
         );
 
-        await fetchReserves();
+        // await fetchReserves();
       }
     } else {
       alert("Please select the correct token pair from your valid pairs");
@@ -451,8 +458,13 @@ const Pool = () => {
     if (!address) return;
     // fetch liquidity positions and update state
     getPositions(address);
-    fetchReserves();
   }, [address, selectedToken1, selectedToken2]);
+
+  useEffect(() => {
+    if (selectedToken1?.address && selectedToken2?.address) {
+      getReserves(selectedToken1.address, selectedToken2.address);
+    }
+  }, [selectedToken1, selectedToken2]);
   return (
     <>
       <div className="w-full mt-48 flex flex-col justify-center items-center px-2 ">

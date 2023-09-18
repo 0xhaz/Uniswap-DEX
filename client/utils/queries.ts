@@ -87,6 +87,87 @@ export const getEthBalance = async (walletAddress: string) => {
   }
 };
 
+export const hasValidAllowance = async (
+  walletAddress: string,
+  tokenName: string,
+  amount: string
+) => {
+  try {
+    const swapRouter = contract("swapRouter");
+    const tokenInfo = tokenContractMap[tokenName];
+
+    if (!swapRouter || !tokenInfo) {
+      console.error("Missing contract information for tokenName:", tokenName);
+      return false;
+    }
+
+    const tokenNameContract = tokenContract(tokenInfo.address, tokenInfo.abi);
+
+    if (!tokenNameContract) {
+      console.error("Failed to get token contract for tokenName:", tokenName);
+      return false;
+    }
+
+    const data = await tokenNameContract?.allowance(
+      walletAddress,
+      swapRouter?.address
+    );
+
+    if (!data) {
+      console.error("Missing data for tokenName:", tokenName);
+      return false;
+    }
+
+    const result = BigNumber.from(data.toString()).gte(
+      BigNumber.from(toWei(amount))
+    );
+
+    return result;
+  } catch (error) {
+    console.error("Error checking allowance for tokenName:", tokenName, error);
+    return false;
+  }
+};
+
+export const increaseAllowance = async (tokenName: string, amount: string) => {
+  try {
+    const swapRouter = contract("swapRouter");
+    const tokenInfo = tokenContractMap[tokenName];
+
+    if (!swapRouter || !tokenInfo) {
+      console.error("Missing contract information for tokenName:", tokenName);
+      return null;
+    }
+
+    const tokenNameContract = tokenContract(tokenInfo.address, tokenInfo.abi);
+
+    if (!tokenNameContract) {
+      console.error("Failed to get token contract for tokenName:", tokenName);
+      return null;
+    }
+
+    const data = await tokenNameContract?.approve(
+      swapRouter?.address,
+      toWei(amount)
+    );
+
+    if (!data) {
+      console.error("Failed to approve for tokenName:", tokenName);
+      return null;
+    }
+
+    const receipt = await data.wait();
+    return receipt;
+  } catch (error) {
+    console.error(
+      "Error increasing allowance for tokenName:",
+      tokenName,
+      error
+    );
+    return null;
+  }
+};
+
 ////////////////////// SWAP //////////////////////
 
 export const swapExactAmountOfTokens = async (
@@ -98,7 +179,7 @@ export const swapExactAmountOfTokens = async (
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const _swapExactTokens = await swapRouter?.swapExactTokensForTokens(
-        toEth(amountIn),
+        toWei(amountIn.toString()),
         1,
         path,
         address,
@@ -121,7 +202,7 @@ export const swapTokensForExactAmount = async (
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const _swapTokensForExact = await swapRouter?.swapTokensForExactTokens(
-        toEth(amountOut),
+        toEth(amountOut.toString()),
         1,
         path,
         address,
@@ -141,13 +222,15 @@ export const swapExactAmountOfEthForTokens = async (
 ) => {
   try {
     if (amountIn) {
+      const _amount = toEth(amountIn.toString());
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const _swapExactEthForTokens = await swapRouter?.swapExactETHForTokens(
         1,
         path,
         address,
-        deadline
+        deadline,
+        { value: _amount }
       );
 
       await _swapExactEthForTokens.wait();
@@ -164,7 +247,7 @@ export const swapEthForExactAmountOfTokens = async (
 ) => {
   try {
     if (amountOut) {
-      const _amount = toWei(amountETH);
+      const _amount = toEth(amountETH.toString());
       const _deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const _swapEthForExactTokens = await swapRouter?.swapETHForExactTokens(
@@ -185,15 +268,14 @@ export const swapEthForExactAmountOfTokens = async (
 export const swapTokensForExactAmountOfEth = async (
   amountOut: string,
   path: string,
-  amountIn: string,
-  selectedTokenAddress: string
+  amountIn: string
 ) => {
   try {
     if (amountOut) {
       const _deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const _swapTokensForExactETH = await swapRouter?.swapTokensForExactETH(
-        toEth(amountOut),
+        toEth(amountOut.toString()),
         1,
         path,
         address,
@@ -216,7 +298,7 @@ export const swapExactAmountOfTokensForEth = async (
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const _swapExactTokensForEth = await swapRouter?.swapExactTokensForETH(
-        toEth(amountIn),
+        toEth(amountIn.toString()),
         1,
         path,
         address,
@@ -274,46 +356,6 @@ export const withdrawWethForEth = async (amountIn: string) => {
   } catch (error) {
     console.log("error withdrawing weth for eth", error);
     throw error;
-  }
-};
-
-export const getAmountIn = async (
-  amountB: string,
-  reserveA: string,
-  reserveB: string
-) => {
-  const swapRouter = contract("swapRouter");
-  try {
-    const response = await swapRouter?.getAmountIn(
-      toEth(amountB),
-      toEth(reserveA),
-      toEth(reserveB)
-    );
-    console.log("Amount In: ", formatEth(response));
-    return formatEth(response);
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
-};
-
-export const getAmountOut = async (
-  amountA: string,
-  reserveA: string,
-  reserveB: string
-) => {
-  const swapRouter = contract("swapRouter");
-  try {
-    const response = await swapRouter?.getAmountOut(
-      toEth(amountA),
-      toEth(reserveA),
-      toEth(reserveB)
-    );
-    console.log("Amount Out: ", formatEth(response));
-    return formatEth(response);
-  } catch (error) {
-    console.log(error);
-    return null;
   }
 };
 
