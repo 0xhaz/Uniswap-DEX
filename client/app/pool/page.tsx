@@ -29,6 +29,7 @@ import {
 } from "../constants/constants";
 import Selector from "../components/selector";
 import { formatEth, toEth, toWei } from "@/utils/ether-utils";
+import toast from "react-hot-toast";
 
 const swapRouter = contract("swapRouter");
 
@@ -71,6 +72,9 @@ const Pool = () => {
     LINK: CONTRACTS.LINK.address,
     WETH: CONTRACTS.WETH.address,
   };
+
+  const notifyError = (msg: string) => toast.error(msg, { duration: 6000 });
+  const notifySuccess = () => toast.success("Transaction completed.");
 
   const selectTokenPair = (tokenA: TokenProps, tokenB: TokenProps) => {
     const selectedPair = tokenPairs.find(
@@ -255,6 +259,7 @@ const Pool = () => {
           swapRouter.address,
           desiredAmountB.toString()
         );
+        notifySuccess();
 
         await addLiquidity(
           token1Address,
@@ -262,6 +267,7 @@ const Pool = () => {
           desiredAmountA.toString(),
           desiredAmountB.toString()
         );
+        notifySuccess();
 
         // await fetchReserves();
       } else if (selectedToken1?.key === "ETH") {
@@ -271,11 +277,14 @@ const Pool = () => {
           swapRouter.address,
           desiredAmountB.toString()
         );
+        notifySuccess();
+
         await addLiquidityETH(
           token2Address,
           desiredAmountB.toString(),
           desiredAmountA.toString()
         );
+        notifySuccess();
 
         // await fetchReserves();
       } else if (selectedToken2?.key === "ETH") {
@@ -285,16 +294,19 @@ const Pool = () => {
           swapRouter.address,
           desiredAmountA.toString()
         );
+        notifySuccess();
+
         await addLiquidityETH(
           token1Address,
           desiredAmountA.toString(),
           desiredAmountB.toString()
         );
+        notifySuccess();
 
         // await fetchReserves();
       }
     } else {
-      alert("Please select the correct token pair from your valid pairs");
+      notifyError("Please select a valid token pair");
     }
   };
 
@@ -358,6 +370,7 @@ const Pool = () => {
         swapRouter.address,
         liquidity
       );
+      notifySuccess();
 
       await approveTokens(
         token2Address,
@@ -365,14 +378,19 @@ const Pool = () => {
         swapRouter.address,
         liquidity
       );
+      notifySuccess();
 
       if (token1.key !== "ETH" && token2.key !== "ETH") {
         removeLiquidity(token1Address, token2Address, liquidity);
+        notifySuccess();
       } else if (token1.key === "ETH" && token2.key !== "ETH") {
         removeLiquidityETH(token1Address, liquidity);
+        notifySuccess();
       } else if (token1.key !== "ETH" && token2.key === "ETH") {
         removeLiquidityETH(token1Address, liquidity);
+        notifySuccess();
       }
+      notifySuccess();
 
       setShowRemoveInput(prevState => ({
         ...prevState,
@@ -467,7 +485,7 @@ const Pool = () => {
   }, [selectedToken1, selectedToken2]);
   return (
     <>
-      <div className="w-full mt-48 flex flex-col justify-center items-center px-2 ">
+      <div className="w-full mt-36 flex flex-col justify-center items-center px-2 ">
         <div className="w-full flex justify-around">
           <h1 className="text-zinc-300 text-3xl font-semibold">Pools</h1>
           <Button auto onPress={handleModal}>

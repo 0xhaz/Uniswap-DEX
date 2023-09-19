@@ -8,6 +8,7 @@ import {
   swapExactAmountOfTokensForEth,
   swapExactAmountOfTokens,
   depositEthForWeth,
+  getBalance,
   getAmountsIn,
   getAmountsOut,
   quote,
@@ -51,6 +52,9 @@ const SwapComponent = () => {
   const [amountIn, setAmountIn] = useState<number | string>(0);
   const [amountOut, setAmountOut] = useState<number | string>(0);
 
+  const [srcBalance, setSrcBalance] = useState<string>("");
+  const [destBalance, setDestBalance] = useState<string>("");
+
   const isReversed = useRef(false);
 
   const INCREASE_ALLOWANCE = "Increase allowance";
@@ -73,7 +77,7 @@ const SwapComponent = () => {
     ) || [null, null];
 
     if (tokenA && tokenB) {
-      return [tokenA, tokenB];
+      return [tokenA, tokenB].toString().split(",");
     }
     return null;
   }
@@ -89,6 +93,7 @@ const SwapComponent = () => {
     if (tokenA && tokenB) {
       return [tokenA, tokenB];
     }
+
     return null;
   }
 
@@ -103,6 +108,20 @@ const SwapComponent = () => {
 
     return null;
   }
+
+  const fetchBalance = async () => {
+    if (!address) return;
+
+    if (srcToken?.address && destToken?.address) {
+      const [srcBalanceValue, destBalanceValue] = await Promise.all([
+        getBalance(srcToken?.name, address),
+        getBalance(destToken?.name, address),
+      ]);
+
+      setSrcBalance(srcBalanceValue || "0");
+      setDestBalance(destBalanceValue || "0");
+    }
+  };
 
   const getAmountOut = async (
     amountA: number,
@@ -179,27 +198,15 @@ const SwapComponent = () => {
     let path: string[] | null = null;
 
     try {
-      // if (!srcToken || !destToken) {
-      //   throw "Tokens not selected";
-      // }
-
-      // if (
-      //   typeof inputValue !== "number" ||
-      //   isNaN(inputValue) ||
-      //   inputValue <= 0
-      // ) {
-      //   throw "Invalid input value";
-      // }
-
       if (srcToken?.name === "ETH" && destToken?.name === "WETH") {
         if (address) {
-          receipt = await depositEthForWeth(toWei(inputValue.toString()));
+          receipt = await depositEthForWeth(inputValue.toString());
         } else {
           throw "Wallet not connected";
         }
       } else if (srcToken?.name === "WETH" && destToken?.name === "ETH") {
         if (address) {
-          receipt = await withdrawWethForEth(toWei(inputValue.toString()));
+          receipt = await withdrawWethForEth(inputValue.toString());
         } else {
           throw "Wallet not connected";
         }
@@ -217,19 +224,18 @@ const SwapComponent = () => {
             const concatenatedPath = path.join(",");
             receipt = await swapExactAmountOfEthForTokens(
               inputValue.toString(),
-              concatenatedPath
+              path
             );
           } else {
             throw "Invalid path";
           }
         } else if (srcToken?.name !== "ETH" && destToken?.name === "ETH") {
-          path = getPathForTokenToEth(srcToken?.address || "");
+          path = getPathForTokenToEth(srcToken?.name || "");
 
           if (path) {
-            const concatenatedPath = path.join(",");
             receipt = await swapExactAmountOfTokensForEth(
               inputValue.toString(),
-              concatenatedPath
+              path
             );
           } else {
             throw "Invalid path";
@@ -240,11 +246,14 @@ const SwapComponent = () => {
             destToken?.address || ""
           );
 
+          console.log("Path: ", path);
+          console.log("srcToken Address: ", srcToken?.address);
+          console.log("destToken Address: ", destToken?.address);
+
           if (path) {
-            const concatenatedPath = path.join(",");
             receipt = await swapExactAmountOfTokens(
               inputValue.toString(),
-              concatenatedPath
+              path
             );
           } else {
             throw "Invalid path";
@@ -259,10 +268,9 @@ const SwapComponent = () => {
           path = getPathForETHToToken(destToken?.address || "");
 
           if (path) {
-            const concatenatedPath = path.join(",");
             receipt = await swapEthForExactAmountOfTokens(
               outputValue.toString(),
-              concatenatedPath,
+              path,
               inputValue.toString()
             );
           } else {
@@ -272,10 +280,9 @@ const SwapComponent = () => {
           path = getPathForETHToToken(srcToken?.address || "");
 
           if (path) {
-            const concatenatedPath = path.join(",");
             receipt = await swapTokensForExactAmountOfEth(
               outputValue.toString(),
-              concatenatedPath,
+              path,
               inputValue.toString()
             );
           } else {
@@ -287,11 +294,12 @@ const SwapComponent = () => {
             destToken?.address || ""
           );
 
+          console.log("Path: ", path);
+
           if (path) {
-            const concatenatedPath = path.join(",");
             receipt = await swapTokensForExactAmount(
               outputValue.toString(),
-              concatenatedPath
+              path
             );
           } else {
             throw "Invalid path";
@@ -317,75 +325,47 @@ const SwapComponent = () => {
   const handleSwap = async () => {
     if (!address) return;
 
-    if (srcToken?.name === "ETH" && destToken?.name === "WETH") {
-      performSwap();
-    } else {
-      setTxPending(true);
-      console.log("srcToken Name: ", srcToken?.name);
-      console.log("destToken Name: ", destToken?.name);
-      const result = await hasValidAllowance(
-        address,
-        srcToken?.name || "",
-        inputValue.toString()
-      );
-      setTxPending(false);
+    const sourceTokenName = srcToken?.name || "";
+    const destTokenName = destToken?.name || "";
 
-      if (result) performSwap();
-      else handleInsufficientAllowance();
+    const hasSourceTokenAllowance = await hasValidAllowance(
+      address,
+      sourceTokenName,
+      inputValue.toString()
+    );
+
+    const hasDestTokenAllowance = await hasValidAllowance(
+      address,
+      destTokenName,
+      inputValue.toString()
+    );
+
+    const isExactAmountIn = !!exactAmountIn;
+    const isExactAmountOut = !!exactAmountOut;
+    const isEthToWethSwap =
+      sourceTokenName === "ETH" && destTokenName === "WETH";
+
+    let shouldPerformSwap = false;
+
+    if (isEthToWethSwap) {
+      shouldPerformSwap = true;
+    } else if (isExactAmountIn || isExactAmountOut) {
+      shouldPerformSwap = hasSourceTokenAllowance || hasDestTokenAllowance;
     }
 
-    if (exactAmountIn) {
-      if (
-        srcToken?.name === "ETH" &&
-        destToken?.name !== "ETH" &&
-        destToken?.name !== "WETH"
-      ) {
-        performSwap();
-      } else if (srcToken?.name !== "ETH" && destToken?.name === "ETH") {
-        performSwap();
-      } else if (srcToken?.name !== "ETH" && destToken?.name !== "ETH") {
-        performSwap();
-      } else {
-        setTxPending(true);
-        console.log("srcToken Name: ", srcToken?.name);
-        console.log("destToken Name: ", destToken?.name);
-        const result = await hasValidAllowance(
-          address,
-          srcToken?.name || "",
-          inputValue.toString()
-        );
-        setTxPending(false);
-
-        if (result) performSwap();
-        else handleInsufficientAllowance();
-      }
-    } else if (exactAmountOut) {
-      if (srcToken?.name === "ETH" && destToken?.name !== "ETH") {
-        performSwap();
-      } else if (srcToken?.name !== "ETH" && destToken?.name === "ETH") {
-        performSwap();
-      } else if (srcToken?.name !== "ETH" && destToken?.name !== "ETH") {
-        performSwap();
-      } else {
-        setTxPending(true);
-        console.log("srcToken Name: ", srcToken?.name);
-        console.log("destToken Name: ", destToken?.name);
-        const result = await hasValidAllowance(
-          address,
-          srcToken?.name || "",
-          inputValue.toString()
-        );
-        setTxPending(false);
-
-        if (result) performSwap();
-        else handleInsufficientAllowance();
-      }
+    if (shouldPerformSwap) {
+      performSwap();
+      setInputValue(0);
+      setOutputValue(0);
+    } else {
+      handleInsufficientAllowance();
     }
   };
 
   const handleIncreaseAllowance = async () => {
     setTxPending(true);
     await increaseAllowance(srcToken?.name || "", inputValue.toString());
+    notifySuccess();
     setTxPending(false);
 
     setSwapBtnText(SWAP);
@@ -405,7 +385,10 @@ const SwapComponent = () => {
           reserveA,
           reserveB
         );
-        setEstimatedQuote(quoteResponse?.toString() || null);
+        const parsedQuote = parseFloat(
+          quoteResponse?.toString() || "0"
+        ).toFixed(2);
+        setEstimatedQuote(parsedQuote);
       }
     };
     fetchQuote();
@@ -416,6 +399,10 @@ const SwapComponent = () => {
     else if (!inputValue || !outputValue) setSwapBtnText(ENTER_AMOUNT);
     else setSwapBtnText(SWAP);
   }, [inputValue, outputValue, address]);
+
+  useEffect(() => {
+    fetchBalance();
+  }, [srcToken, destToken]);
 
   return (
     <>
@@ -433,19 +420,16 @@ const SwapComponent = () => {
             setToken={setSrcToken}
             ignoreValue={destToken?.name || ""}
             handleChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              const inputValue = Number(e.target.value);
+              const newValue =
+                e.target.value !== "" ? e.target.value : DEFAULT_VALUE;
 
-              if (inputValue !== 0) {
-                setInputValue(e.target.value);
-                getAmountOut(
-                  Number(inputValue),
-                  Number(reserveA),
-                  Number(reserveB)
-                );
-                setExactAmountIn(true);
-              } else {
-                console.error("Input value is empty");
-              }
+              setInputValue(newValue);
+              getAmountOut(
+                Number(newValue),
+                Number(reserveA),
+                Number(reserveB)
+              );
+              setExactAmountIn(true);
             }}
           />
 
@@ -496,23 +480,37 @@ const SwapComponent = () => {
         <Toaster />
       </div>
 
-      <div className="bg-zinc-900 w-[35%] p-4 px-6 rounded-xl mt-10">
+      <div className="bg-zinc-900 w-[45%] p-4 px-6 rounded-xl mt-10">
         <div className="flex items-center justify-between py-4 px-1">
           <div>
-            <div>Balance A</div>
-            <div>"BalanceA"</div>
+            <div className="flex items-center justify-center p-2">
+              Balance {srcToken?.name}
+            </div>
+            <div className="flex items-center justify-center">{srcBalance}</div>
           </div>
           <div>
-            <div>Balance B</div>
-            <div>"BalanceB"</div>
+            <div className="flex items-center justify-center p-2">
+              Balance {destToken?.name}
+            </div>
+            <div className="flex items-center justify-center">
+              {destBalance}
+            </div>
           </div>
           <div>
-            <div>Reserve A</div>
-            <div>"ReserveA"</div>
+            <div className="flex items-center justify-center p-2">
+              Reserve {srcToken?.name}
+            </div>
+            <div className="flex items-center justify-center">
+              {parseFloat(reserveA).toFixed(2)}
+            </div>
           </div>
           <div>
-            <div>Reserve B</div>
-            <div>"ReserveB"</div>
+            <div className="flex items-center justify-center p-2">
+              Reserve {destToken?.name}
+            </div>
+            <div className="flex items-center justify-center">
+              {parseFloat(reserveB).toFixed(2)}
+            </div>
           </div>
         </div>
       </div>

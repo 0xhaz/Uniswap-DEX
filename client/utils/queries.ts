@@ -56,19 +56,18 @@ export const getBalance = async (
   walletAddress: string
 ) => {
   try {
-    if (!(tokenAddress in tokenContractMap)) {
-      throw new Error(`Token ${tokenAddress} not supported`);
-      return null;
-    }
     const { address, abi } = tokenContractMap[tokenAddress];
 
     const selectedTokenContract = tokenContract(address, abi);
 
     const balance = await selectedTokenContract.balanceOf(walletAddress);
+    console.log("Balance: ", formatEth(balance));
 
-    const balanceEth = ethers.utils.formatEther(balance);
+    const parsedBalance = parseFloat(formatEth(balance)).toFixed(2);
 
-    return balanceEth;
+    console.log("Parsed Balance: ", parsedBalance);
+
+    return parsedBalance;
   } catch (error) {
     console.log(error);
     return null;
@@ -172,40 +171,43 @@ export const increaseAllowance = async (tokenName: string, amount: string) => {
 
 export const swapExactAmountOfTokens = async (
   amountIn: string,
-  path: string
+  path: string[]
 ) => {
   try {
     if (amountIn) {
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
-      const _swapExactTokens = await swapRouter?.swapExactTokensForTokens(
-        toWei(amountIn.toString()),
-        1,
-        path,
-        address,
-        deadline
-      );
+      const signer = provider.getSigner();
 
+      const _swapExactTokens = await swapRouter?.swapExactTokensForTokens(
+        toEth(amountIn.toString()),
+        1,
+        path.map(address => address.toLowerCase()), // Ensure all addresses are in lowercase
+        signer.getAddress(),
+        deadline,
+        { gasLimit: 1000000 }
+      );
       await _swapExactTokens.wait();
     }
   } catch (error) {
-    console.log(error);
+    console.log("Error ", error);
   }
 };
 
 export const swapTokensForExactAmount = async (
   amountOut: string,
-  path: string
+  path: string[]
 ) => {
   try {
     if (amountOut) {
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+      const signer = provider.getSigner();
       const _swapTokensForExact = await swapRouter?.swapTokensForExactTokens(
         toEth(amountOut.toString()),
         1,
-        path,
-        address,
+        path.map(address => address.toLowerCase()),
+        signer.getAddress(),
         deadline
       );
 
@@ -218,17 +220,18 @@ export const swapTokensForExactAmount = async (
 
 export const swapExactAmountOfEthForTokens = async (
   amountIn: string,
-  path: string
+  path: string[]
 ) => {
   try {
     if (amountIn) {
       const _amount = toEth(amountIn.toString());
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+      const signer = provider.getSigner();
       const _swapExactEthForTokens = await swapRouter?.swapExactETHForTokens(
         1,
-        path,
-        address,
+        path.map(address => address.toLowerCase()),
+        signer.getAddress(),
         deadline,
         { value: _amount }
       );
@@ -242,7 +245,7 @@ export const swapExactAmountOfEthForTokens = async (
 
 export const swapEthForExactAmountOfTokens = async (
   amountOut: string,
-  path: string,
+  path: string[],
   amountETH: string
 ) => {
   try {
@@ -250,10 +253,11 @@ export const swapEthForExactAmountOfTokens = async (
       const _amount = toEth(amountETH.toString());
       const _deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+      const signer = provider.getSigner();
       const _swapEthForExactTokens = await swapRouter?.swapETHForExactTokens(
         toEth(amountOut),
-        path,
-        address,
+        path.map(address => address.toLowerCase()),
+        signer.getAddress(),
         _deadline,
         { value: _amount }
       );
@@ -267,18 +271,19 @@ export const swapEthForExactAmountOfTokens = async (
 
 export const swapTokensForExactAmountOfEth = async (
   amountOut: string,
-  path: string,
+  path: string[],
   amountIn: string
 ) => {
   try {
     if (amountOut) {
       const _deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+      const signer = provider.getSigner();
       const _swapTokensForExactETH = await swapRouter?.swapTokensForExactETH(
         toEth(amountOut.toString()),
         1,
-        path,
-        address,
+        path.map(address => address.toLowerCase()),
+        signer.getAddress(),
         _deadline
       );
 
@@ -291,17 +296,18 @@ export const swapTokensForExactAmountOfEth = async (
 
 export const swapExactAmountOfTokensForEth = async (
   amountIn: string,
-  path: string
+  path: string[]
 ) => {
   try {
     if (amountIn) {
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+      const signer = provider.getSigner();
       const _swapExactTokensForEth = await swapRouter?.swapExactTokensForETH(
         toEth(amountIn.toString()),
         1,
-        path,
-        address,
+        path.map(address => address.toLowerCase()),
+        signer.getAddress(),
         deadline
       );
 
@@ -315,7 +321,7 @@ export const swapExactAmountOfTokensForEth = async (
 export const depositEthForWeth = async (amountIn: string) => {
   try {
     const amountInEth = toEth(amountIn);
-    const address = await getAccount();
+    const signer = provider.getSigner();
 
     console.log("Depositing ETH for WETH...");
     console.log("Amount in ETH:", amountInEth);
@@ -323,7 +329,7 @@ export const depositEthForWeth = async (amountIn: string) => {
 
     const weth = wethContract();
     const tx = await weth.deposit({
-      from: address,
+      from: signer.getAddress(),
       value: amountInEth,
     });
     console.log("Transaction Hash:", tx.hash);
@@ -603,3 +609,33 @@ export const getLiquidity = async (
     return "0";
   }
 };
+
+////////////////////// STAKING //////////////////////
+
+export const getStakedAmount = async (tokenAddress: string) => {
+  const stakingContract = contract("staking");
+  const signer = provider.getSigner();
+  try {
+    const staked = await stakingContract?.getStaked(
+      signer.getAddress(),
+      tokenAddress
+    );
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const getEarnedRewards = async (tokenAddress: string) => {
+  const stakingContract = contract("staking");
+  const signer = provider.getSigner();
+  try {
+    const rewardEarned = await stakingContract?.getRewardEarned(
+      tokenAddress,
+      signer.getAddress()
+    );
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+////////////////////// LENDING //////////////////////

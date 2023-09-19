@@ -121,17 +121,26 @@ export const pathETH_USDT = [CONTRACTS.WETH.address, CONTRACTS.USDT.address];
 export const pathUSDC_ETH = [CONTRACTS.USDC.address, CONTRACTS.WETH.address];
 export const pathETH_USDC = [CONTRACTS.WETH.address, CONTRACTS.USDC.address];
 
-export const tokenPairs = [
+export const tokenPairs: string[][] = [
   pathLINK_USDT,
   pathLINK_USDC,
   pathLINK_WETH,
   pathLINK_ETH,
   pathUSDT_USDC,
+  pathUSDT_LINK,
+  pathUSDC_LINK,
+  pathUSDC_USDT,
   pathUSDT_WETH,
   pathUSDT_ETH,
   pathUSDC_WETH,
   pathUSDT_ETH,
   pathUSDC_ETH,
+  pathWETH_LINK,
+  pathWETH_USDT,
+  pathWETH_USDC,
+  pathETH_LINK,
+  pathETH_USDT,
+  pathETH_USDC,
 ];
 
 export const ETH = "ETH";
