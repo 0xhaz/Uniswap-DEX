@@ -17,4 +17,12 @@ interface IStakingPool {
     function rewardPerToken() external view returns (uint256);
 
     function redeemReward(address _user) external;
+
+    function lastUpdateTime() external view returns (uint256);
+
+    function calculateAPY(
+        address _pool,
+        uint256 _timePeriod,
+        uint256 _rewardRate
+    ) external view returns (uint256);
 }

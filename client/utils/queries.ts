@@ -620,6 +620,8 @@ export const getStakedAmount = async (tokenAddress: string) => {
       signer.getAddress(),
       tokenAddress
     );
+
+    return staked;
   } catch (error) {
     console.error(error);
   }
@@ -633,6 +635,95 @@ export const getEarnedRewards = async (tokenAddress: string) => {
       tokenAddress,
       signer.getAddress()
     );
+
+    return rewardEarned;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const stakedTokens = async (
+  tokenAddress: string,
+  inputAmount: string
+) => {
+  const stakingContract = contract("staking");
+  try {
+    const staked = await stakingContract?.staked(
+      tokenAddress,
+      toEth(inputAmount)
+    );
+
+    await staked.wait();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const withdrawTokens = async (
+  tokenAddress: string,
+  outAmount: string
+) => {
+  const stakingContract = contract("staking");
+
+  try {
+    const withdraw = await stakingContract?.withdraw(
+      tokenAddress,
+      toEth(outAmount)
+    );
+
+    await withdraw.wait();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const claimRewards = async (tokenAddress: string) => {
+  const stakingContract = contract("staking");
+
+  try {
+    const claim = await stakingContract?.redeemReward(tokenAddress);
+
+    await claim.wait();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const stakeEther = async (amount: string) => {
+  const stakingContract = contract("staking");
+  const signer = provider.getSigner();
+
+  try {
+    const stake = await stakingContract?.stakeETH({
+      from: signer.getAddress(),
+      value: toEth(amount),
+    });
+
+    await stake.wait();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const withdrawEther = async (amount: string) => {
+  const stakingContract = contract("staking");
+
+  try {
+    const withdraw = await stakingContract?.withdrawETH(toEth(amount));
+
+    await withdraw.wait();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const claimEther = async () => {
+  const stakingContract = contract("staking");
+
+  try {
+    const claim = await stakingContract?.redeemRewardETH();
+
+    await claim.wait();
   } catch (error) {
     console.error(error);
   }

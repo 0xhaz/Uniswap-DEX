@@ -33,7 +33,6 @@ import {
 import { formatEth, toEth, toWei } from "../../utils/ether-utils";
 import { useAccount } from "wagmi";
 import { ethers } from "ethers";
-import { set } from "lodash";
 
 const swapRouter = contract("swapRouter");
 
@@ -136,10 +135,8 @@ const SwapComponent = () => {
           toEth(reserveA.toString()),
           toEth(reserveB.toString())
         );
-        console.log("Response in getAmountOut: ", response);
 
         const formattedResponse = parseFloat(formatEth(response)).toFixed(2);
-        console.log("Formatted Response: ", formattedResponse);
 
         setAmountOut(formattedResponse);
         setOutputValue(formattedResponse);
@@ -162,12 +159,6 @@ const SwapComponent = () => {
           toEth(reserveA.toString()),
           toEth(reserveB.toString())
         );
-        console.log("Response in getAmountIn: ", response);
-
-        console.log(
-          "Input Value in getAmountIn: ",
-          ethers.utils.formatEther(response)
-        );
 
         const formattedResponse = parseFloat(formatEth(response)).toFixed(2);
         setAmountIn(formattedResponse);
@@ -181,9 +172,6 @@ const SwapComponent = () => {
   const getReserves = async (tokenA: string, tokenB: string) => {
     try {
       const response = await swapRouter?.getReserve(tokenA, tokenB);
-
-      console.log("Reserve A: ", formatEth(response?.reserveA));
-      console.log("Reserve B: ", formatEth(response?.reserveB));
 
       setReserveA(formatEth(response?.reserveA));
       setReserveB(formatEth(response?.reserveB));
@@ -221,7 +209,6 @@ const SwapComponent = () => {
           path = getPathForTokenToEth(destToken?.address || "");
 
           if (path) {
-            const concatenatedPath = path.join(",");
             receipt = await swapExactAmountOfEthForTokens(
               inputValue.toString(),
               path

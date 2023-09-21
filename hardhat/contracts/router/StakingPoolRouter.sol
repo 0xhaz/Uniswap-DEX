@@ -58,6 +58,7 @@ contract StakingPoolRouter {
             IStakingPool(pool).stake(_amount, msg.sender);
         } else {
             createPool(_token);
+            pool = getPoolAddress(_token);
             IStakingPool(pool).stake(_amount, msg.sender);
         }
     }
