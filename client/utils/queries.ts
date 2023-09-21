@@ -612,6 +612,16 @@ export const getLiquidity = async (
 
 ////////////////////// STAKING //////////////////////
 
+export const getPoolAddress = async (tokenAddress: string) => {
+  const stakingContract = contract("staking");
+  try {
+    const getPool = await stakingContract?.getPoolAddress(tokenAddress);
+    return getPool;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 export const getStakedAmount = async (tokenAddress: string) => {
   const stakingContract = contract("staking");
   const signer = provider.getSigner();

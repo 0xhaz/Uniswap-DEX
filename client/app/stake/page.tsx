@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useAccount, useProvider, useSigner } from "wagmi";
 import { ethers } from "ethers";
 import {
+  getPoolAddress,
   approveTokens,
   getStakedAmount,
   getEarnedRewards,
@@ -23,6 +24,7 @@ import {
   stakeEther,
   withdrawEther,
   claimEther,
+  getBalance,
 } from "@/utils/queries";
 import { DEFAULT_VALUE, TokenProps, tokens } from "../constants/constants";
 import Selector from "@/app/components/selector";
@@ -34,13 +36,60 @@ const Stake = () => {
   const [stakeAmount, setStakeAmount] = useState<number | string>(0);
   const [withdrawAmount, setWithdrawAmount] = useState<number | string>(0);
   const [claimAmount, setClaimAmount] = useState<number | string>(0);
-  const [stakeToken, setStakeToken] = useState<TokenProps | null>(null);
+  const [stakeToken, setStakeToken] = useState<TokenProps | null>(
+    () => tokens.find(token => token.key === DEFAULT_VALUE) || null
+  );
   const [txPending, setTxPending] = useState<boolean>(false);
-  const [poolAddress, setPoolAddress] = useState<string>("");
+  const [poolAddress, setPoolAddress] = useState<string | null>(null);
   const [poolBalance, setPoolBalance] = useState<number | string>(0);
   const [poolToken, setPoolToken] = useState<TokenProps | null>(null);
 
   const { address } = useAccount();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!address || !stakeToken) return;
+
+      try {
+        const poolToken = await getPoolAddress(stakeToken?.address || "");
+        setPoolAddress(poolToken);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchData();
+  }, [address, stakeToken]);
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!address || !stakeToken) return;
+
+      try {
+        const balance = await getBalance(stakeToken?.address || "", address);
+        setPoolBalance(balance?.toString() || "0");
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchBalance();
+  }, [address, stakeToken]);
+
+  useEffect(() => {
+    const fetchStakedAmount = async () => {
+      if (!address || !stakeToken) return;
+
+      try {
+        const stakedAmount = await getStakedAmount(stakeToken?.address || "");
+        setStakedAmount(stakedAmount?.toString() || "0");
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchStakedAmount();
+  }, [address, stakeToken]);
 
   return (
     <>
@@ -54,10 +103,9 @@ const Stake = () => {
             <Selector
               id={"stake"}
               setToken={(token: TokenProps) => setStakeToken(token)}
-              defaultValue={DEFAULT_VALUE}
+              defaultValue={stakeToken}
               ignoreValue={null}
               tokens={tokens}
-              handleChange={() => {}}
             />
           </div>
           <div>
