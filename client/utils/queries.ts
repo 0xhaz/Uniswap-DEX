@@ -38,6 +38,8 @@ export const approveTokens = async (
 ) => {
   try {
     const signer = provider.getSigner();
+    console.log("Token In Address: ", tokenInAddress);
+    console.log("Spender Address: ", spenderAddress);
 
     const tx = await tokenContract(tokenInAddress, abi)
       .connect(signer)
@@ -61,11 +63,8 @@ export const getBalance = async (
     const selectedTokenContract = tokenContract(address, abi);
 
     const balance = await selectedTokenContract.balanceOf(walletAddress);
-    console.log("Balance: ", formatEth(balance));
 
     const parsedBalance = parseFloat(formatEth(balance)).toFixed(2);
-
-    console.log("Parsed Balance: ", parsedBalance);
 
     return parsedBalance;
   } catch (error) {
@@ -613,7 +612,7 @@ export const getLiquidity = async (
 ////////////////////// STAKING //////////////////////
 
 export const getPoolAddress = async (tokenAddress: string) => {
-  const stakingContract = contract("staking");
+  const stakingContract = contract("stakingRouter");
   try {
     const getPool = await stakingContract?.getPoolAddress(tokenAddress);
     return getPool;
@@ -623,8 +622,9 @@ export const getPoolAddress = async (tokenAddress: string) => {
 };
 
 export const getStakedAmount = async (tokenAddress: string) => {
-  const stakingContract = contract("staking");
+  const stakingContract = contract("stakingRouter");
   const signer = provider.getSigner();
+
   try {
     const staked = await stakingContract?.getStaked(
       signer.getAddress(),
@@ -638,7 +638,7 @@ export const getStakedAmount = async (tokenAddress: string) => {
 };
 
 export const getEarnedRewards = async (tokenAddress: string) => {
-  const stakingContract = contract("staking");
+  const stakingContract = contract("stakingRouter");
   const signer = provider.getSigner();
   try {
     const rewardEarned = await stakingContract?.getRewardEarned(
@@ -656,10 +656,14 @@ export const stakedTokens = async (
   tokenAddress: string,
   inputAmount: string
 ) => {
-  const stakingContract = contract("staking");
+  let receipt;
+  let result;
+  const stakingContract = contract("stakingRouter");
+  const tokenInfo = tokenContractMap[tokenAddress];
+
   try {
-    const staked = await stakingContract?.staked(
-      tokenAddress,
+    const staked = await stakingContract?.stake(
+      tokenInfo.address,
       toEth(inputAmount)
     );
 
@@ -673,7 +677,7 @@ export const withdrawTokens = async (
   tokenAddress: string,
   outAmount: string
 ) => {
-  const stakingContract = contract("staking");
+  const stakingContract = contract("stakingRouter");
 
   try {
     const withdraw = await stakingContract?.withdraw(
@@ -687,8 +691,8 @@ export const withdrawTokens = async (
   }
 };
 
-export const claimRewards = async (tokenAddress: string) => {
-  const stakingContract = contract("staking");
+export const claimRewards = async (tokenAddress: string, outAmount: string) => {
+  const stakingContract = contract("stakingRouter");
 
   try {
     const claim = await stakingContract?.redeemReward(tokenAddress);
@@ -700,13 +704,13 @@ export const claimRewards = async (tokenAddress: string) => {
 };
 
 export const stakeEther = async (amount: string) => {
-  const stakingContract = contract("staking");
+  const stakingContract = contract("stakingRouter");
   const signer = provider.getSigner();
 
   try {
     const stake = await stakingContract?.stakeETH({
       from: signer.getAddress(),
-      value: toEth(amount),
+      value: toEth(amount.toString()),
     });
 
     await stake.wait();
@@ -716,7 +720,7 @@ export const stakeEther = async (amount: string) => {
 };
 
 export const withdrawEther = async (amount: string) => {
-  const stakingContract = contract("staking");
+  const stakingContract = contract("stakingRouter");
 
   try {
     const withdraw = await stakingContract?.withdrawETH(toEth(amount));
@@ -728,7 +732,7 @@ export const withdrawEther = async (amount: string) => {
 };
 
 export const claimEther = async () => {
-  const stakingContract = contract("staking");
+  const stakingContract = contract("stakingRouter");
 
   try {
     const claim = await stakingContract?.redeemRewardETH();

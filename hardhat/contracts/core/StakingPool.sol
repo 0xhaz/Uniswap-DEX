@@ -20,7 +20,7 @@ contract StakingPool {
     modifier updateReward(address _account) {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = block.timestamp;
-        rewards[_account] = _rewardEarned(_account);
+        rewards[_account] = rewardEarned(_account);
         userRewardPerTokenPaid[_account] = rewardPerTokenStored;
         _;
     }
@@ -42,7 +42,7 @@ contract StakingPool {
         require(_amount > 0, "Cannot stake 0 tokens");
         _totalSupply += _amount;
         staked[_user] += _amount;
-        stakingToken.transferFrom(msg.sender, address(this), _amount);
+        stakingToken.transferFrom(_user, address(this), _amount);
     }
 
     /// @dev - to withdraw tokens from the pool
@@ -54,7 +54,7 @@ contract StakingPool {
         require(_amount > 0, "Cannot withdraw 0 tokens");
         _totalSupply -= _amount;
         staked[_user] -= _amount;
-        stakingToken.transfer(msg.sender, _amount);
+        stakingToken.transfer(_user, _amount);
     }
 
     /// @dev - To calculuate the amount of rewards per token staked
@@ -70,16 +70,28 @@ contract StakingPool {
                 _totalSupply);
     }
 
+    function getStakedAmount(address _user) public view returns (uint256) {
+        return staked[_user];
+    }
+
     /**
      * @dev - to calculate the earned rewards for a user based on the amount of tokens staked
      * @param _account - the address of the user
      * @return uint256 - the amount of rewards earned
      */
 
-    function _rewardEarned(address _account) internal view returns (uint256) {
+    function rewardEarned(address _account) public view returns (uint256) {
         return
             ((staked[_account] *
                 (rewardPerToken() - userRewardPerTokenPaid[_account])) /
                 decimalFactor) + rewards[_account];
+    }
+
+    function claimReward(address _user) external updateReward(msg.sender) {
+        uint256 reward = rewards[_user];
+        if (reward > 0) {
+            rewards[_user] = 0;
+            rewardToken.transfer(_user, reward);
+        }
     }
 }

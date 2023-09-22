@@ -2,15 +2,11 @@
 pragma solidity ^0.8.19;
 
 interface IStakingPool {
-    function staked(address _user) external view returns (uint256);
+    function rewardEarned(address _user) external view returns (uint256);
 
-    function earned(address _user) external view returns (uint256);
+    function stakeToken(uint256 _amount, address _account) external;
 
-    function stake(uint256 _amount, address _account) external;
-
-    function withdraw(uint256 _amount, address _account) external;
-
-    function rewards(address _user) external view returns (uint256);
+    function withdrawToken(uint256 _amount, address _account) external;
 
     function totalSupply() external view returns (uint256);
 
@@ -20,9 +16,7 @@ interface IStakingPool {
 
     function lastUpdateTime() external view returns (uint256);
 
-    function calculateAPY(
-        address _pool,
-        uint256 _timePeriod,
-        uint256 _rewardRate
-    ) external view returns (uint256);
+    function getStakedAmount(address _user) external view returns (uint256);
+
+    function claimReward(address _user) external;
 }

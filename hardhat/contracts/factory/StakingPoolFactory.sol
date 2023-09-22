@@ -8,7 +8,7 @@ contract StakingPoolFactory {
     address public feeToSetter;
     address[] public allPools;
 
-    mapping(address => mapping(address => address)) public getPool;
+    mapping(address => address) public getPool;
 
     event PoolCreated(address indexed token, address pool, uint256 timestamp);
 
@@ -34,17 +34,17 @@ contract StakingPoolFactory {
         address _rewardToken
     ) external returns (address pool) {
         require(
-            getPool[_stakingToken][_rewardToken] == address(0),
+            getPool[_stakingToken] == address(0),
             "StakingPoolFactory::createPool: Pool already exists"
         );
-        bytes memory bytecode = type(StakingPool).creationCode;
-        bytes32 salt = keccak256(abi.encodePacked(_stakingToken, _rewardToken));
-        assembly {
-            pool := create2(0, add(bytecode, 32), mload(bytecode), salt)
-        }
+        require(
+            _stakingToken != address(0),
+            "StakingPoolFactory::createPool: Invalid staking token"
+        );
+
         StakingPool _pool = new StakingPool(_stakingToken, _rewardToken);
 
-        getPool[_stakingToken][_rewardToken] = address(_pool);
+        getPool[_stakingToken] = address(_pool);
         allPools.push(address(_pool));
         emit PoolCreated(_stakingToken, address(_pool), block.timestamp);
 

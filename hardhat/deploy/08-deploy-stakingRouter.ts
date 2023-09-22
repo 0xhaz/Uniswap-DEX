@@ -17,7 +17,7 @@ const deployStakingRouter: DeployFunction = async (
 
   const isDevelopment = developmentChains.includes(network.name);
 
-  const factoryContract = await deployments.get("SwapPairTokensFactory");
+  const factoryContract = await deployments.get("StakingPoolFactory");
   const wethContract = await deployments.get("WETH9");
   const rTokenContract = await deployments.get("RToken");
 

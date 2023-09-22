@@ -38,8 +38,9 @@ contract StakingPoolRouter {
         address _user
     ) public view returns (uint256 rewardAmount) {
         address pool = getPoolAddress(_token);
+        require(pool != address(0), "POOL_NOT_EXISTS");
 
-        rewardAmount = IStakingPool(pool).rewards(_user);
+        rewardAmount = IStakingPool(pool).rewardEarned(_user);
     }
 
     function getStaked(
@@ -48,18 +49,20 @@ contract StakingPoolRouter {
     ) public view returns (uint256 stakedAmount) {
         address pool = getPoolAddress(_token);
 
-        stakedAmount = IStakingPool(pool).staked(_user);
+        stakedAmount = IStakingPool(pool).getStakedAmount(_user);
     }
 
     function stake(address _token, uint256 _amount) public {
         address pool = getPoolAddress(_token);
 
         if (pool != address(0)) {
-            IStakingPool(pool).stake(_amount, msg.sender);
+            IStakingPool(pool).stakeToken(_amount, msg.sender);
         } else {
             createPool(_token);
+
             pool = getPoolAddress(_token);
-            IStakingPool(pool).stake(_amount, msg.sender);
+
+            IStakingPool(pool).stakeToken(_amount, msg.sender);
         }
     }
 
@@ -70,7 +73,7 @@ contract StakingPoolRouter {
         uint256 stakedAmount = getStaked(msg.sender, _token);
         require(stakedAmount >= _amount, "INSUFFICIENT_STAKED_AMOUNT");
 
-        IStakingPool(pool).withdraw(_amount, msg.sender);
+        IStakingPool(pool).withdrawToken(_amount, msg.sender);
     }
 
     function redeemReward(address _token) public {
@@ -80,7 +83,7 @@ contract StakingPoolRouter {
         uint256 rewardAmount = getRewardEarned(_token, msg.sender);
         require(rewardAmount > 0, "NO_REWARD_TO_REDEEM");
 
-        IStakingPool(pool).redeemReward(msg.sender);
+        IStakingPool(pool).claimReward(msg.sender);
     }
 
     function stakeETH(uint256 _amount) public payable {
