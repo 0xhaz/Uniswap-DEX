@@ -12,6 +12,9 @@ contract StakingPoolRouter {
     address public immutable WETH;
     address public immutable rtoken;
 
+    mapping(address => uint256) public getETHBalance;
+    mapping(address => uint256) public stakedETH;
+
     constructor(address _factory, address _WETH, address _rtoken) {
         factory = _factory;
         WETH = _WETH;
@@ -55,23 +58,28 @@ contract StakingPoolRouter {
     function stake(address _token, uint256 _amount) public {
         address pool = getPoolAddress(_token);
 
-        if (pool != address(0)) {
-            IStakingPool(pool).stakeToken(_amount, msg.sender);
-        } else {
+        if (pool == address(0)) {
             createPool(_token);
-
             pool = getPoolAddress(_token);
-
-            IStakingPool(pool).stakeToken(_amount, msg.sender);
         }
+
+        require(pool != address(0), "POOL_NOT_EXIST");
+
+        TransferHelper.safeTransferFrom(
+            _token,
+            msg.sender,
+            address(this),
+            _amount
+        );
+
+        IStakingPool(pool).stakeToken(_amount, msg.sender);
     }
 
     function withdraw(address _token, uint256 _amount) public {
         address pool = getPoolAddress(_token);
         require(pool != address(0), "POOL_NOT_EXISTS");
 
-        uint256 stakedAmount = getStaked(msg.sender, _token);
-        require(stakedAmount >= _amount, "INSUFFICIENT_STAKED_AMOUNT");
+        TransferHelper.safeTransfer(_token, msg.sender, _amount);
 
         IStakingPool(pool).withdrawToken(_amount, msg.sender);
     }
@@ -87,27 +95,30 @@ contract StakingPoolRouter {
     }
 
     function stakeETH(uint256 _amount) public payable {
-        require(msg.value == _amount, "INVALID_AMOUNT");
+        address pool = getPoolAddress(WETH);
 
-        IWETH(WETH).deposit{value: msg.value}();
-        TransferHelper.safeTransfer(WETH, msg.sender, _amount);
+        require(pool != address(0), "POOL_NOT_EXIST");
+        require(_amount > 0, "Must stake more than 0 ether");
+        require(msg.value >= _amount, "Insufficient Ether sent");
 
-        stake(WETH, _amount);
+        IWETH(WETH).deposit{value: _amount}();
+        stakedETH[msg.sender] += _amount;
+
+        IStakingPool(pool).stakeToken(_amount, msg.sender);
     }
 
-    function withdrawETH(uint256 _amount) public {
-        withdraw(WETH, _amount);
+    function withdrawEth(uint256 _amount) public {
+        address pool = getPoolAddress(WETH);
 
-        TransferHelper.safeTransferFrom(
-            WETH,
-            msg.sender,
-            address(this),
-            _amount
-        );
+        require(pool != address(0), "POOL_NOT_EXIST");
+        require(stakedETH[msg.sender] >= _amount, "Not enough staked Ether");
+
+        IStakingPool(pool).withdrawToken(_amount, msg.sender);
+        stakedETH[msg.sender] -= _amount;
 
         IWETH(WETH).withdraw(_amount);
-
-        TransferHelper.safeTransferETH(msg.sender, _amount);
+        (bool success, ) = msg.sender.call{value: _amount}("");
+        require(success, "Ether transfer failed");
     }
 
     function redeemRewardETH() public {

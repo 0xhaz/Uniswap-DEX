@@ -36,26 +36,26 @@ const deployStakingFactory: DeployFunction = async (
     factory.address
   )) as StakingPoolFactory;
 
-  const createUsdcPoolTx = await factoryContract.createPool(
-    usdcToken.address,
-    rToken.address
-  );
-  await createUsdcPoolTx.wait();
-  log(`USDC Pool Created: ${createUsdcPoolTx.hash}`);
+  // const createUsdcPoolTx = await factoryContract.createPool(
+  //   usdcToken.address,
+  //   rToken.address
+  // );
+  // await createUsdcPoolTx.wait();
+  // log(`USDC Pool Created: ${createUsdcPoolTx.hash}`);
 
-  const createLinkPoolTx = await factoryContract.createPool(
-    linkToken.address,
-    rToken.address
-  );
-  await createLinkPoolTx.wait();
-  log(`Link Pool Created: ${createLinkPoolTx.hash}`);
+  // const createLinkPoolTx = await factoryContract.createPool(
+  //   linkToken.address,
+  //   rToken.address
+  // );
+  // await createLinkPoolTx.wait();
+  // log(`Link Pool Created: ${createLinkPoolTx.hash}`);
 
-  const createWethPoolTx = await factoryContract.createPool(
-    wethToken.address,
-    rToken.address
-  );
-  await createWethPoolTx.wait();
-  log(`Weth Pool Created: ${createWethPoolTx.hash}`);
+  // const createWethPoolTx = await factoryContract.createPool(
+  //   wethToken.address,
+  //   rToken.address
+  // );
+  // await createWethPoolTx.wait();
+  // log(`Weth Pool Created: ${createWethPoolTx.hash}`);
 
   const contractFactory = [
     { name: "StakingPoolFactory", address: factory.address },

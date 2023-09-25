@@ -11,6 +11,8 @@ contract StakingPool {
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
     uint256 public decimalFactor;
+    uint256 public constant fixedAPY = 12;
+    bool public rewardRateSet = false;
 
     mapping(address => uint256) public rewards;
     mapping(address => uint256) public userRewardPerTokenPaid;
@@ -42,7 +44,10 @@ contract StakingPool {
         require(_amount > 0, "Cannot stake 0 tokens");
         _totalSupply += _amount;
         staked[_user] += _amount;
-        stakingToken.transferFrom(_user, address(this), _amount);
+
+        if (!rewardRateSet) {
+            _setRewardRate();
+        }
     }
 
     /// @dev - to withdraw tokens from the pool
@@ -54,7 +59,6 @@ contract StakingPool {
         require(_amount > 0, "Cannot withdraw 0 tokens");
         _totalSupply -= _amount;
         staked[_user] -= _amount;
-        stakingToken.transfer(_user, _amount);
     }
 
     /// @dev - To calculuate the amount of rewards per token staked
@@ -93,5 +97,13 @@ contract StakingPool {
             rewards[_user] = 0;
             rewardToken.transfer(_user, reward);
         }
+    }
+
+    function _setRewardRate() internal {
+        require(!rewardRateSet, "Reward rate already set");
+        rewardRate =
+            (stakingToken.balanceOf(address(this)) * fixedAPY) /
+            (365 * 100);
+        rewardRateSet = true;
     }
 }

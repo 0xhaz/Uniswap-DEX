@@ -511,19 +511,10 @@ const SwapComponent = () => {
   ) {
     // 1. Swap tokens (srcToken <-> destToken)
     // 2. Swap values (inputValue <-> outputValue)
-    console.log("Before swap:");
-    console.log("srcToken:", srcToken);
-    console.log("destToken:", destToken);
-    console.log("inputValue:", inputValue);
-    console.log("outputValue:", outputValue);
 
     // Swap srcToken and destToken
     const newSrcToken = destToken;
     const newDestToken = srcToken;
-
-    console.log("After swapping tokens:");
-    console.log("newSrcToken:", newSrcToken);
-    console.log("newDestToken:", newDestToken);
 
     // Use functional updates for state variables
     setSrcToken(() => newSrcToken);
@@ -532,12 +523,6 @@ const SwapComponent = () => {
     // Swap input and output values
     setInputValue(outputValue);
     setOutputValue(inputValue);
-
-    console.log("After state updates:");
-    console.log("srcToken:", srcToken);
-    console.log("destToken:", destToken);
-    console.log("inputValue:", inputValue);
-    console.log("outputValue:", outputValue);
   }
 
   function getSwapBtnClassName() {

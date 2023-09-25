@@ -624,12 +624,15 @@ export const getPoolAddress = async (tokenAddress: string) => {
 export const getStakedAmount = async (tokenAddress: string) => {
   const stakingContract = contract("stakingRouter");
   const signer = provider.getSigner();
+  const tokenContractInfo = tokenContractMap[tokenAddress];
 
   try {
     const staked = await stakingContract?.getStaked(
       signer.getAddress(),
-      tokenAddress
+      tokenContractInfo.address
     );
+
+    console.log("Staked: ", staked.toString());
 
     return staked;
   } catch (error) {
@@ -640,11 +643,15 @@ export const getStakedAmount = async (tokenAddress: string) => {
 export const getEarnedRewards = async (tokenAddress: string) => {
   const stakingContract = contract("stakingRouter");
   const signer = provider.getSigner();
+  const tokenContractInfo = tokenContractMap[tokenAddress];
+
   try {
     const rewardEarned = await stakingContract?.getRewardEarned(
-      tokenAddress,
+      tokenContractInfo.address,
       signer.getAddress()
     );
+
+    console.log("Reward Earned: ", rewardEarned.toString());
 
     return rewardEarned;
   } catch (error) {
@@ -669,7 +676,7 @@ export const stakedTokens = async (
 
     await staked.wait();
   } catch (error) {
-    console.error(error);
+    console.error("Error when staking: ", error);
   }
 };
 
@@ -678,12 +685,14 @@ export const withdrawTokens = async (
   outAmount: string
 ) => {
   const stakingContract = contract("stakingRouter");
-
+  const tokenInfo = tokenContractMap[tokenAddress];
   try {
     const withdraw = await stakingContract?.withdraw(
-      tokenAddress,
+      tokenInfo.address,
       toEth(outAmount)
     );
+
+    console.log("Out Amount: ", outAmount.toString());
 
     await withdraw.wait();
   } catch (error) {
@@ -740,6 +749,49 @@ export const claimEther = async () => {
     await claim.wait();
   } catch (error) {
     console.error(error);
+  }
+};
+
+export const hasValidAllowanceStaking = async (
+  walletAddress: string,
+  tokenName: string,
+  amount: string
+) => {
+  try {
+    const stakingRouter = contract("stakingRouter");
+    const stakingContract = contract("staking");
+    const tokenInfo = tokenContractMap[tokenName];
+
+    if (!stakingRouter || !tokenInfo) {
+      console.error("Missing contract information for tokenName:", tokenName);
+      return false;
+    }
+
+    const tokenNameContract = tokenContract(tokenInfo.address, tokenInfo.abi);
+
+    if (!tokenNameContract) {
+      console.error("Failed to get token contract for tokenName:", tokenName);
+      return false;
+    }
+
+    const data = await tokenNameContract?.allowance(
+      walletAddress,
+      stakingRouter?.address
+    );
+
+    if (!data) {
+      console.error("Missing data for tokenName:", tokenName);
+      return false;
+    }
+
+    const result = BigNumber.from(data.toString()).gte(
+      BigNumber.from(toWei(amount))
+    );
+
+    return result;
+  } catch (error) {
+    console.error("Error checking allowance for tokenName:", tokenName, error);
+    return false;
   }
 };
 

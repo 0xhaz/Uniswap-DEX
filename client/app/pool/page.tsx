@@ -126,7 +126,6 @@ const Pool = () => {
       }
     }
 
-    console.log("Final positions: ", positions);
     setPositions(positions);
   };
 

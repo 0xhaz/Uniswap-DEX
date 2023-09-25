@@ -26,22 +26,21 @@ import {
   claimEther,
   getBalance,
   getEthBalance,
-  hasValidAllowance,
-  increaseAllowance,
+  hasValidAllowanceStaking,
 } from "@/utils/queries";
 import { DEFAULT_VALUE, TokenProps, tokens } from "../constants/constants";
 import Selector from "@/app/components/selector";
 import TransactionStatus from "@/app/components/transactionStatus";
 import { contract } from "@/utils/contracts";
+import { formatEth, toEth } from "@/utils/ether-utils";
 
 const stakingRouter = contract("stakingRouter");
 
 const Stake = () => {
-  const [expand, setExpand] = useState<boolean>(false);
   const [stakedAmount, setStakedAmount] = useState<number | string>(0);
   const [earnedRewards, setEarnedRewards] = useState<number | string>(0);
   const [stakeAmount, setStakeAmount] = useState<string | number>(0);
-  const [withdrawAmount, setWithdrawAmount] = useState<number | string>(0);
+  const [withdrawAmount, setWithdrawAmount] = useState<number>(0);
   const [claimAmount, setClaimAmount] = useState<number | string>(0);
   const [stakeToken, setStakeToken] = useState<TokenProps | null>(
     () => tokens.find(token => token.key === DEFAULT_VALUE) || null
@@ -49,7 +48,6 @@ const Stake = () => {
   const [txPending, setTxPending] = useState<boolean>(false);
   const [poolAddress, setPoolAddress] = useState<string | null>(null);
   const [poolBalance, setPoolBalance] = useState<number | string>(0);
-  const [poolToken, setPoolToken] = useState<TokenProps | null>(null);
 
   const { address } = useAccount();
 
@@ -63,19 +61,38 @@ const Stake = () => {
       setTxPending(true);
       if (stakeToken?.key === "ETH") {
         await stakeEther(stakeAmount.toString());
+        setStakeAmount(stakeAmount.toString());
+        setStakeAmount("");
+        notifySuccess();
       } else {
-        const stakeTokenAddress = stakeToken?.address ?? "";
-        const stakeTokenABI = stakeToken?.abi ?? "";
-
-        await approveTokens(
-          stakeTokenAddress,
-          stakeTokenABI,
-          stakingRouter?.address,
+        const hasAllowance = await hasValidAllowanceStaking(
+          address,
+          stakeToken?.key || "",
           stakeAmount.toString()
         );
-        notifySuccess();
+
+        if (!hasAllowance) {
+          console.log("Approval is required. Calling approveTokens...");
+          await approveTokens(
+            stakeToken?.address || "",
+            stakeToken?.abi || "",
+            stakingRouter?.address,
+            stakeAmount.toString()
+          );
+
+          notifySuccess();
+        } else {
+          console.log("Already approved. Proceeding with staking...");
+        }
 
         await stakedTokens(stakeToken?.key || "", stakeAmount.toString());
+
+        const updatedStakedAmount = await getStakedAmount(
+          stakeToken?.key || ""
+        );
+        console.log(updatedStakedAmount);
+        setStakedAmount(formatEth(updatedStakedAmount.toString()));
+        setStakeAmount("");
         notifySuccess();
       }
     } catch (error) {
@@ -89,11 +106,16 @@ const Stake = () => {
   const handleUnstakes = () => {
     if (!address) return;
     if (stakeToken) {
+      setTxPending(true);
       if (stakeToken?.key === "ETH") {
         withdrawEther(withdrawAmount.toString());
+        notifySuccess();
       } else {
         withdrawTokens(stakeToken?.key || "", withdrawAmount.toString());
+
+        notifySuccess();
       }
+      setTxPending(false);
     }
   };
 
@@ -149,7 +171,10 @@ const Stake = () => {
 
       try {
         const stakedAmount = await getStakedAmount(stakeToken?.key || "");
-        setStakedAmount(stakedAmount?.toString() || "0");
+        const parseStakedAmount = parseFloat(
+          formatEth(stakedAmount.toString())
+        ).toFixed(2);
+        setStakedAmount(parseStakedAmount || "0");
       } catch (error) {
         console.error(error);
       }
@@ -163,8 +188,12 @@ const Stake = () => {
       if (!address || !stakeToken) return;
 
       try {
-        const earnedRewards = await getEarnedRewards(stakeToken?.address || "");
-        setEarnedRewards(earnedRewards?.toString() || "0");
+        const earnedRewards = await getEarnedRewards(stakeToken?.key || "");
+        const parseEarnedRewards = parseFloat(
+          formatEth(earnedRewards.toString())
+        ).toFixed(2);
+        setEarnedRewards(parseEarnedRewards);
+        console.log("Rewards: ", formatEth(earnedRewards?.toString()));
       } catch (error) {
         console.error(error);
       }
@@ -181,24 +210,29 @@ const Stake = () => {
       <div className="w-[50%] bg-[#212429] mt-10 p-20 flex flex-col justify-center items-center px-2 pb-10 ">
         <div className="w-[80%] flex items-center justify-between">
           <div className=" grid items-center mb-12 ml-10 text-lg font-semibold ">
-            <p className="px-4 mb-4 ">Stake</p>
-            <Selector
-              id={"stake"}
-              setToken={(token: TokenProps) => setStakeToken(token)}
-              defaultValue={stakeToken}
-              ignoreValue={null}
-              tokens={tokens}
-            />
+            <p className="px-4 mb-6 text-2xl ">Stake</p>
+            <div className="relative flex items-center rounded-xl mt-0">
+              <input
+                type="number"
+                id=""
+                className=" text-white w-[300px] outline-none rounded-xl h-12 px-2 appearance-none text-xl bg-[#2c2f36] "
+                placeholder="0.0"
+                required
+                onChange={e => setStakeAmount(e.target.value)}
+                value={stakeAmount}
+              />
+              <div className="absolute -right-1 ">
+                <Selector
+                  id={"stake"}
+                  setToken={(token: TokenProps) => setStakeToken(token)}
+                  defaultValue={stakeToken}
+                  ignoreValue={null}
+                  tokens={tokens}
+                />
+              </div>
+            </div>
           </div>
           <div>
-            <input
-              type="number"
-              id=""
-              className="relative text-white w-full outline-none rounded-xl h-12 px-2 appearance-none text-xl bg-[#2c2f36] "
-              placeholder="0.0"
-              required
-              onChange={e => setStakeAmount(e.target.value)}
-            />
             <Button
               type="secondary"
               style={{
@@ -212,14 +246,14 @@ const Stake = () => {
           </div>
         </div>
 
-        <div className="mt-10 relative border border-gray-500 py-2 px-10 rounded-md flex items-center justify-between ">
-          <div className="text-white p-2 mx-4 ">
-            <div>Staking APR</div>
-            <div>12%</div>
+        <div className=" relative border border-gray-500 py-2 px-10 rounded-md flex items-center justify-between ">
+          <div className="text-white p-2 mx-4  ">
+            <div className="">Staking APY</div>
+            <div className=" flex items-center justify-center">12%</div>
           </div>
           <div className="text-white p-2 mx-4">
-            <div>Max Slashing</div>
-            <div>10%</div>
+            <div></div>
+            <div></div>
           </div>
           <div className="text-white p-2 mx-4">
             <div>Wallet Balance</div>
@@ -230,7 +264,7 @@ const Stake = () => {
         <div className="mt-4 relative flex items-center text-white justify-between">
           <div className="mt-4 relative border border-gray-500 py-4 px-6 rounded-sm flex items-center flex-col w-full mr-2 justify-center ">
             <h3 className="text-md mb-1">Staked</h3>
-            <h3 className="text-xl font-semibold">{stakeAmount}</h3>
+            <h3 className="text-xl font-semibold">{stakedAmount}</h3>
             <div className="text-sm mt-1">
               <input
                 type="number"
@@ -238,7 +272,8 @@ const Stake = () => {
                 className="relative text-white w-full outline-none rounded-xl h-12 px-2 appearance-none text-xl bg-[#2c2f36]"
                 placeholder="0.0"
                 required
-                onChange={e => {}}
+                onChange={e => setWithdrawAmount(+e.target.value)}
+                value={withdrawAmount}
               />
             </div>
             <Button
@@ -261,7 +296,7 @@ const Stake = () => {
                 className="relative text-white w-full outline-none rounded-xl h-12 px-2 appearance-none text-xl bg-[#2c2f36]"
                 placeholder="0.0"
                 required
-                onChange={e => {}}
+                onChange={e => setClaimAmount(e.target.value)}
               />
             </div>
             <Button
