@@ -21,14 +21,6 @@ contract StakingPoolRouter {
         rtoken = _rtoken;
     }
 
-    function getPoolAddress(address _token) public view returns (address pool) {
-        pool = IStakingPoolFactory(factory).getPool(_token);
-    }
-
-    function getBalance(address _token) public view returns (uint256 balance) {
-        balance = IERC20(_token).balanceOf(address(this));
-    }
-
     function createPool(address sToken) public {
         address pool = getPoolAddress(sToken);
         require(pool == address(0), "POOL_EXISTS");
@@ -97,6 +89,11 @@ contract StakingPoolRouter {
     function stakeETH(uint256 _amount) public payable {
         address pool = getPoolAddress(WETH);
 
+        if (pool == address(0)) {
+            createPool(WETH);
+            pool = getPoolAddress(WETH);
+        }
+
         require(pool != address(0), "POOL_NOT_EXIST");
         require(_amount > 0, "Must stake more than 0 ether");
         require(msg.value >= _amount, "Insufficient Ether sent");
@@ -123,5 +120,26 @@ contract StakingPoolRouter {
 
     function redeemRewardETH() public {
         redeemReward(WETH);
+    }
+
+    function getPoolAddress(address _token) public view returns (address pool) {
+        pool = IStakingPoolFactory(factory).getPool(_token);
+    }
+
+    function getBalance(address _token) public view returns (uint256 balance) {
+        balance = IERC20(_token).balanceOf(address(this));
+    }
+
+    function estimateAPYForPool(address _token) public view returns (uint256) {
+        address pool = getPoolAddress(_token);
+        require(pool != address(0), "POOL_NOT_EXISTS");
+
+        IStakingPool stakingPool = IStakingPool(pool);
+
+        uint256 rewardPerToken = stakingPool.rewardPerToken();
+
+        uint256 estimatedAPY = (rewardPerToken * 365 days) / 1e18;
+
+        return estimatedAPY;
     }
 }

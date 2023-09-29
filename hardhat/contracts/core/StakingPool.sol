@@ -7,11 +7,9 @@ contract StakingPool {
     IERC20 public rewardToken;
     IERC20 public stakingToken;
     uint256 private _totalSupply;
-    uint256 public rewardRate;
+    uint256 public rewardRate = 100;
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
-    uint256 public decimalFactor;
-    uint256 public constant fixedAPY = 12;
     bool public rewardRateSet = false;
 
     mapping(address => uint256) public rewards;
@@ -30,9 +28,6 @@ contract StakingPool {
     constructor(address _stakingToken, address _rewardToken) {
         stakingToken = IERC20(_stakingToken);
         rewardToken = IERC20(_rewardToken);
-
-        uint256 rewardTokenDecimals = rewardToken.decimals();
-        decimalFactor = 10 ** rewardTokenDecimals;
     }
 
     /// @dev - to stake tokens into the pool
@@ -44,10 +39,6 @@ contract StakingPool {
         require(_amount > 0, "Cannot stake 0 tokens");
         _totalSupply += _amount;
         staked[_user] += _amount;
-
-        if (!rewardRateSet) {
-            _setRewardRate();
-        }
     }
 
     /// @dev - to withdraw tokens from the pool
@@ -70,7 +61,7 @@ contract StakingPool {
 
         return
             rewardPerTokenStored +
-            (((block.timestamp - lastUpdateTime) * rewardRate * decimalFactor) /
+            (((block.timestamp - lastUpdateTime) * rewardRate * 1e18) /
                 _totalSupply);
     }
 
@@ -87,8 +78,8 @@ contract StakingPool {
     function rewardEarned(address _account) public view returns (uint256) {
         return
             ((staked[_account] *
-                (rewardPerToken() - userRewardPerTokenPaid[_account])) /
-                decimalFactor) + rewards[_account];
+                (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) +
+            rewards[_account];
     }
 
     function claimReward(address _user) external updateReward(msg.sender) {
@@ -97,13 +88,5 @@ contract StakingPool {
             rewards[_user] = 0;
             rewardToken.transfer(_user, reward);
         }
-    }
-
-    function _setRewardRate() internal {
-        require(!rewardRateSet, "Reward rate already set");
-        rewardRate =
-            (stakingToken.balanceOf(address(this)) * fixedAPY) /
-            (365 * 100);
-        rewardRateSet = true;
     }
 }

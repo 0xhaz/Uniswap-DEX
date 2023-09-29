@@ -28,11 +28,17 @@ import {
   getEthBalance,
   hasValidAllowanceStaking,
 } from "@/utils/queries";
-import { DEFAULT_VALUE, TokenProps, tokens } from "../constants/constants";
+import {
+  CONTRACTS,
+  DEFAULT_VALUE,
+  RTOKEN,
+  TokenProps,
+  tokens,
+} from "../constants/constants";
 import Selector from "@/app/components/selector";
 import TransactionStatus from "@/app/components/transactionStatus";
 import { contract } from "@/utils/contracts";
-import { formatEth, toEth } from "@/utils/ether-utils";
+import { formatEth, toEth, toWei } from "@/utils/ether-utils";
 
 const stakingRouter = contract("stakingRouter");
 
@@ -90,7 +96,7 @@ const Stake = () => {
         const updatedStakedAmount = await getStakedAmount(
           stakeToken?.key || ""
         );
-        console.log(updatedStakedAmount);
+
         setStakedAmount(formatEth(updatedStakedAmount.toString()));
         setStakeAmount("");
         notifySuccess();
@@ -121,10 +127,18 @@ const Stake = () => {
 
   const handleClaim = () => {
     if (!address) return;
+    const tokenInfo = CONTRACTS.RTOKEN;
     if (stakeToken) {
       if (stakeToken?.key === "ETH") {
         claimEther();
       } else {
+        approveTokens(
+          tokenInfo?.address || "",
+          tokenInfo?.abi || "",
+          stakingRouter?.address,
+          claimAmount.toString()
+        );
+
         claimRewards(stakeToken?.key || "", claimAmount.toString());
       }
     }
@@ -194,6 +208,7 @@ const Stake = () => {
         ).toFixed(2);
         setEarnedRewards(parseEarnedRewards);
         console.log("Rewards: ", formatEth(earnedRewards?.toString()));
+        console.log("earnedRewards: ", earnedRewards.toString());
       } catch (error) {
         console.error(error);
       }

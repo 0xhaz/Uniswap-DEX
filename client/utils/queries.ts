@@ -702,9 +702,9 @@ export const withdrawTokens = async (
 
 export const claimRewards = async (tokenAddress: string, outAmount: string) => {
   const stakingContract = contract("stakingRouter");
-
+  const tokenInfo = tokenContractMap[tokenAddress];
   try {
-    const claim = await stakingContract?.redeemReward(tokenAddress);
+    const claim = await stakingContract?.redeemReward(tokenInfo.address);
 
     await claim.wait();
   } catch (error) {
@@ -715,12 +715,15 @@ export const claimRewards = async (tokenAddress: string, outAmount: string) => {
 export const stakeEther = async (amount: string) => {
   const stakingContract = contract("stakingRouter");
   const signer = provider.getSigner();
+  const amountInWei = toEth(amount);
 
   try {
     const stake = await stakingContract?.stakeETH({
       from: signer.getAddress(),
-      value: toEth(amount.toString()),
+      value: amountInWei,
     });
+
+    console.log("Staking ETH: ", amount.toString());
 
     await stake.wait();
   } catch (error) {
@@ -796,3 +799,178 @@ export const hasValidAllowanceStaking = async (
 };
 
 ////////////////////// LENDING //////////////////////
+
+export const getLendingPoolAddress = async (tokenAddress: string) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const tokenInfo = tokenContractMap[tokenAddress];
+  try {
+    const getPool = await lendingPoolContract?.getPoolAddress(
+      tokenInfo.address
+    );
+    return getPool;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const createPool = async (tokenAddress: string) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const tokenInfo = tokenContractMap[tokenAddress];
+  try {
+    const createPool = await lendingPoolContract?.createPool(tokenInfo.address);
+    await createPool.wait();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const getRepaidAmount = async (tokenAddress: string, amount: string) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const tokenInfo = tokenContractMap[tokenAddress];
+  const signer = provider.getSigner();
+  try {
+    const repayAmount = await lendingPoolContract?.getRepayAmount(
+      tokenInfo.address,
+      signer,
+      amount
+    );
+    return repayAmount;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const getWithdrawalAmount = async (
+  tokenAddress: string,
+  amount: string
+) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const tokenInfo = tokenContractMap[tokenAddress];
+  const signer = provider.getSigner();
+  try {
+    const withdrawAmount = await lendingPoolContract?.getWithdrawAmount(
+      tokenInfo.address,
+      signer,
+      amount
+    );
+    return withdrawAmount;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const depositTokens = async (tokenAddress: string, amount: string) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const tokenInfo = tokenContractMap[tokenAddress];
+  try {
+    const deposit = await lendingPoolContract?.depositToken(
+      tokenInfo.address,
+      toEth(amount)
+    );
+    await deposit.wait();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const withdrawTokensLending = async (
+  tokenAddress: string,
+  amount: string
+) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const tokenInfo = tokenContractMap[tokenAddress];
+  try {
+    const withdrawAmount = await getWithdrawalAmount(tokenAddress, amount);
+
+    if (withdrawAmount) {
+      const withdraw = await lendingPoolContract?.withdrawToken(
+        tokenInfo.address,
+        toEth(amount)
+      );
+      await withdraw.wait();
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const borrowTokens = async (tokenAddress: string, amount: string) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const tokenInfo = tokenContractMap[tokenAddress];
+  try {
+    const borrow = await lendingPoolContract?.borrowToken(
+      tokenInfo.address,
+      toEth(amount)
+    );
+    await borrow.wait();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const repayTokens = async (tokenAddress: string, amount: string) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const tokenInfo = tokenContractMap[tokenAddress];
+  try {
+    const repayAmount = await getRepaidAmount(tokenAddress, amount);
+
+    if (repayAmount) {
+      const repay = await lendingPoolContract?.repayToken(
+        tokenInfo.address,
+        toEth(amount)
+      );
+      await repay.wait();
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const depositEther = async (amount: string) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const signer = provider.getSigner();
+  const amountInWei = toEth(amount);
+  try {
+    const deposit = await lendingPoolContract?.depositETH({
+      from: signer.getAddress(),
+      value: amountInWei,
+    });
+    await deposit.wait();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const withdrawEtherLending = async (amount: string) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const signer = provider.getSigner();
+  const amountInWei = toEth(amount);
+  try {
+    const withdraw = await lendingPoolContract?.withdrawETH(amountInWei);
+    await withdraw.wait();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const borrowEther = async (amount: string) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const amountInWei = toEth(amount);
+  try {
+    const borrow = await lendingPoolContract?.borrowETH(amountInWei);
+    await borrow.wait();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const repayEther = async (amount: string) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const amountInWei = toEth(amount);
+  try {
+    const repay = await lendingPoolContract?.repayETH(amountInWei);
+    await repay.wait();
+  } catch (error) {
+    console.error(error);
+  }
+};

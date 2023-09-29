@@ -7,6 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract WETH is ERC20, Ownable {
     address public approved;
 
+    event Deposit(address indexed account, uint256 amount);
+    event Withdraw(address indexed account, uint256 amount);
+
     constructor() ERC20("Wrapped Ether", "WETH") {}
 
     modifier onlyApproved() {
@@ -25,4 +28,23 @@ contract WETH is ERC20, Ownable {
     function setApproved(address _approved) public onlyOwner {
         approved = _approved;
     }
+
+    function deposit() external payable {
+        _mint(msg.sender, msg.value);
+        emit Deposit(msg.sender, msg.value);
+    }
+
+    function withdraw(uint256 _amount) external {
+        require(balanceOf(msg.sender) >= _amount, "Insufficient Balance");
+        _burn(msg.sender, _amount);
+        payable(msg.sender).transfer(_amount);
+        emit Withdraw(msg.sender, _amount);
+    }
+
+    receive() external payable {
+        _mint(msg.sender, msg.value);
+        emit Deposit(msg.sender, msg.value);
+    }
+
+    fallback() external payable {}
 }
