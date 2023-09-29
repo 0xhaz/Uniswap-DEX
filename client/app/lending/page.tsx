@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { Button, Input } from "@nextui-org/react";
+import { Button, Input, Modal } from "@nextui-org/react";
 import { useAccount, useProvider } from "wagmi";
 import { DEFAULT_VALUE, tokens, TokenProps } from "../constants/constants";
 import Selector from "../components/selector";
@@ -31,6 +31,7 @@ const Lending = () => {
   );
   const [toggleSupply, setToggleSupply] = useState<boolean>(false);
   const [toggleBorrow, setToggleBorrow] = useState<boolean>(false);
+  const [toggleWithdraw, setToggleWithdraw] = useState<boolean>(false);
   const [toggleRepay, setToggleRepay] = useState<boolean>(false);
   const [txPending, setTxPending] = useState<boolean>(false);
   const [userBalance, setUserBalance] = useState<number>(0);
@@ -38,19 +39,22 @@ const Lending = () => {
   const [borrowedAmount, setBorrowedAmount] = useState<number>(0);
   const [repayAmount, setRepayAmount] = useState<number>(0);
   const [borrowAmount, setBorrowAmount] = useState<number>(0);
+  const [withdrawAmount, setWithdrawAmount] = useState<number>(0);
   const [supplyAmount, setSupplyAmount] = useState<number>(0);
   const [poolAddress, setPoolAddress] = useState<string>("");
   const [toBorrow, setToBorrow] = useState<number>(0);
 
+  const handleModal = () => setExpand(true);
+  const closeModal = () => setExpand(false);
+
   const { address } = useAccount();
   return (
     <>
-      <div className="w-full mt-10 flex flex-col justify-center items-center px-2 pb-10">
-        <div className="w-full flex flex-col justify-around">
-          <h1 className="text-gray-100 text-3xl font-semibold">Lending Pool</h1>
-        </div>
+      <h1 className="text-gray-100 text-3xl font-semibold">Lending Pool</h1>
+      <div className="w-[50%] bg-[#212429] mt-10 flex flex-col justify-center items-center px-2 pb-10">
+        <div className="w-full flex flex-col justify-around"></div>
         <div className="flex items-center justify-between">
-          <div className="text-gray-100 flex items-center text-lg font-semibold">
+          <div className="text-gray-100 flex m-10 text-lg font-semibold">
             Lend
           </div>
           <Selector
@@ -93,19 +97,52 @@ const Lending = () => {
           </div>
         </div>
 
-        <div className="flex justify-between items-center">
-          <div>
-            <Button
-              auto
-              className="mt-4"
-              onClick={() => {
-                setToggleSupply(!toggleSupply);
-                setToggleBorrow(false);
-              }}
-            >
-              Supply
-            </Button>
-          </div>
+        <div className="flex justify-between m-2 gap-4 items-center">
+          <Button
+            auto
+            className="mt-4"
+            onClick={() => {
+              setToggleSupply(!toggleSupply);
+              setToggleBorrow(false);
+            }}
+          >
+            Supply
+          </Button>
+          <Button
+            auto
+            className="mt-4"
+            onClick={() => {
+              setToggleBorrow(!toggleBorrow);
+              setToggleSupply(false);
+            }}
+          >
+            Borrow
+          </Button>
+
+          <Button
+            auto
+            className="mt-4"
+            onClick={() => {
+              setToggleWithdraw(!toggleWithdraw);
+              setToggleRepay(false);
+              setToggleBorrow(false);
+              setToggleSupply(false);
+            }}
+          >
+            Withdraw
+          </Button>
+          <Button
+            auto
+            className="mt-4"
+            onClick={() => {
+              setToggleRepay(!toggleRepay);
+              setToggleWithdraw(false);
+              setToggleBorrow(false);
+              setToggleSupply(false);
+            }}
+          >
+            Repay
+          </Button>
         </div>
       </div>
     </>

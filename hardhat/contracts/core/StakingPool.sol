@@ -10,7 +10,6 @@ contract StakingPool {
     uint256 public rewardRate = 100;
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
-    bool public rewardRateSet = false;
 
     mapping(address => uint256) public rewards;
     mapping(address => uint256) public userRewardPerTokenPaid;
@@ -84,9 +83,8 @@ contract StakingPool {
 
     function claimReward(address _user) external updateReward(msg.sender) {
         uint256 reward = rewards[_user];
-        if (reward > 0) {
-            rewards[_user] = 0;
-            rewardToken.transfer(_user, reward);
-        }
+
+        rewards[_user] = 0;
+        rewardToken.transfer(_user, reward);
     }
 }

@@ -205,7 +205,7 @@ const Stake = () => {
         const earnedRewards = await getEarnedRewards(stakeToken?.key || "");
         const parseEarnedRewards = parseFloat(
           formatEth(earnedRewards.toString())
-        ).toFixed(2);
+        ).toFixed(4);
         setEarnedRewards(parseEarnedRewards);
         console.log("Rewards: ", formatEth(earnedRewards?.toString()));
         console.log("earnedRewards: ", earnedRewards.toString());
