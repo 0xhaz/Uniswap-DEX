@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { Button, Input, Modal } from "@nextui-org/react";
+import { Button, Input, Modal, Text } from "@nextui-org/react";
 import { useAccount, useProvider } from "wagmi";
 import { DEFAULT_VALUE, tokens, TokenProps } from "../constants/constants";
 import Selector from "../components/selector";
@@ -105,9 +105,52 @@ const Lending = () => {
               setToggleSupply(!toggleSupply);
               setToggleBorrow(false);
             }}
+            onPress={handleModal}
           >
             Supply
           </Button>
+          <Modal
+            closeButton
+            blur
+            aria-labelledby="modal-title"
+            open={expand}
+            onClose={closeModal}
+            width="600px"
+            css={{
+              backgroundColor: "#212429",
+            }}
+          >
+            <Modal.Header>
+              <Text
+                size={20}
+                css={{
+                  color: "#fff",
+                }}
+              >
+                Deposit Amounts
+              </Text>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="bg-[#212429] p-4 py-2 rounded-xl mb-2 border-[2px] border-transparent hover:border-zinc-600">
+                <div className="flex items-center rounded-xl">
+                  <input
+                    className="relative text-white w-full outline-none rounded-xl h-12 px-2 appearance-none text-xl bg-[#2c2f36]"
+                    type="number"
+                    placeholder="0.0"
+                    onChange={e => setSupplyAmount(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-center py-3">
+                <button
+                  className="p-4 m-4 my-2 w-[50%] rounded-xl bg-blue-700 text-white hover:bg-blue-600"
+                  onClick={() => {}}
+                >
+                  Add Supply
+                </button>
+              </div>
+            </Modal.Body>
+          </Modal>
           <Button
             auto
             className="mt-4"
@@ -115,9 +158,52 @@ const Lending = () => {
               setToggleBorrow(!toggleBorrow);
               setToggleSupply(false);
             }}
+            onPress={handleModal}
           >
             Borrow
           </Button>
+          <Modal
+            closeButton
+            blur
+            aria-labelledby="modal-title"
+            open={expand}
+            onClose={closeModal}
+            width="600px"
+            css={{
+              backgroundColor: "#212429",
+            }}
+          >
+            <Modal.Header>
+              <Text
+                size={20}
+                css={{
+                  color: "#fff",
+                }}
+              >
+                Borrow Amounts
+              </Text>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="bg-[#212429] p-4 py-2 rounded-xl mb-2 border-[2px] border-transparent hover:border-zinc-600">
+                <div className="flex items-center rounded-xl">
+                  <input
+                    className="relative text-white w-full outline-none rounded-xl h-12 px-2 appearance-none text-xl bg-[#2c2f36]"
+                    type="number"
+                    placeholder="0.0"
+                    onChange={e => setBorrowAmount(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-center py-3">
+                <button
+                  className="p-4 m-4 my-2 w-[50%] rounded-xl bg-blue-700 text-white hover:bg-blue-600"
+                  onClick={() => {}}
+                >
+                  Borrow
+                </button>
+              </div>
+            </Modal.Body>
+          </Modal>
 
           <Button
             auto
@@ -128,9 +214,52 @@ const Lending = () => {
               setToggleBorrow(false);
               setToggleSupply(false);
             }}
+            onPress={handleModal}
           >
             Withdraw
           </Button>
+          <Modal
+            closeButton
+            blur
+            aria-labelledby="modal-title"
+            open={expand}
+            onClose={closeModal}
+            width="600px"
+            css={{
+              backgroundColor: "#212429",
+            }}
+          >
+            <Modal.Header>
+              <Text
+                size={20}
+                css={{
+                  color: "#fff",
+                }}
+              >
+                Withdraw Amounts
+              </Text>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="bg-[#212429] p-4 py-2 rounded-xl mb-2 border-[2px] border-transparent hover:border-zinc-600">
+                <div className="flex items-center rounded-xl">
+                  <input
+                    className="relative text-white w-full outline-none rounded-xl h-12 px-2 appearance-none text-xl bg-[#2c2f36]"
+                    type="number"
+                    placeholder="0.0"
+                    onChange={e => setWithdrawAmount(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-center py-3">
+                <button
+                  className="p-4 m-4 my-2 w-[50%] rounded-xl bg-blue-700 text-white hover:bg-blue-600"
+                  onClick={() => {}}
+                >
+                  Withdraw
+                </button>
+              </div>
+            </Modal.Body>
+          </Modal>
           <Button
             auto
             className="mt-4"
@@ -140,9 +269,52 @@ const Lending = () => {
               setToggleBorrow(false);
               setToggleSupply(false);
             }}
+            onPress={handleModal}
           >
             Repay
           </Button>
+          <Modal
+            closeButton
+            blur
+            aria-labelledby="modal-title"
+            open={expand}
+            onClose={closeModal}
+            width="600px"
+            css={{
+              backgroundColor: "#212429",
+            }}
+          >
+            <Modal.Header>
+              <Text
+                size={20}
+                css={{
+                  color: "#fff",
+                }}
+              >
+                Repay Amounts
+              </Text>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="bg-[#212429] p-4 py-2 rounded-xl mb-2 border-[2px] border-transparent hover:border-zinc-600">
+                <div className="flex items-center rounded-xl">
+                  <input
+                    className="relative text-white w-full outline-none rounded-xl h-12 px-2 appearance-none text-xl bg-[#2c2f36]"
+                    type="number"
+                    placeholder="0.0"
+                    onChange={e => setRepayAmount(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-center py-3">
+                <button
+                  className="p-4 m-4 my-2 w-[50%] rounded-xl bg-blue-700 text-white hover:bg-blue-600"
+                  onClick={() => {}}
+                >
+                  Repay
+                </button>
+              </div>
+            </Modal.Body>
+          </Modal>
         </div>
       </div>
     </>
