@@ -908,6 +908,40 @@ export const borrowTokens = async (tokenAddress: string, amount: string) => {
   }
 };
 
+export const getLendAmount = async (tokenAddress: string) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const tokenInfo = tokenContractMap[tokenAddress];
+  const signer = provider.getSigner();
+
+  try {
+    const lendAmount = await lendingPoolContract?.getLendAmount(
+      tokenInfo.address,
+      signer
+    );
+    return lendAmount;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const getBorrowAmount = async (tokenAddress: string) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const tokenInfo = tokenContractMap[tokenAddress];
+  const signer = provider.getSigner();
+
+  try {
+    const borrowAmount = await lendingPoolContract?.getBorrowAmount(
+      tokenInfo.address,
+      signer
+    );
+    return borrowAmount;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 export const repayTokens = async (tokenAddress: string, amount: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
