@@ -17,7 +17,7 @@ const deployLendingRouter: DeployFunction = async (
 
   const isDevelopment = developmentChains.includes(network.name);
 
-  const factoryContract = await deployments.get("SwapPairTokensFactory");
+  const factoryContract = await deployments.get("LendingPoolFactory");
   const wethContract = await deployments.get("WETH9");
 
   const args: any = [factoryContract.address, wethContract.address];

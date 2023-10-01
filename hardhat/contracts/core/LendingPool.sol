@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../interfaces/IERC20.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 error LendingPool__InvalidAmount();
 error LendingPool__InvalidValue();
 error LendingPool__InvalidUser();
 
-contract LendingPool is ERC20 {
-    ERC20 immutable token;
+contract LendingPool {
+    IERC20 public token;
     address public immutable tokenAddress;
     uint256 totalPoolSupply;
     uint256 interestFactor;
@@ -30,18 +30,21 @@ contract LendingPool is ERC20 {
     }
 
     // @dev mapping of user address that has lended
-    mapping(address => Amount) private lendAmount;
+    mapping(address => Amount) public lendAmount;
     // mapping of interest earned by the lender
-    mapping(address => uint256) private earnedInterest;
+    mapping(address => uint256) public earnedInterest;
 
     // @dev arrays to store the info about lenders & borrowers
-    mapping(address => bool) private lenders;
-    mapping(address => bool) private borrowers;
+    mapping(address => bool) public lenders;
+    mapping(address => bool) public borrowers;
 
     // @dev mapping to check if the address has borrowed any amount
-    mapping(address => Amount) private borrowAmount;
+    mapping(address => Amount) public borrowAmount;
     // @dev mapping of interest paid by the borrower
-    mapping(address => uint256) private paidInterest;
+    mapping(address => uint256) public paidInterest;
+
+    // @dev mapping of current total supply of the token
+    mapping(address => uint256) private currentTotalSupply;
 
     // Events
     event Deposit(address indexed user, uint256 amount);
@@ -49,8 +52,8 @@ contract LendingPool is ERC20 {
     event Borrow(address indexed user, uint256 amount);
     event Repay(address indexed user, uint256 amount);
 
-    constructor(address _tokenAddress) ERC20("XToken", "XT") {
-        token = ERC20(_tokenAddress);
+    constructor(address _tokenAddress) {
+        token = IERC20(_tokenAddress);
         tokenAddress = _tokenAddress;
 
         uint256 tokenDecimals = token.decimals();
@@ -69,11 +72,9 @@ contract LendingPool is ERC20 {
         if (_liquidateAmount >= borrowAmount[_user].amount)
             revert LendingPool__InvalidAmount();
 
-        token.transferFrom(_user, address(this), _liquidateAmount);
-
         uint256 _reward = (_liquidateAmount * 3) / 100;
         _updateBorrow(_user);
-        token.transfer(msg.sender, _reward);
+
         borrowAmount[_user].amount -= _liquidateAmount + _reward;
     }
 
@@ -84,15 +85,15 @@ contract LendingPool is ERC20 {
     function deposit(uint256 _amount, address _user) external {
         if (_amount == 0) revert LendingPool__InvalidAmount();
 
-        /// @dev transferring the tokens to the pool contract
-        token.transferFrom(_user, address(this), _amount);
+        Amount storage userAmount = lendAmount[_user];
 
-        /// @dev adding in lending and lenders array for tracking
-        lendAmount[_user].amount = _amount;
-        lendAmount[_user].start = block.timestamp;
+        userAmount.amount += _amount;
+
+        if (userAmount.start == 0) {
+            userAmount.start = block.timestamp;
+        }
+
         lenders[_user] = true;
-
-        _mint(_user, _amount);
 
         /// @dev updating the total pool supply
         totalPoolSupply += _amount;
@@ -115,11 +116,6 @@ contract LendingPool is ERC20 {
         borrowAmount[_user].start = block.timestamp;
         totalPoolSupply -= _amount;
 
-        token.transfer(_user, _amount);
-
-        /// @dev tokenApproval to deduct the amount from the user
-        token.approve(address(this), _amount);
-
         borrowers[_user] = true;
         _updateBorrow(_user);
         emit Borrow(_user, _amount);
@@ -136,17 +132,14 @@ contract LendingPool is ERC20 {
 
         if (_amount == 0) revert LendingPool__InvalidAmount();
 
-        /// @dev transferring the tokens to the pool contract
-        token.transferFrom(_user, address(this), _amount);
-
         /// @dev updating the total pool supply
-        borrowAmount[_user].amount -= _repayAmount;
+        borrowAmount[_user].amount -= _amount;
 
         if (borrowAmount[_user].amount == 0) {
             borrowers[_user] = false;
         }
 
-        totalPoolSupply += _repayAmount;
+        totalPoolSupply += _amount;
         _updateBorrow(_user);
         emit Repay(_user, _repayAmount);
     }
@@ -158,25 +151,22 @@ contract LendingPool is ERC20 {
     function withdraw(address _user, uint256 _withdrawAmount) external {
         if (!lenders[_user]) revert LendingPool__InvalidUser();
 
+        Amount storage userAmount = lendAmount[_user];
+
         /// @dev calculating the total amount with interest
         uint256 _amount = _calculateWithdrawAmount(_user, _withdrawAmount);
         // console.log(_amount);
         if (_amount == 0) revert LendingPool__InvalidAmount();
 
-        /// @dev delete the record from the lendAmount mapping
-        lendAmount[_user].amount -= _amount;
+        userAmount.amount -= _amount;
 
-        if (lendAmount[_user].amount == 0) {
+        if (userAmount.amount == 0) {
             lenders[_user] = false;
         }
 
-        _burn(_user, _amount);
-
         /// @dev updating the total supply before transferring the tokens
-        totalPoolSupply -= _withdrawAmount;
+        totalPoolSupply -= _amount;
 
-        /// @dev transferring the tokens to the user
-        token.transfer(_user, _withdrawAmount);
         _updateLend(_user);
         emit Withdraw(_user, _withdrawAmount);
     }
@@ -187,12 +177,6 @@ contract LendingPool is ERC20 {
 
     function getBorrowRate() external view returns (uint256) {
         return borrowRate;
-    }
-
-    function getCurrentTotalSupply(
-        address _tokenAddress
-    ) external view returns (uint256) {
-        return token.balanceOf(_tokenAddress);
     }
 
     function _calculateRepayAmount(

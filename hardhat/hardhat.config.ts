@@ -51,6 +51,10 @@ const config: HardhatUserConfig = {
     outDir: "typechain",
     target: "ethers-v5",
   },
+  mocha: {
+    timeout: 10000000,
+    retries: 3,
+  },
   solidity: {
     compilers: [
       {

@@ -800,6 +800,48 @@ export const hasValidAllowanceStaking = async (
 
 ////////////////////// LENDING //////////////////////
 
+export const hasValidAllowanceLending = async (
+  walletAdress: string,
+  tokenName: string,
+  amount: string
+) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const tokenInfo = tokenContractMap[tokenName];
+
+  try {
+    if (!lendingPoolContract || !tokenInfo) {
+      console.error("Missing contract information for tokenName:", tokenName);
+      return false;
+    }
+
+    const tokenNameContract = tokenContract(tokenInfo.address, tokenInfo.abi);
+
+    if (!tokenNameContract) {
+      console.error("Failed to get token contract for tokenName:", tokenName);
+      return false;
+    }
+
+    const data = await tokenNameContract?.allowance(
+      walletAdress,
+      lendingPoolContract?.address
+    );
+
+    if (!data) {
+      console.error("Missing data for tokenName:", tokenName);
+      return false;
+    }
+
+    const result = BigNumber.from(data.toString()).gte(
+      BigNumber.from(toWei(amount))
+    );
+
+    return result;
+  } catch (error) {
+    console.error("Error checking allowance for tokenName:", tokenName, error);
+    return false;
+  }
+};
+
 export const getLendingPoolAddress = async (tokenAddress: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
@@ -831,7 +873,7 @@ export const getRepaidAmount = async (tokenAddress: string, amount: string) => {
   try {
     const repayAmount = await lendingPoolContract?.getRepayAmount(
       tokenInfo.address,
-      signer,
+      signer.getAddress(),
       amount
     );
     return repayAmount;
@@ -850,7 +892,7 @@ export const getWithdrawalAmount = async (
   try {
     const withdrawAmount = await lendingPoolContract?.getWithdrawAmount(
       tokenInfo.address,
-      signer,
+      signer.getAddress(),
       amount
     );
     return withdrawAmount;
@@ -916,8 +958,9 @@ export const getLendAmount = async (tokenAddress: string) => {
   try {
     const lendAmount = await lendingPoolContract?.getLendAmount(
       tokenInfo.address,
-      signer
+      signer.getAddress()
     );
+    console.log("Lend Amount: ", lendAmount.toString());
     return lendAmount;
   } catch (error) {
     console.error(error);
@@ -933,7 +976,7 @@ export const getBorrowAmount = async (tokenAddress: string) => {
   try {
     const borrowAmount = await lendingPoolContract?.getBorrowAmount(
       tokenInfo.address,
-      signer
+      signer.getAddress()
     );
     return borrowAmount;
   } catch (error) {

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 interface ILendingPoolFactory {
-    function getPool(address _token) external view returns (address);
+    function getLendingPool(address _token) external view returns (address);
 
     function allPools() external view returns (address[] memory);
 

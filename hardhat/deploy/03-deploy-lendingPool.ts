@@ -17,9 +17,9 @@ const deployLendingPool: DeployFunction = async (
 
   const isDevelopment = developmentChains.includes(network.name);
 
-  const wethTokenContract = await deployments.get("WETH9");
+  const usdtTokenContract = await deployments.get("USDT");
 
-  const args: any = [wethTokenContract.address];
+  const args: any = [usdtTokenContract.address];
 
   const lendingPool = await deployments.deploy("LendingPool", {
     from: deployer,

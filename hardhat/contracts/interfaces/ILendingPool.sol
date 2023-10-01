@@ -13,7 +13,7 @@ interface ILendingPool {
 
     function borrowAmount(address _user) external view returns (Amount memory);
 
-    function payInterest(address user) external view returns (uint256);
+    function paidInterest(address user) external view returns (uint256);
 
     function lenders(address _user) external view returns (bool);
 
@@ -28,6 +28,10 @@ interface ILendingPool {
     function withdraw(address _user, uint256 _amount) external;
 
     function liquidate(address _user, uint256 _amount) external;
+
+    function getCurrentTotalSupply(
+        address _token
+    ) external view returns (uint256);
 
     function calculateRepayAmount(
         address _user,

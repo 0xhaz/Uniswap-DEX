@@ -24,6 +24,8 @@ import {
   getEthBalance,
   getLendAmount,
   getBorrowAmount,
+  approveTokens,
+  hasValidAllowanceLending,
 } from "@/utils/queries";
 import { formatEth } from "@/utils/ether-utils";
 
@@ -44,7 +46,7 @@ const Lending = () => {
   const [txPending, setTxPending] = useState<boolean>(false);
   const [userBalance, setUserBalance] = useState<number | string>(0);
   const [lendAmount, setLendAmount] = useState<number | string>(0);
-  const [borrowedAmount, setBorrowedAmount] = useState<number>(0);
+  const [borrowedAmount, setBorrowedAmount] = useState<number | string>(0);
   const [repayAmount, setRepayAmount] = useState<number>(0);
   const [borrowAmount, setBorrowAmount] = useState<number | string>(0);
   const [withdrawAmount, setWithdrawAmount] = useState<number>(0);
@@ -88,10 +90,12 @@ const Lending = () => {
   };
 
   const getPoolBalance = async () => {
+    if (!address) return;
     try {
-      const tokenInfo = getBalance(selectedToken?.key || "", address || "");
+      const tokenInfo = getBalance(selectedToken?.key || "", address);
       const formatBalance = formatEth(tokenInfo.toString());
-      setToBorrow(formatBalance);
+      console.log("formatBalance: ", formatBalance);
+      setToBorrow(tokenInfo.toString());
     } catch (error) {
       console.log("Fetching pool balance: ", error);
     }
@@ -101,6 +105,8 @@ const Lending = () => {
     try {
       const amount = await getLendAmount(selectedToken?.key || "");
       const formatAmount = formatEth(amount);
+      console.log("formatAmount: ", formatAmount);
+      console.log("amount: ", amount.toString());
       setLendAmount(formatAmount);
     } catch (error) {
       console.log("Fetching lend amount: ", error);
@@ -111,96 +117,108 @@ const Lending = () => {
     try {
       const amount = await getBorrowAmount(selectedToken?.key || "");
       const formatAmount = formatEth(amount);
-      setBorrowAmount(formatAmount);
+      setBorrowedAmount(formatAmount);
     } catch (error) {
       console.log("Fetching borrow amount: ", error);
     }
   };
 
   const handleSupply = async () => {
+    if (!address || !selectedToken) return;
     try {
-      if (selectedToken) {
-        if (selectedToken?.key === "ETH") {
-          setTxPending(true);
-          depositEther(supplyAmount.toString());
+      setTxPending(true);
+      if (selectedToken?.key === "ETH") {
+        depositEther(supplyAmount.toString());
+        notifySuccess();
+      } else {
+        const hasAllowance = await hasValidAllowanceLending(
+          address,
+          selectedToken?.key || "",
+          supplyAmount.toString()
+        );
+
+        if (!hasAllowance) {
+          await approveTokens(
+            selectedToken?.address || "",
+            selectedToken?.abi || [],
+            lendingRouter.address,
+            supplyAmount.toString()
+          );
+
           notifySuccess();
-          setTxPending(false);
-        } else {
-          setTxPending(true);
-          depositTokens(selectedToken?.address || "", supplyAmount.toString());
-          notifySuccess();
-          setTxPending(false);
         }
+
+        depositTokens(selectedToken?.key || "", supplyAmount.toString());
+        notifySuccess();
       }
     } catch (error) {
       notifyError("Error supplying");
       console.log("Supplying Error: ", error);
+    } finally {
+      setTxPending(false);
     }
   };
 
   const handleBorrow = async () => {
     try {
+      setTxPending(true);
       if (selectedToken) {
         if (selectedToken?.key === "ETH") {
-          setTxPending(true);
           borrowEther(borrowAmount.toString());
           notifySuccess();
-          setTxPending(false);
         } else {
-          setTxPending(true);
-          borrowTokens(selectedToken?.address || "", borrowAmount.toString());
+          borrowTokens(selectedToken?.key || "", borrowAmount.toString());
           notifySuccess();
-          setTxPending(false);
         }
       }
     } catch (error) {
       notifyError("Error borrowing");
       console.log("Borrowing Error: ", error);
+    } finally {
+      setTxPending(false);
     }
   };
 
   const handleWithdraw = async () => {
     try {
+      setTxPending(true);
       if (selectedToken) {
         if (selectedToken?.key === "ETH") {
-          setTxPending(true);
           withdrawEtherLending(withdrawAmount.toString());
           notifySuccess();
-          setTxPending(false);
         } else {
-          setTxPending(true);
           withdrawTokensLending(
-            selectedToken?.address || "",
+            selectedToken?.key || "",
             withdrawAmount.toString()
           );
           notifySuccess();
-          setTxPending(false);
         }
       }
     } catch (error) {
       notifyError("Error withdrawing");
       console.log("Withdrawing Error: ", error);
+    } finally {
+      setTxPending(false);
     }
   };
 
   const handleRepay = async () => {
     try {
+      setTxPending(true);
       if (selectedToken) {
         if (selectedToken?.key === "ETH") {
-          setTxPending(true);
           repayEther(repayAmount.toString());
           notifySuccess();
-          setTxPending(false);
         } else {
-          setTxPending(true);
-          repayTokens(selectedToken?.address || "", repayAmount.toString());
+          repayTokens(selectedToken?.key || "", repayAmount.toString());
           notifySuccess();
-          setTxPending(false);
         }
       }
     } catch (error) {
       notifyError("Error repaying");
       console.log("Repaying Error: ", error);
+    } finally {
+      setTxPending(false);
     }
   };
 
@@ -209,6 +227,8 @@ const Lending = () => {
     getUserBalance();
     getPoolAddress();
     getPoolBalance();
+    fetchLendAmount();
+    fetchBorrowAmount();
   }, [selectedToken]);
 
   const { address } = useAccount();
@@ -242,7 +262,7 @@ const Lending = () => {
             </div>
             <div className="flex items-center justify-between w-full my-2">
               <div>Available to borrow</div>
-              <div>{userBalance}</div>
+              <div>{toBorrow}</div>
             </div>
           </div>
           <div className="mt-4 relative border w-full ml-2 text-white border-gray-500 py-4 px-6 rounded-md flex flex-col items-center justify-between">
@@ -252,7 +272,7 @@ const Lending = () => {
             </div>
             <div className="flex items-center justify-between w-full my-2">
               <div>Borrowed Amount</div>
-              <div>{toBorrow}</div>
+              <div>{borrowedAmount}</div>
             </div>
             <div className="flex items-center justify-between w-full my-2">
               <div>Interest</div>
@@ -311,7 +331,7 @@ const Lending = () => {
                   <button
                     id="supply"
                     className="p-4 m-4 my-2 w-[50%] rounded-xl bg-blue-700 text-white hover:bg-blue-600"
-                    onClick={() => {}}
+                    onClick={() => handleSupply()}
                   >
                     Add Supply
                   </button>
@@ -369,7 +389,7 @@ const Lending = () => {
                   <button
                     id="borrow"
                     className="p-4 m-4 my-2 w-[50%] rounded-xl bg-blue-700 text-white hover:bg-blue-600"
-                    onClick={() => {}}
+                    onClick={() => handleBorrow()}
                   >
                     Borrow
                   </button>
@@ -431,7 +451,7 @@ const Lending = () => {
                   <button
                     id="withdraw"
                     className="p-4 m-4 my-2 w-[50%] rounded-xl bg-blue-700 text-white hover:bg-blue-600"
-                    onClick={() => {}}
+                    onClick={() => handleWithdraw()}
                   >
                     Withdraw
                   </button>
@@ -491,7 +511,7 @@ const Lending = () => {
                   <button
                     id="repay"
                     className="p-4 m-4 my-2 w-[50%] rounded-xl bg-blue-700 text-white hover:bg-blue-600"
-                    onClick={() => {}}
+                    onClick={() => handleRepay()}
                   >
                     Repay
                   </button>
