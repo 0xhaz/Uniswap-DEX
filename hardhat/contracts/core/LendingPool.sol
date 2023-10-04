@@ -43,9 +43,6 @@ contract LendingPool {
     // @dev mapping of interest paid by the borrower
     mapping(address => uint256) public paidInterest;
 
-    // @dev mapping of current total supply of the token
-    mapping(address => uint256) private currentTotalSupply;
-
     // Events
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
@@ -117,7 +114,7 @@ contract LendingPool {
         totalPoolSupply -= _amount;
 
         borrowers[_user] = true;
-        _updateBorrow(_user);
+
         emit Borrow(_user, _amount);
     }
 
@@ -154,18 +151,18 @@ contract LendingPool {
         Amount storage userAmount = lendAmount[_user];
 
         /// @dev calculating the total amount with interest
-        uint256 _amount = _calculateWithdrawAmount(_user, _withdrawAmount);
-        // console.log(_amount);
-        if (_amount == 0) revert LendingPool__InvalidAmount();
 
-        userAmount.amount -= _amount;
+        // console.log(_amount);
+        if (_withdrawAmount == 0) revert LendingPool__InvalidAmount();
+
+        userAmount.amount -= _withdrawAmount;
 
         if (userAmount.amount == 0) {
             lenders[_user] = false;
         }
 
         /// @dev updating the total supply before transferring the tokens
-        totalPoolSupply -= _amount;
+        totalPoolSupply -= _withdrawAmount;
 
         _updateLend(_user);
         emit Withdraw(_user, _withdrawAmount);
@@ -177,6 +174,11 @@ contract LendingPool {
 
     function getBorrowRate() external view returns (uint256) {
         return borrowRate;
+    }
+
+    /// @dev get the current total supply of the token
+    function getCurrentTotalSupply() external view returns (uint256) {
+        return totalPoolSupply;
     }
 
     function _calculateRepayAmount(
@@ -195,28 +197,15 @@ contract LendingPool {
         _amount = (_repayAmount + _interest);
     }
 
-    function _calculateWithdrawAmount(
-        address _user,
-        uint256 _withdrawAmount
-    ) internal view returns (uint256 amount) {
-        Amount storage amount_ = lendAmount[_user];
-
-        require(_withdrawAmount <= amount_.amount, "Invalid amount");
-
-        uint256 elapsedTime = block.timestamp - amount_.start;
-
-        uint256 interestEarned = (_withdrawAmount *
-            elapsedTime *
-            lendRate *
-            interestFactor) / totalPoolSupply;
-
-        amount = (_withdrawAmount + interestEarned);
-    }
-
     function _updateBorrow(
         address _user
     ) internal returns (uint256 _interestAmount) {
         Amount storage amount_ = borrowAmount[_user];
+
+        if (amount_.start == 0) {
+            return 0;
+        }
+
         _interestAmount =
             (amount_.amount *
                 ((block.timestamp - amount_.start) *
@@ -231,6 +220,10 @@ contract LendingPool {
         address _user
     ) internal returns (uint256 _interestAmount) {
         Amount storage amount_ = lendAmount[_user];
+
+        if (totalPoolSupply == 0 || amount_.start == 0) {
+            return 0;
+        }
 
         _interestAmount =
             (amount_.amount *

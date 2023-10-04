@@ -28,8 +28,9 @@ import {
   tokenPairs,
 } from "../constants/constants";
 import Selector from "../components/selector";
+import TransactionStatus from "../components/transactionStatus";
 import { formatEth, toEth, toWei } from "@/utils/ether-utils";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 
 const swapRouter = contract("swapRouter");
 
@@ -244,6 +245,7 @@ const Pool = () => {
     console.log("validPairIndex", validPairIndex);
 
     if (validPairIndex !== -1) {
+      setTxPending(true);
       if (selectedToken1?.key !== "ETH" && selectedToken2?.key !== "ETH") {
         await approveTokens(
           token1Address,
@@ -304,6 +306,9 @@ const Pool = () => {
 
         // await fetchReserves();
       }
+
+      setTxPending(false);
+      closeModal();
     } else {
       notifyError("Please select a valid token pair");
     }
@@ -590,6 +595,10 @@ const Pool = () => {
               </div>
             </Modal.Body>
           </Modal>
+
+          {txPending && <TransactionStatus />}
+
+          <Toaster />
         </div>
       </div>
 

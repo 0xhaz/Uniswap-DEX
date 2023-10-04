@@ -2,16 +2,11 @@
 pragma solidity ^0.8.19;
 
 interface ILendingPool {
-    struct Amount {
-        uint256 amount;
-        uint256 start;
-    }
-
-    function lendAmount(address _user) external view returns (Amount memory);
+    function lendAmount(address _user) external view returns (uint256);
 
     function earnedInterest(address _user) external view returns (uint256);
 
-    function borrowAmount(address _user) external view returns (Amount memory);
+    function borrowAmount(address _user) external view returns (uint256);
 
     function paidInterest(address user) external view returns (uint256);
 
@@ -29,9 +24,7 @@ interface ILendingPool {
 
     function liquidate(address _user, uint256 _amount) external;
 
-    function getCurrentTotalSupply(
-        address _token
-    ) external view returns (uint256);
+    function getCurrentTotalSupply() external view returns (uint256);
 
     function calculateRepayAmount(
         address _user,

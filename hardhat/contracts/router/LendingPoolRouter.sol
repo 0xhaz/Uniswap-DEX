@@ -33,12 +33,13 @@ contract LendingPoolRouter {
 
     function getRepayAmount(
         address _token,
-        address _user,
-        uint256 repayAmount
+        address _user
     ) public view returns (uint256 amount) {
         address pool = getPoolAddress(_token);
 
-        amount = ILendingPool(pool).calculateRepayAmount(_user, repayAmount);
+        uint256 borrowAmount = ILendingPool(pool).borrowAmount(_user);
+
+        amount = ILendingPool(pool).calculateRepayAmount(_user, borrowAmount);
     }
 
     function getWithdrawAmount(
@@ -79,7 +80,7 @@ contract LendingPoolRouter {
         require(pool != address(0), "Pool does not exist");
 
         require(
-            ILendingPool(pool).lendAmount(msg.sender).amount > 0,
+            ILendingPool(pool).lendAmount(msg.sender) > 0,
             "No amount to withdraw"
         );
 
@@ -101,16 +102,21 @@ contract LendingPoolRouter {
         address pool = getPoolAddress(_token);
         require(pool != address(0), "Pool does not exist");
 
-        uint256 totalAmount = getRepayAmount(_token, msg.sender, _amount);
+        uint256 calculatedRepayAmount = getRepayAmount(_token, msg.sender);
+
+        require(
+            _amount <= calculatedRepayAmount,
+            "Amount exceeds repay amount"
+        );
 
         TransferHelper.safeTransferFrom(
             _token,
             msg.sender,
             address(this),
-            totalAmount
+            _amount
         );
 
-        ILendingPool(pool).repay(msg.sender, totalAmount);
+        ILendingPool(pool).repay(msg.sender, _amount);
     }
 
     function depositETH(uint256 _amount) public payable {
@@ -153,7 +159,7 @@ contract LendingPoolRouter {
         address pool = getPoolAddress(WETH);
         require(pool != address(0), "Pool does not exist");
 
-        uint256 totalAmount = getRepayAmount(WETH, msg.sender, _amount);
+        uint256 totalAmount = getRepayAmount(WETH, msg.sender);
 
         require(msg.value >= totalAmount, "Invalid amount");
 
@@ -174,7 +180,7 @@ contract LendingPoolRouter {
         address pool = getPoolAddress(_token);
         require(pool != address(0), "Pool does not exist");
 
-        amount = ILendingPool(pool).lendAmount(_user).amount;
+        amount = ILendingPool(pool).lendAmount(_user);
     }
 
     function getTotalLendAmount(
@@ -183,7 +189,7 @@ contract LendingPoolRouter {
         address pool = getPoolAddress(_token);
         require(pool != address(0), "Pool does not exist");
 
-        amount = ILendingPool(pool).getCurrentTotalSupply(_token);
+        amount = ILendingPool(pool).getCurrentTotalSupply();
     }
 
     function getBorrowAmount(
@@ -193,6 +199,6 @@ contract LendingPoolRouter {
         address pool = getPoolAddress(_token);
         require(pool != address(0), "Pool does not exist");
 
-        amount = ILendingPool(pool).borrowAmount(_user).amount;
+        amount = ILendingPool(pool).borrowAmount(_user);
     }
 }

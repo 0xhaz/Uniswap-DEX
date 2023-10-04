@@ -26,6 +26,7 @@ import {
   getBorrowAmount,
   approveTokens,
   hasValidAllowanceLending,
+  getTotalBorrowAvailable,
 } from "@/utils/queries";
 import { formatEth } from "@/utils/ether-utils";
 
@@ -47,7 +48,7 @@ const Lending = () => {
   const [userBalance, setUserBalance] = useState<number | string>(0);
   const [lendAmount, setLendAmount] = useState<number | string>(0);
   const [borrowedAmount, setBorrowedAmount] = useState<number | string>(0);
-  const [repayAmount, setRepayAmount] = useState<number>(0);
+  const [repayAmount, setRepayAmount] = useState<number | string>(0);
   const [borrowAmount, setBorrowAmount] = useState<number | string>(0);
   const [withdrawAmount, setWithdrawAmount] = useState<number>(0);
   const [supplyAmount, setSupplyAmount] = useState<number>(0);
@@ -57,7 +58,16 @@ const Lending = () => {
   const handleSupplyModal = () => setExpandSupply(true);
   const handleBorrowModal = () => setExpandBorrow(true);
   const handleWithdrawModal = () => setExpandWithdraw(true);
-  const handleRepayModal = () => setExpandRepay(true);
+  const handleRepayModal = async () => {
+    try {
+      const amount = await getRepaidAmount(selectedToken?.key || "");
+      setRepayAmount(amount);
+      console.log("repayAmount: ", repayAmount);
+      setExpandRepay(true);
+    } catch (error) {
+      console.log("Fetching repay amount: ", error);
+    }
+  };
 
   const isTokenSelected = () =>
     selectedToken !== null && selectedToken.key !== DEFAULT_VALUE;
@@ -92,10 +102,10 @@ const Lending = () => {
   const getPoolBalance = async () => {
     if (!address) return;
     try {
-      const tokenInfo = getBalance(selectedToken?.key || "", address);
+      const tokenInfo = await getTotalBorrowAvailable(selectedToken?.key || "");
       const formatBalance = formatEth(tokenInfo.toString());
       console.log("formatBalance: ", formatBalance);
-      setToBorrow(tokenInfo.toString());
+      setToBorrow(formatBalance);
     } catch (error) {
       console.log("Fetching pool balance: ", error);
     }
@@ -203,6 +213,7 @@ const Lending = () => {
   };
 
   const handleRepay = async () => {
+    if (!address || !selectedToken) return;
     try {
       setTxPending(true);
       if (selectedToken) {
@@ -210,6 +221,23 @@ const Lending = () => {
           repayEther(repayAmount.toString());
           notifySuccess();
         } else {
+          const hasAllowance = await hasValidAllowanceLending(
+            address,
+            selectedToken?.key || "",
+            repayAmount.toString()
+          );
+
+          if (!hasAllowance) {
+            await approveTokens(
+              selectedToken?.address || "",
+              selectedToken?.abi || [],
+              lendingRouter.address,
+              repayAmount.toString()
+            );
+
+            notifySuccess();
+          }
+
           repayTokens(selectedToken?.key || "", repayAmount.toString());
           notifySuccess();
         }
@@ -503,6 +531,7 @@ const Lending = () => {
                       className="relative text-white w-full outline-none rounded-xl h-12 px-2 appearance-none text-xl bg-[#2c2f36]"
                       type="number"
                       placeholder="0.0"
+                      value={repayAmount}
                       onChange={e => setRepayAmount(Number(e.target.value))}
                     />
                   </div>

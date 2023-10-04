@@ -866,16 +866,16 @@ export const createPool = async (tokenAddress: string) => {
   }
 };
 
-export const getRepaidAmount = async (tokenAddress: string, amount: string) => {
+export const getRepaidAmount = async (tokenAddress: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
   const signer = provider.getSigner();
   try {
     const repayAmount = await lendingPoolContract?.getRepayAmount(
       tokenInfo.address,
-      signer.getAddress(),
-      amount
+      signer.getAddress()
     );
+    console.log("Repay Amount: ", repayAmount);
     return repayAmount;
   } catch (error) {
     console.error(error);
@@ -922,15 +922,11 @@ export const withdrawTokensLending = async (
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
   try {
-    const withdrawAmount = await getWithdrawalAmount(tokenAddress, amount);
-
-    if (withdrawAmount) {
-      const withdraw = await lendingPoolContract?.withdrawToken(
-        tokenInfo.address,
-        toEth(amount)
-      );
-      await withdraw.wait();
-    }
+    const withdraw = await lendingPoolContract?.withdrawToken(
+      tokenInfo.address,
+      toEth(amount)
+    );
+    await withdraw.wait();
   } catch (error) {
     console.error(error);
   }
@@ -985,19 +981,32 @@ export const getBorrowAmount = async (tokenAddress: string) => {
   }
 };
 
+export const getTotalBorrowAvailable = async (tokenAddress: string) => {
+  const lendingPoolContract = contract("lendingPoolRouter");
+  const tokenInfo = tokenContractMap[tokenAddress];
+
+  try {
+    const totalBorrowAvailable = await lendingPoolContract?.getTotalLendAmount(
+      tokenInfo?.address
+    );
+    console.log("Total Borrow Available: ", totalBorrowAvailable.toString());
+    return totalBorrowAvailable;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
 export const repayTokens = async (tokenAddress: string, amount: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
   try {
-    const repayAmount = await getRepaidAmount(tokenAddress, amount);
+    const payToken = await lendingPoolContract?.repayToken(
+      tokenInfo.address,
+      toEth(amount)
+    );
 
-    if (repayAmount) {
-      const repay = await lendingPoolContract?.repayToken(
-        tokenInfo.address,
-        toEth(amount)
-      );
-      await repay.wait();
-    }
+    await payToken.wait();
   } catch (error) {
     console.error(error);
   }
