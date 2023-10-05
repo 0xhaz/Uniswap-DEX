@@ -3,8 +3,6 @@ pragma solidity ^0.8.19;
 
 import "../interfaces/IERC20.sol";
 
-// import "hardhat/console.sol";
-
 error LendingPool__InvalidAmount();
 error LendingPool__InvalidValue();
 error LendingPool__InvalidUser();
@@ -125,7 +123,7 @@ contract LendingPool {
     function repay(address _user, uint256 _repayAmount) external {
         if (!borrowers[_user]) revert LendingPool__InvalidUser();
 
-        uint256 _amount = _calculateRepayAmount(_user, _repayAmount);
+        uint256 _amount = calculateRepayAmount(_user, _repayAmount);
 
         if (_amount == 0) revert LendingPool__InvalidAmount();
 
@@ -181,10 +179,10 @@ contract LendingPool {
         return totalPoolSupply;
     }
 
-    function _calculateRepayAmount(
+    function calculateRepayAmount(
         address _user,
         uint256 _repayAmount
-    ) internal view returns (uint256 _amount) {
+    ) public view returns (uint256 _amount) {
         /// @dev total amount to be repaid with interest
         Amount storage amount_ = borrowAmount[_user];
 

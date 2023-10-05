@@ -31,30 +31,6 @@ contract LendingPoolRouter {
         ILendingPoolFactory(factory).createPool(_token);
     }
 
-    function getRepayAmount(
-        address _token,
-        address _user
-    ) public view returns (uint256 amount) {
-        address pool = getPoolAddress(_token);
-
-        uint256 borrowAmount = ILendingPool(pool).borrowAmount(_user);
-
-        amount = ILendingPool(pool).calculateRepayAmount(_user, borrowAmount);
-    }
-
-    function getWithdrawAmount(
-        address _token,
-        address _user,
-        uint256 withdrawAmount
-    ) public view returns (uint256 amount) {
-        address pool = getPoolAddress(_token);
-
-        amount = ILendingPool(pool).calculateWithdrawAmount(
-            _user,
-            withdrawAmount
-        );
-    }
-
     function depositToken(address _token, uint256 _amount) public {
         address pool = getPoolAddress(_token);
 
@@ -102,19 +78,7 @@ contract LendingPoolRouter {
         address pool = getPoolAddress(_token);
         require(pool != address(0), "Pool does not exist");
 
-        uint256 calculatedRepayAmount = getRepayAmount(_token, msg.sender);
-
-        require(
-            _amount <= calculatedRepayAmount,
-            "Amount exceeds repay amount"
-        );
-
-        TransferHelper.safeTransferFrom(
-            _token,
-            msg.sender,
-            address(this),
-            _amount
-        );
+        require(_amount > 0, "Invalid Amount");
 
         ILendingPool(pool).repay(msg.sender, _amount);
     }
@@ -132,11 +96,10 @@ contract LendingPoolRouter {
         address pool = getPoolAddress(WETH);
         require(pool != address(0), "Pool does not exist");
 
-        uint256 totalAmount = getWithdrawAmount(WETH, msg.sender, _amount);
         ILendingPool(pool).withdraw(msg.sender, _amount);
 
-        IWETH(WETH).transferFrom(msg.sender, address(this), totalAmount);
-        IWETH(WETH).withdraw(totalAmount);
+        IWETH(WETH).transferFrom(msg.sender, address(this), _amount);
+        IWETH(WETH).withdraw(_amount);
 
         TransferHelper.safeTransferETH(msg.sender, _amount);
     }
@@ -159,18 +122,24 @@ contract LendingPoolRouter {
         address pool = getPoolAddress(WETH);
         require(pool != address(0), "Pool does not exist");
 
-        uint256 totalAmount = getRepayAmount(WETH, msg.sender);
-
-        require(msg.value >= totalAmount, "Invalid amount");
-
         IWETH(WETH).deposit{value: msg.value}();
-        TransferHelper.safeTransfer(WETH, msg.sender, totalAmount);
+        TransferHelper.safeTransfer(WETH, msg.sender, _amount);
 
         ILendingPool(pool).repay(msg.sender, _amount);
 
-        if (msg.value > totalAmount) {
-            TransferHelper.safeTransferETH(msg.sender, msg.value - totalAmount);
+        if (msg.value > _amount) {
+            TransferHelper.safeTransferETH(msg.sender, msg.value - _amount);
         }
+    }
+
+    function getRepayAmount(
+        address _token,
+        address _user,
+        uint256 _repayAmount
+    ) public view returns (uint256 amount) {
+        address pool = getPoolAddress(_token);
+
+        amount = ILendingPool(pool).calculateRepayAmount(_user, _repayAmount);
     }
 
     function getLendAmount(
