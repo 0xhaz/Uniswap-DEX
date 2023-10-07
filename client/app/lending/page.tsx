@@ -62,7 +62,7 @@ const Lending = () => {
     try {
       const amount = await getRepaidAmount(selectedToken?.key || "");
       setRepayAmount(amount);
-      console.log("repayAmount: ", repayAmount);
+
       setExpandRepay(true);
     } catch (error) {
       console.log("Fetching repay amount: ", error);
@@ -104,7 +104,7 @@ const Lending = () => {
     try {
       const tokenInfo = await getTotalBorrowAvailable(selectedToken?.key || "");
       const formatBalance = formatEth(tokenInfo.toString());
-      console.log("formatBalance: ", formatBalance);
+
       setToBorrow(formatBalance);
     } catch (error) {
       console.log("Fetching pool balance: ", error);
@@ -115,8 +115,7 @@ const Lending = () => {
     try {
       const amount = await getLendAmount(selectedToken?.key || "");
       const formatAmount = formatEth(amount);
-      console.log("formatAmount: ", formatAmount);
-      console.log("amount: ", amount.toString());
+
       setLendAmount(formatAmount);
     } catch (error) {
       console.log("Fetching lend amount: ", error);
@@ -166,6 +165,7 @@ const Lending = () => {
       console.log("Supplying Error: ", error);
     } finally {
       setTxPending(false);
+      setExpandSupply(false);
     }
   };
 
@@ -186,6 +186,7 @@ const Lending = () => {
       console.log("Borrowing Error: ", error);
     } finally {
       setTxPending(false);
+      setExpandBorrow(false);
     }
   };
 
@@ -209,6 +210,7 @@ const Lending = () => {
       console.log("Withdrawing Error: ", error);
     } finally {
       setTxPending(false);
+      setExpandWithdraw(false);
     }
   };
 
@@ -247,6 +249,7 @@ const Lending = () => {
       console.log("Repaying Error: ", error);
     } finally {
       setTxPending(false);
+      setExpandRepay(false);
     }
   };
 

@@ -38,8 +38,6 @@ export const approveTokens = async (
 ) => {
   try {
     const signer = provider.getSigner();
-    console.log("Token In Address: ", tokenInAddress);
-    console.log("Spender Address: ", spenderAddress);
 
     const tx = await tokenContract(tokenInAddress, abi)
       .connect(signer)
@@ -163,6 +161,18 @@ export const increaseAllowance = async (tokenName: string, amount: string) => {
       error
     );
     return null;
+  }
+};
+
+export const mintTokens = async (tokenName: string) => {
+  const tokenInfo = tokenContractMap[tokenName];
+  const signer = provider.getSigner();
+  try {
+    const tokenNameContract = tokenContract(tokenInfo.address, tokenInfo.abi);
+    const mint = await tokenNameContract?.mint(signer.getAddress());
+    await mint.wait();
+  } catch (error) {
+    console.error(error);
   }
 };
 
@@ -322,21 +332,15 @@ export const depositEthForWeth = async (amountIn: string) => {
     const amountInEth = toEth(amountIn);
     const signer = provider.getSigner();
 
-    console.log("Depositing ETH for WETH...");
-    console.log("Amount in ETH:", amountInEth);
-    console.log("From Address:", address);
-
     const weth = wethContract();
     const tx = await weth.deposit({
       from: signer.getAddress(),
       value: amountInEth,
     });
-    console.log("Transaction Hash:", tx.hash);
+
     await tx.wait();
 
     const wethBalance = await weth.balanceOf(address);
-
-    console.log("WETH Balance:", formatEth(wethBalance));
   } catch (error) {
     console.log("error depositing eth for weth", error);
     throw error;
@@ -352,12 +356,10 @@ export const withdrawWethForEth = async (amountIn: string) => {
     const tx = await weth.withdraw(amountInEth, {
       from: address,
     });
-    console.log("Transaction Hash:", tx.hash);
+
     await tx.wait();
 
     const wethBalance = await weth.balanceOf(address);
-
-    console.log("WETH Balance:", formatEth(wethBalance));
   } catch (error) {
     console.log("error withdrawing weth for eth", error);
     throw error;
@@ -368,10 +370,7 @@ export const getAmountsIn = async (amountOut: string, path: string[]) => {
   const swapRouter = contract("swapRouter");
   try {
     const response = await swapRouter?.getAmountsIn(amountOut, path);
-    console.log(
-      "Amounts In: ",
-      response.map((amount: string) => toEth(amount))
-    );
+
     return response.map((amount: string) => formatEth(amount));
   } catch (error) {
     console.log(error);
@@ -383,10 +382,7 @@ export const getAmountsOut = async (amountIn: string, path: string[]) => {
   const swapRouter = contract("swapRouter");
   try {
     const response = await swapRouter?.getAmountsOut(amountIn, path);
-    console.log(
-      "Amounts Out: ",
-      response.map((amount: string) => toEth(amount))
-    );
+
     return response.map((amount: string) => formatEth(amount));
   } catch (error) {
     console.log(error);
@@ -473,8 +469,6 @@ export const addLiquidity = async (
     if (valueOne && valueTwo) {
       const deadline = getDeadline();
       const userAddress = await getAccount();
-      console.log("tokenOneAddress: ", tokenOneAddress);
-      console.log("tokenTwoAddress: ", tokenTwoAddress);
 
       const _addLiquidity = await swapRouter?.addLiquidity(
         tokenOneAddress,
@@ -598,9 +592,6 @@ export const getLiquidity = async (
     );
 
     const liquidityAmount = formatEth(liquidity);
-    // console.log("Liquidity Amount: ", liquidityAmount);
-    // console.log("Token A Address: ", addressTokenA);
-    // console.log("Token B Address: ", addressTokenB);
 
     return liquidityAmount;
   } catch (error) {
@@ -632,8 +623,6 @@ export const getStakedAmount = async (tokenAddress: string) => {
       tokenContractInfo.address
     );
 
-    console.log("Staked: ", staked.toString());
-
     return staked;
   } catch (error) {
     console.error(error);
@@ -650,8 +639,6 @@ export const getEarnedRewards = async (tokenAddress: string) => {
       tokenContractInfo.address,
       signer.getAddress()
     );
-
-    console.log("Reward Earned: ", rewardEarned.toString());
 
     return rewardEarned;
   } catch (error) {
@@ -692,8 +679,6 @@ export const withdrawTokens = async (
       toEth(outAmount)
     );
 
-    console.log("Out Amount: ", outAmount.toString());
-
     await withdraw.wait();
   } catch (error) {
     console.error(error);
@@ -722,8 +707,6 @@ export const stakeEther = async (amount: string) => {
       from: signer.getAddress(),
       value: amountInWei,
     });
-
-    console.log("Staking ETH: ", amount.toString());
 
     await stake.wait();
   } catch (error) {
@@ -875,7 +858,7 @@ export const getRepaidAmount = async (tokenAddress: string) => {
       tokenInfo.address,
       signer.getAddress()
     );
-    console.log("Repay Amount: ", repayAmount);
+
     return repayAmount;
   } catch (error) {
     console.error(error);
@@ -956,7 +939,7 @@ export const getLendAmount = async (tokenAddress: string) => {
       tokenInfo.address,
       signer.getAddress()
     );
-    console.log("Lend Amount: ", lendAmount.toString());
+
     return lendAmount;
   } catch (error) {
     console.error(error);
@@ -989,7 +972,7 @@ export const getTotalBorrowAvailable = async (tokenAddress: string) => {
     const totalBorrowAvailable = await lendingPoolContract?.getTotalLendAmount(
       tokenInfo?.address
     );
-    console.log("Total Borrow Available: ", totalBorrowAvailable.toString());
+
     return totalBorrowAvailable;
   } catch (error) {
     console.error(error);

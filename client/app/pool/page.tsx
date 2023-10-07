@@ -77,26 +77,6 @@ const Pool = () => {
   const notifyError = (msg: string) => toast.error(msg, { duration: 6000 });
   const notifySuccess = () => toast.success("Transaction completed.");
 
-  const selectTokenPair = (tokenA: TokenProps, tokenB: TokenProps) => {
-    const selectedPair = tokenPairs.find(
-      pair =>
-        (pair[0] === tokenA.address && pair[1] === tokenB.address) ||
-        (pair[0] === tokenB.address && pair[1] === tokenA.address)
-    );
-
-    if (selectedPair) {
-      setSelectedToken1(
-        tokens.find(token => token.address === selectedPair[0]) || null
-      );
-      setSelectedToken2(
-        tokens.find(token => token.address === selectedPair[1]) || null
-      );
-    } else {
-      setSelectedToken1(null);
-      setSelectedToken2(null);
-    }
-  };
-
   const getPositions = async (address: string) => {
     if (!address) return;
 
@@ -152,8 +132,6 @@ const Pool = () => {
     try {
       const response = await swapRouter?.getReserve(tokenA, tokenB);
 
-      console.log("Reserve A: ", formatEth(response?.reserveA));
-      console.log("Reserve B: ", formatEth(response?.reserveB));
       // return {
       //   reserveA: response?.reserveA,
       //   reserveB: response?.reserveB,
@@ -225,92 +203,93 @@ const Pool = () => {
   };
 
   const handleAddLiquidity = async () => {
-    console.log("Selected Token 1 (Before Check): ", selectedToken1);
-    console.log("Selected Token 2 (Before Check): ", selectedToken2);
-
-    if (selectedToken1 === selectedToken2) {
-      alert("Please select different tokens");
-      return;
-    }
-
-    const token1Address = selectedToken1?.address || "";
-    const token2Address = selectedToken2?.address || "";
-
-    const selectedPair = [token1Address, token2Address];
-
-    const validPairIndex = tokenPairs.findIndex(pair => {
-      return pair[0] === selectedPair[0] && pair[1] === selectedPair[1];
-    });
-
-    console.log("validPairIndex", validPairIndex);
-
-    if (validPairIndex !== -1) {
-      setTxPending(true);
-      if (selectedToken1?.key !== "ETH" && selectedToken2?.key !== "ETH") {
-        await approveTokens(
-          token1Address,
-          selectedToken1?.abi,
-          swapRouter.address,
-          desiredAmountA.toString()
-        );
-
-        await approveTokens(
-          token2Address,
-          selectedToken2?.abi,
-          swapRouter.address,
-          desiredAmountB.toString()
-        );
-        notifySuccess();
-
-        await addLiquidity(
-          token1Address,
-          token2Address,
-          desiredAmountA.toString(),
-          desiredAmountB.toString()
-        );
-        notifySuccess();
-
-        // await fetchReserves();
-      } else if (selectedToken1?.key === "ETH") {
-        await approveTokens(
-          token2Address,
-          selectedToken2?.abi,
-          swapRouter.address,
-          desiredAmountB.toString()
-        );
-        notifySuccess();
-
-        await addLiquidityETH(
-          token2Address,
-          desiredAmountB.toString(),
-          desiredAmountA.toString()
-        );
-        notifySuccess();
-
-        // await fetchReserves();
-      } else if (selectedToken2?.key === "ETH") {
-        await approveTokens(
-          token1Address,
-          selectedToken1?.abi,
-          swapRouter.address,
-          desiredAmountA.toString()
-        );
-        notifySuccess();
-
-        await addLiquidityETH(
-          token1Address,
-          desiredAmountA.toString(),
-          desiredAmountB.toString()
-        );
-        notifySuccess();
-
-        // await fetchReserves();
+    try {
+      if (selectedToken1 === selectedToken2) {
+        alert("Please select different tokens");
+        return;
       }
 
+      const token1Address = selectedToken1?.address || "";
+      const token2Address = selectedToken2?.address || "";
+
+      const selectedPair = [token1Address, token2Address];
+
+      const validPairIndex = tokenPairs.findIndex(pair => {
+        return pair[0] === selectedPair[0] && pair[1] === selectedPair[1];
+      });
+
+      if (validPairIndex !== -1) {
+        setTxPending(true);
+        if (selectedToken1?.key !== "ETH" && selectedToken2?.key !== "ETH") {
+          await approveTokens(
+            token1Address,
+            selectedToken1?.abi,
+            swapRouter.address,
+            desiredAmountA.toString()
+          );
+
+          await approveTokens(
+            token2Address,
+            selectedToken2?.abi,
+            swapRouter.address,
+            desiredAmountB.toString()
+          );
+          notifySuccess();
+
+          await addLiquidity(
+            token1Address,
+            token2Address,
+            desiredAmountA.toString(),
+            desiredAmountB.toString()
+          );
+          notifySuccess();
+
+          // await fetchReserves();
+        } else if (selectedToken1?.key === "ETH") {
+          await approveTokens(
+            token2Address,
+            selectedToken2?.abi,
+            swapRouter.address,
+            desiredAmountB.toString()
+          );
+          notifySuccess();
+
+          await addLiquidityETH(
+            token2Address,
+            desiredAmountB.toString(),
+            desiredAmountA.toString()
+          );
+          notifySuccess();
+
+          // await fetchReserves();
+        } else if (selectedToken2?.key === "ETH") {
+          await approveTokens(
+            token1Address,
+            selectedToken1?.abi,
+            swapRouter.address,
+            desiredAmountA.toString()
+          );
+          notifySuccess();
+
+          await addLiquidityETH(
+            token1Address,
+            desiredAmountA.toString(),
+            desiredAmountB.toString()
+          );
+          notifySuccess();
+
+          // await fetchReserves();
+        }
+      } else {
+        notifyError("Please select a valid token pair");
+      }
+    } catch (error) {
+      console.error("Error adding liquidity: ", error);
+      notifyError("Error adding liquidity");
+      setTxPending(false);
+    } finally {
       setTxPending(false);
       closeModal();
-    } else {
-      notifyError("Please select a valid token pair");
     }
   };
 
@@ -323,83 +302,90 @@ const Pool = () => {
     const inputToken1Address = tokenNameToAddress[inputToken1Name];
     const inputToken2Address = tokenNameToAddress[inputToken2Name];
 
-    if (inputToken1Address === inputToken2Address) {
-      alert("Please select different tokens");
-      return;
-    }
-
-    if (!address) return;
-
-    if (
-      inputToken1Address &&
-      inputToken2Address &&
-      inputToken1Address != inputToken2Address &&
-      liquidity
-    ) {
-      const isPairValid = tokenPairs.some(
-        ([tokenA, tokenB]) =>
-          (tokenA === inputToken1Address && tokenB === inputToken2Address) ||
-          (tokenB === inputToken1Address && tokenA === inputToken2Address)
-      );
-
-      console.log("Input Pair: ", inputToken1Address, inputToken2Address);
-      console.log("Valid Pairs: ", tokenPairs);
-      console.log("Is Pair Valid: ", isPairValid);
-
-      if (!isPairValid) {
-        alert("Please select the correct token pair from your valid pairs");
+    try {
+      if (inputToken1Address === inputToken2Address) {
+        alert("Please select different tokens");
         return;
       }
 
-      const token1 = tokens.find(token => token.address === inputToken1Address);
-      const token2 = tokens.find(token => token.address === inputToken2Address);
+      if (!address) return;
 
-      console.log("Token 1: ", token1);
-      console.log("Token 2: ", token2);
-
-      if (!token1 || !token2) {
-        alert("Please select the correct token pair from your valid pairs");
-        return;
-      }
-
-      const token1Address = token1.address ?? "";
-      const token2Address = token2.address ?? "";
-
-      console.log("Token 1 Address: ", token1Address);
-      console.log("Token 2 Address: ", token2Address);
-
-      await approveTokens(
-        token1Address,
-        token1.abi,
-        swapRouter.address,
+      if (
+        inputToken1Address &&
+        inputToken2Address &&
+        inputToken1Address != inputToken2Address &&
         liquidity
-      );
-      notifySuccess();
+      ) {
+        const isPairValid = tokenPairs.some(
+          ([tokenA, tokenB]) =>
+            (tokenA === inputToken1Address && tokenB === inputToken2Address) ||
+            (tokenB === inputToken1Address && tokenA === inputToken2Address)
+        );
 
-      await approveTokens(
-        token2Address,
-        token2.abi,
-        swapRouter.address,
-        liquidity
-      );
-      notifySuccess();
+        if (!isPairValid) {
+          alert("Please select the correct token pair from your valid pairs");
+          return;
+        }
 
-      if (token1.key !== "ETH" && token2.key !== "ETH") {
-        removeLiquidity(token1Address, token2Address, liquidity);
+        const token1 = tokens.find(
+          token => token.address === inputToken1Address
+        );
+        const token2 = tokens.find(
+          token => token.address === inputToken2Address
+        );
+
+        if (!token1 || !token2) {
+          alert("Please select the correct token pair from your valid pairs");
+          return;
+        }
+
+        const token1Address = token1.address ?? "";
+        const token2Address = token2.address ?? "";
+
+        setTxPending(true);
+
+        await approveTokens(
+          token1Address,
+          token1.abi,
+          swapRouter.address,
+          liquidity
+        );
         notifySuccess();
-      } else if (token1.key === "ETH" && token2.key !== "ETH") {
-        removeLiquidityETH(token1Address, liquidity);
+
+        await approveTokens(
+          token2Address,
+          token2.abi,
+          swapRouter.address,
+          liquidity
+        );
         notifySuccess();
-      } else if (token1.key !== "ETH" && token2.key === "ETH") {
-        removeLiquidityETH(token1Address, liquidity);
+
+        if (token1.key !== "ETH" && token2.key !== "ETH") {
+          removeLiquidity(token1Address, token2Address, liquidity);
+          notifySuccess();
+        } else if (token1.key === "ETH" && token2.key !== "ETH") {
+          removeLiquidityETH(token1Address, liquidity);
+          notifySuccess();
+        } else if (token1.key !== "ETH" && token2.key === "ETH") {
+          removeLiquidityETH(token1Address, liquidity);
+          notifySuccess();
+        }
         notifySuccess();
+
+        setShowRemoveInput(prevState => ({
+          ...prevState,
+          [rowIndex]: false,
+        }));
+      } else {
+        notifyError("Please select a valid token pair");
       }
-      notifySuccess();
-
-      setShowRemoveInput(prevState => ({
-        ...prevState,
-        [rowIndex]: false,
-      }));
+    } catch (error) {
+      console.error("Error removing liquidity: ", error);
+      notifyError("Error removing liquidity");
+      setTxPending(false);
+    } finally {
+      setTxPending(false);
+      closeModal();
     }
   };
 

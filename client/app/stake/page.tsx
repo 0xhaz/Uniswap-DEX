@@ -78,7 +78,6 @@ const Stake = () => {
         );
 
         if (!hasAllowance) {
-          console.log("Approval is required. Calling approveTokens...");
           await approveTokens(
             stakeToken?.address || "",
             stakeToken?.abi || "",
@@ -207,8 +206,6 @@ const Stake = () => {
           formatEth(earnedRewards.toString())
         ).toFixed(4);
         setEarnedRewards(parseEarnedRewards);
-        console.log("Rewards: ", formatEth(earnedRewards?.toString()));
-        console.log("earnedRewards: ", earnedRewards.toString());
       } catch (error) {
         console.error(error);
       }

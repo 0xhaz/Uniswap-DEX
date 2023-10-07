@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { ethers } from "ethers";
+
 import toast, { Toaster } from "react-hot-toast";
 import {
   ClipboardIcon,
@@ -40,7 +40,7 @@ const TokenBalance = ({ name, walletAddress }: TokenBalanceProps) => {
         <copyIcon.icon
           className="h-6 cursor-pointer"
           onClick={() => {
-            navigator.clipboard.writeText(tokenAddress);
+            navigator.clipboard.writeText(tokenAddress || "");
             setCopyIcon({ icon: ClipboardCheckIcon });
           }}
         />

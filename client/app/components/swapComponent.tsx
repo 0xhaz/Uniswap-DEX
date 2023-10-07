@@ -233,10 +233,6 @@ const SwapComponent = () => {
             destToken?.address || ""
           );
 
-          console.log("Path: ", path);
-          console.log("srcToken Address: ", srcToken?.address);
-          console.log("destToken Address: ", destToken?.address);
-
           if (path) {
             receipt = await swapExactAmountOfTokens(
               inputValue.toString(),
@@ -280,8 +276,6 @@ const SwapComponent = () => {
             srcToken?.address || "",
             destToken?.address || ""
           );
-
-          console.log("Path: ", path);
 
           if (path) {
             receipt = await swapTokensForExactAmount(
@@ -420,10 +414,10 @@ const SwapComponent = () => {
             }}
           />
 
-          <ArrowSmDownIcon
+          {/* <ArrowSmDownIcon
             className="absolute left-1/2 -translate-x-1/2 -bottom-6 h-10 p-1 bg-[#212429] border-4 border-zinc-900 text-zinc-300 rounded-xl cursor-pointer hover:scale-110"
             onClick={handleReverseExchange}
-          />
+          /> */}
         </div>
 
         <div className="bg-[#212429] p-4 py-6 rounded-xl mt-2 border-[2px] border-transparent hover:border-zinc-600">
@@ -436,7 +430,7 @@ const SwapComponent = () => {
             ignoreValue={srcToken?.name || ""}
             handleChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setOutputValue(e.target.value);
-              console.log("Output Value: ", outputValue);
+
               getAmountIn(
                 Number(e.target.value),
                 Number(reserveA),
