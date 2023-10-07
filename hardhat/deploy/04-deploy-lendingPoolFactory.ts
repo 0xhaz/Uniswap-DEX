@@ -23,7 +23,7 @@ const deployLendingPoolFactory: DeployFunction = async (
     from: deployer,
     args: args,
     log: true,
-    waitConfirmations: blockConfirmations || 1,
+    waitConfirmations: blockConfirmations || 5,
   });
 
   const factoryContract = (await ethers.getContractAt(

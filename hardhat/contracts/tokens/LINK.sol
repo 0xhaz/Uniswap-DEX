@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract Link is ERC20 {
-    uint256 _amount = 1000;
+    uint256 _amount = 1000 ether;
 
     constructor() ERC20("ChainLink Token", "LINK") {
         _mint(msg.sender, 1000 * (10 ** decimals()));

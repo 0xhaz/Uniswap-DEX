@@ -25,7 +25,7 @@ const deployTokens: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     from: deployer,
     args: [],
     log: true,
-    waitConfirmations: blockConfirmations || 1,
+    waitConfirmations: blockConfirmations || 4,
   });
 
   const LinkTokenContract = (await ethers.getContractAt(
@@ -33,10 +33,7 @@ const deployTokens: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     LinkToken.address
   )) as Link;
 
-  const linkMintTx = await LinkTokenContract.mint(
-    deployer,
-    ethers.utils.parseEther("1000000000")
-  );
+  const linkMintTx = await LinkTokenContract.mint(deployer);
 
   log(`Link Token Minted: ${linkMintTx.hash} to ${deployer}`);
 
@@ -47,7 +44,7 @@ const deployTokens: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     from: deployer,
     args: args,
     log: true,
-    waitConfirmations: blockConfirmations || 1,
+    waitConfirmations: blockConfirmations || 4,
   });
 
   const USDTTokenContract = (await ethers.getContractAt(
@@ -55,10 +52,7 @@ const deployTokens: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     USDTToken.address
   )) as USDT;
 
-  const usdtMintTx = await USDTTokenContract.mint(
-    deployer,
-    ethers.utils.parseEther("1000000000")
-  );
+  const usdtMintTx = await USDTTokenContract.mint(deployer);
 
   log(`USDT Token Minted: ${usdtMintTx.hash} to ${deployer}`);
 
@@ -69,7 +63,8 @@ const deployTokens: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     from: deployer,
     args: args,
     log: true,
-    waitConfirmations: blockConfirmations || 1,
+    waitConfirmations: blockConfirmations || 4,
+    gasPrice: ethers.utils.parseUnits("50", "gwei"),
   });
 
   const USDCTokenContract = (await ethers.getContractAt(
@@ -77,10 +72,7 @@ const deployTokens: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     USDCToken.address
   )) as USDC;
 
-  const usdcMintTx = await USDCTokenContract.mint(
-    deployer,
-    ethers.utils.parseEther("1000000000")
-  );
+  const usdcMintTx = await USDCTokenContract.mint(deployer);
 
   log(`USDC Token Minted: ${usdcMintTx.hash} to ${deployer}`);
 
@@ -92,7 +84,8 @@ const deployTokens: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     from: deployer,
     args: args,
     log: true,
-    waitConfirmations: blockConfirmations || 1,
+    waitConfirmations: blockConfirmations || 4,
+    gasPrice: ethers.utils.parseUnits("50", "gwei"),
   });
 
   const RTokenContract = (await ethers.getContractAt(
@@ -115,7 +108,8 @@ const deployTokens: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     from: deployer,
     args: args,
     log: true,
-    waitConfirmations: blockConfirmations || 1,
+    waitConfirmations: blockConfirmations || 4,
+    gasPrice: ethers.utils.parseUnits("50", "gwei"),
   });
 
   const WETHTokenContract = (await ethers.getContractAt(

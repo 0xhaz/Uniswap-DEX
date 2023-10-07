@@ -28,7 +28,7 @@ const deploySwapPairTokens2: DeployFunction = async (
     from: deployer,
     args: args,
     log: true,
-    waitConfirmations: blockConfirmations || 1,
+    waitConfirmations: blockConfirmations || 5,
   });
 
   const swapPairTokens2Contract = (await ethers.getContractAt(
