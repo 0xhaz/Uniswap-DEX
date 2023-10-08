@@ -7,10 +7,29 @@ import {
   tokenContractMap,
   contractMap,
 } from "./contracts";
+import { useAccount, useProvider } from "wagmi";
 
 const getDeadline = () => {
   const deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes
   return deadline;
+};
+
+export const getAccount = async () => {
+  try {
+    if (typeof window !== "undefined") {
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum as any
+      );
+      const signer = provider.getSigner();
+      const address = await signer.getAddress();
+      return address;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting account", error);
+    return null;
+  }
 };
 
 const provider = new ethers.providers.Web3Provider(window.ethereum as any);
@@ -62,7 +81,7 @@ export const getBalance = async (
 export const getEthBalance = async (walletAddress: string) => {
   try {
     const balance = await provider.getBalance(walletAddress);
-    const balanceEth = formatEth(balance.toString());
+    const balanceEth = ethers.utils.formatEther(balance);
 
     return balanceEth;
   } catch (error) {
@@ -340,7 +359,7 @@ export const depositEthForWeth = async (amountIn: string) => {
 export const withdrawWethForEth = async (amountIn: string) => {
   try {
     const amountInEth = toEth(amountIn);
-    const address = provider.getSigner();
+    const address = await getAccount();
 
     const weth = wethContract();
     const tx = await weth.withdraw(amountInEth, {
@@ -472,7 +491,7 @@ export const addLiquidity = async (
   try {
     if (valueOne && valueTwo) {
       const deadline = getDeadline();
-      const userAddress = provider.getSigner();
+      const userAddress = await getAccount();
 
       const _addLiquidity = await swapRouter?.addLiquidity(
         tokenOneAddress,
@@ -501,7 +520,7 @@ export const addLiquidityETH = async (
     // await approveTokens(addressToken, valueToken);
     const _valueETH = toEth(valueETH.toString());
     const deadline = getDeadline();
-    const userAddress = provider.getSigner();
+    const userAddress = await getAccount();
     const _addLiquidityETH = await swapRouter?.addLiquidityETH(
       addressToken,
       toEth(valueToken.toString()),
@@ -525,7 +544,7 @@ export const removeLiquidity = async (
   const swapRouter = contract("swapRouter");
   try {
     const deadline = getDeadline();
-    const userAddress = provider.getSigner();
+    const userAddress = await getAccount();
 
     if (addressTokenA && addressTokenB && liquidityAmount) {
       const estimateGas = await swapRouter.estimateGas.removeLiquidity(
@@ -566,7 +585,7 @@ export const removeLiquidityETH = async (
   try {
     if (liquidityAmount) {
       const deadline = getDeadline();
-      const userAddress = provider.getSigner();
+      const userAddress = await getAccount();
       const _removeLiquidityETH = await swapRouter?.removeLiquidityETH(
         addressToken,
         toEth(liquidityAmount),

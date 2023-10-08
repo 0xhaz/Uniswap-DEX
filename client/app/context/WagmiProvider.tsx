@@ -11,7 +11,7 @@ type WagmiProviderProps = {
   children: React.ReactNode;
 };
 
-const { chains, provider } = configureChains(
+export const { chains, provider } = configureChains(
   [localhost, sepolia, hardhat],
 
   [
@@ -36,7 +36,7 @@ const wagmiClient = createClient({
 const WagmiProvider = ({ children }: WagmiProviderProps) => {
   return (
     <>
-      <WagmiConfig client={wagmiClient}>{children} </WagmiConfig>
+      <WagmiConfig client={wagmiClient}>{children}</WagmiConfig>
     </>
   );
 };
