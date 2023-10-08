@@ -415,6 +415,18 @@ export const quote = async (
 
 ////////////////////// LIQUIDITY //////////////////////
 
+export const getPairAddress = async (tokenA: string, tokenB: string) => {
+  const swapFactory = contract("swapFactory");
+
+  try {
+    const pairAddress = await swapFactory?.getPair(tokenA, tokenB);
+    return pairAddress;
+  } catch (error) {
+    console.error("Error getting pair address: ", error);
+    return null;
+  }
+};
+
 export const liquidityExistsForPair = async (
   tokenOneAddress: string,
   tokenTwoAddress: string,
@@ -579,6 +591,7 @@ export const removeLiquidityETH = async (
 };
 
 export const getLiquidity = async (
+  pairAddress: string,
   walletAddress: string,
   addressTokenA: string,
   addressTokenB: string

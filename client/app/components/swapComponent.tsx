@@ -352,6 +352,15 @@ const SwapComponent = () => {
     setSwapBtnText(SWAP);
   };
 
+  const updateOutputValue = () => {
+    if (
+      (srcToken?.name === "ETH" && destToken?.name === "WETH") ||
+      (srcToken?.name === "WETH" && destToken?.name === "ETH")
+    ) {
+      setOutputValue(inputValue);
+    }
+  };
+
   useEffect(() => {
     if (srcToken?.address && destToken?.address) {
       getReserves(srcToken?.address, destToken?.address);
@@ -371,9 +380,14 @@ const SwapComponent = () => {
         ).toFixed(2);
         setEstimatedQuote(parsedQuote);
       }
+      updateOutputValue();
     };
     fetchQuote();
   }, [srcToken, destToken, inputValue, reserveA, reserveB]);
+
+  useEffect(() => {
+    updateOutputValue();
+  }, [inputValue, srcToken, destToken]);
 
   useEffect(() => {
     if (!address) setSwapBtnText(CONNECT_WALLET);

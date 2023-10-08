@@ -276,7 +276,7 @@ const Lending = () => {
             id={"lend"}
             setToken={(token: TokenProps) => setSelectedToken(token)}
             defaultValue={selectedToken || null}
-            ignoreValue={null}
+            ignoreValue={"ETH"}
             tokens={tokens}
           />
         </div>

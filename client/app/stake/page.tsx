@@ -202,9 +202,9 @@ const Stake = () => {
 
       try {
         const earnedRewards = await getEarnedRewards(stakeToken?.key || "");
-        const parseEarnedRewards = parseFloat(
-          formatEth(earnedRewards.toString())
-        ).toFixed(4);
+        const parseEarnedRewards = parseFloat(formatEth(earnedRewards)).toFixed(
+          4
+        );
         setEarnedRewards(parseEarnedRewards);
       } catch (error) {
         console.error(error);
@@ -238,7 +238,7 @@ const Stake = () => {
                   id={"stake"}
                   setToken={(token: TokenProps) => setStakeToken(token)}
                   defaultValue={stakeToken}
-                  ignoreValue={null}
+                  ignoreValue={"ETH"}
                   tokens={tokens}
                 />
               </div>

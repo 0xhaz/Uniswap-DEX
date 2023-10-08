@@ -34,17 +34,23 @@ const Faucet = () => {
   };
 
   useEffect(() => {
-    if (address) {
-      const tokenNames = ["USDT", "USDC", "LINK"];
-      const tokenBalances: { [key: string]: number | string } = {};
+    const fetchBalances = async () => {
+      if (address) {
+        const tokenNames = ["USDT", "USDC", "LINK"];
+        const tokenBalances: { [key: string]: number | string } = {};
 
-      tokenNames.forEach(async tokenName => {
-        const balanceValue = await getBalance(tokenName, address);
-        const balance = balanceValue !== null ? balanceValue : "0";
-        tokenBalances[tokenName] = balance;
+        const promises = tokenNames.map(async tokenName => {
+          const balanceValue = await getBalance(tokenName, address);
+          const balance = balanceValue !== null ? balanceValue : "0";
+          tokenBalances[tokenName] = balance;
+        });
+
+        await Promise.all(promises);
+
         setBalance(tokenBalances);
-      });
-    }
+      }
+    };
+    fetchBalances();
   }, [address]);
 
   return (

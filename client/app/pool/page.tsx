@@ -20,6 +20,7 @@ import {
   removeLiquidityETH,
   getLiquidity,
   approveTokens,
+  getPairAddress,
 } from "@/utils/queries";
 import {
   CONTRACTS,
@@ -87,19 +88,34 @@ const Pool = () => {
       const [tokenA, tokenB] = tokenPairs[i];
 
       try {
-        const pairIdentifier = `${tokenA}-${tokenB}`;
+        const pairIdentifier1 = `${tokenA}-${tokenB}`;
+        const pairIdentifier2 = `${tokenB}-${tokenA}`;
 
-        if (!processedPairs.has(pairIdentifier)) {
-          const liquidityAtoB = await getLiquidity(address, tokenA, tokenB);
+        if (
+          !processedPairs.has(pairIdentifier1) &&
+          !processedPairs.has(pairIdentifier2)
+        ) {
+          const pairAddress = await getPairAddress(tokenA, tokenB);
 
-          if (parseFloat(liquidityAtoB) > 0) {
-            positions.push({
-              tokenA: tokenAddressToName[tokenA] || tokenA,
-              tokenB: tokenAddressToName[tokenB] || tokenB,
-              liquidity: parseFloat(liquidityAtoB),
-            });
+          if (pairAddress) {
+            const liquidityAtoB = await getLiquidity(
+              pairAddress,
+              address,
+              tokenA,
+              tokenB
+            );
 
-            processedPairs.add(pairIdentifier);
+            if (parseFloat(liquidityAtoB) > 0) {
+              positions.push({
+                tokenA: tokenAddressToName[tokenA] || tokenA,
+                tokenB: tokenAddressToName[tokenB] || tokenB,
+                liquidity: parseFloat(liquidityAtoB).toFixed(2),
+                pairAddress: pairAddress,
+              });
+
+              processedPairs.add(pairIdentifier1);
+              processedPairs.add(pairIdentifier2);
+            }
           }
         }
       } catch (error) {
