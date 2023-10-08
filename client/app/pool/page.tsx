@@ -499,6 +499,12 @@ const Pool = () => {
       getReserves(selectedToken1.address, selectedToken2.address);
     }
   }, [selectedToken1, selectedToken2]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      console.log("window.ethereum", window.ethereum);
+    }
+  }, [window.ethereum]);
   return (
     <>
       <div className="w-full mt-36 flex flex-col justify-center items-center px-2 ">
