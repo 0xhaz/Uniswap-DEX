@@ -44,9 +44,24 @@ export const approveTokens = async (
   amountIn: string
 ) => {
   try {
+    const token = tokenContract(tokenInAddress, abi);
+
+    if (!token) {
+      console.error(
+        "Failed to get token contract for tokenName:",
+        tokenInAddress
+      );
+      return false;
+    }
+
     const signer = provider.getSigner();
 
-    const tx = await tokenContract(tokenInAddress, abi)
+    if (!signer) {
+      console.error("Failed to get signer");
+      return false;
+    }
+
+    const tx = await token
       .connect(signer)
       .approve(spenderAddress, toEth(amountIn));
     await tx.wait();
@@ -66,6 +81,14 @@ export const getBalance = async (
     const { address, abi } = tokenContractMap[tokenAddress];
 
     const selectedTokenContract = tokenContract(address, abi);
+
+    if (!selectedTokenContract) {
+      console.error(
+        "Failed to get token contract for tokenName:",
+        tokenAddress
+      );
+      return null;
+    }
 
     const balance = await selectedTokenContract.balanceOf(walletAddress);
 
@@ -545,6 +568,11 @@ export const removeLiquidity = async (
   try {
     const deadline = getDeadline();
     const userAddress = await getAccount();
+
+    if (!swapRouter) {
+      console.error("Missing swapRouter");
+      return;
+    }
 
     if (addressTokenA && addressTokenB && liquidityAmount) {
       const estimateGas = await swapRouter.estimateGas.removeLiquidity(

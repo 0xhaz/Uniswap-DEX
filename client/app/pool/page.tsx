@@ -225,6 +225,11 @@ const Pool = () => {
         return;
       }
 
+      if (!swapRouter) {
+        console.error("Swap router not found");
+        return;
+      }
+
       const token1Address = selectedToken1?.address || "";
       const token2Address = selectedToken2?.address || "";
 
@@ -325,6 +330,11 @@ const Pool = () => {
       }
 
       if (!address) return;
+
+      if (!swapRouter) {
+        console.error("Swap router not found");
+        return;
+      }
 
       if (
         inputToken1Address &&
@@ -450,7 +460,6 @@ const Pool = () => {
   };
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
     if (!address) return;
 
     if (selectedToken1?.key !== "ETH") {

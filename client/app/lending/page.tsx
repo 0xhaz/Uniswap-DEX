@@ -134,6 +134,11 @@ const Lending = () => {
 
   const handleSupply = async () => {
     if (!address || !selectedToken) return;
+
+    if (!lendingRouter) {
+      console.log("Lending Router not found");
+      return;
+    }
     try {
       setTxPending(true);
       if (selectedToken?.key === "ETH") {
@@ -216,6 +221,12 @@ const Lending = () => {
 
   const handleRepay = async () => {
     if (!address || !selectedToken) return;
+
+    if (!lendingRouter) {
+      console.log("Lending Router not found");
+      return;
+    }
+
     try {
       setTxPending(true);
       if (selectedToken) {

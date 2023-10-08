@@ -56,30 +56,41 @@ export const contractMap: Record<string, { address: string; abi: any }> = {
   },
 };
 
-export const tokenContract = (address: string, abi: any): ethers.Contract => {
+export const tokenContract = (
+  address: string,
+  abi: any
+): ethers.Contract | undefined => {
   const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
-  const contract = new ethers.Contract(address, abi, signer);
+  const { ethereum } = window;
 
-  return contract;
+  if (ethereum) {
+    const signer = provider.getSigner();
+    const contract = new ethers.Contract(address, abi, signer);
+
+    return contract;
+  }
 };
 
-export const contract = (contractName: string): ethers.Contract => {
+export const contract = (contractName: string): ethers.Contract | undefined => {
   const contractInfo = contractMap[contractName as keyof typeof contractMap];
   if (!contractInfo) {
     throw new Error(`Contract ${contractName} not supported`);
   }
 
   const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
-  const signerOrProvider = signer || provider;
-  const contract = new ethers.Contract(
-    contractInfo.address,
-    contractInfo.abi,
-    signerOrProvider
-  );
+  const { ethereum } = window;
 
-  return contract;
+  if (ethereum) {
+    const signer = provider.getSigner();
+    const signerOrProvider = signer || provider;
+    const contract = new ethers.Contract(
+      contractInfo.address,
+      contractInfo.abi,
+      signerOrProvider
+    );
+
+    return contract;
+  }
 };
 
 export const wethContract = () => {

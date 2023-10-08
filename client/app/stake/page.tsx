@@ -63,6 +63,8 @@ const Stake = () => {
   const handleStake = async () => {
     if (!address || !stakeToken) return;
 
+    if (!stakingRouter) return;
+
     try {
       setTxPending(true);
       if (stakeToken?.key === "ETH") {
@@ -126,6 +128,7 @@ const Stake = () => {
 
   const handleClaim = () => {
     if (!address) return;
+    if (!stakingRouter) return;
     const tokenInfo = CONTRACTS.RTOKEN;
     if (stakeToken) {
       if (stakeToken?.key === "ETH") {
