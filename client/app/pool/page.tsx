@@ -450,6 +450,7 @@ const Pool = () => {
   };
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     if (!address) return;
 
     if (selectedToken1?.key !== "ETH") {

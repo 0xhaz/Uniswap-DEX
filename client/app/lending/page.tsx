@@ -254,6 +254,7 @@ const Lending = () => {
   };
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     if (!address) return;
     getUserBalance();
     getPoolAddress();

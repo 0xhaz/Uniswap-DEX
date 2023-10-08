@@ -144,6 +144,7 @@ const Stake = () => {
   };
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const fetchData = async () => {
       if (!address || !stakeToken) return;
 

@@ -33,6 +33,7 @@ const Faucet = () => {
   };
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const fetchBalances = async () => {
       if (address) {
         const tokenNames = ["USDT", "USDC", "LINK"];
