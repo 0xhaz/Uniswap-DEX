@@ -1,6 +1,6 @@
 import USDT_ADDRESS from "../contracts/USDT-address.json";
 import USDC_ADDRESS from "../contracts/USDC-address.json";
-import LINK_ADDRESS from "../contracts/LINK-address.json";
+import LINK_ADDRESS from "../contracts/Link-address.json";
 import RTOKEN_ADDRESS from "../contracts/RToken-address.json";
 import WETH_ADDRESS from "../contracts/WETH9-address.json";
 import SWAP_PAIR_TOKENS_ADDRESS from "../contracts/SwapPairTokens-address.json";
@@ -15,7 +15,7 @@ import LENDING_POOL_ROUTER_ADDRESS from "../contracts/LendingPoolRouter-address.
 
 import USDT_ABI from "../contracts/USDT.json";
 import USDC_ABI from "../contracts/USDC.json";
-import LINK_ABI from "../contracts/LINK.json";
+import LINK_ABI from "../contracts/Link.json";
 import RTOKEN_ABI from "../contracts/RToken.json";
 import WETH_ABI from "../contracts/WETH9.json";
 import SWAP_PAIR_TOKENS_ABI from "../contracts/SwapPairTokens.json";
