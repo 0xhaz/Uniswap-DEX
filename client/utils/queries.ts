@@ -8,6 +8,8 @@ import {
   contractMap,
 } from "./contracts";
 
+import { useProvider, useSigner } from "wagmi";
+
 const getDeadline = () => {
   const deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes
   return deadline;
@@ -15,10 +17,16 @@ const getDeadline = () => {
 
 const getAccount = async () => {
   try {
-    const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-    const signer = provider.getSigner();
-    const address = await signer.getAddress();
-    return address;
+    if (typeof window !== "undefined") {
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum as any
+      );
+      const signer = provider.getSigner();
+      const address = await signer.getAddress();
+      return address;
+    } else {
+      return null;
+    }
   } catch (error) {
     console.error("Error getting account", error);
     return null;

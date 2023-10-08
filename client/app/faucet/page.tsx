@@ -10,7 +10,6 @@ import { mintTokens, getBalance } from "@/utils/queries";
 
 const Faucet = () => {
   const { address } = useAccount();
-  const [token, setToken] = useState("USDT");
   const [balance, setBalance] = useState<{ [key: string]: number | string }>(
     {}
   );
