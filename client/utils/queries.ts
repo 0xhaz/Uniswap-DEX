@@ -8,29 +8,9 @@ import {
   contractMap,
 } from "./contracts";
 
-import { useProvider, useSigner } from "wagmi";
-
 const getDeadline = () => {
   const deadline = Math.floor(Date.now() / 1000) + 600; // 10 minutes
   return deadline;
-};
-
-const getAccount = async () => {
-  try {
-    if (typeof window !== "undefined") {
-      const provider = new ethers.providers.Web3Provider(
-        window.ethereum as any
-      );
-      const signer = provider.getSigner();
-      const address = await signer.getAddress();
-      return address;
-    } else {
-      return null;
-    }
-  } catch (error) {
-    console.error("Error getting account", error);
-    return null;
-  }
 };
 
 const provider = new ethers.providers.Web3Provider(window.ethereum as any);
@@ -82,7 +62,7 @@ export const getBalance = async (
 export const getEthBalance = async (walletAddress: string) => {
   try {
     const balance = await provider.getBalance(walletAddress);
-    const balanceEth = ethers.utils.formatEther(balance);
+    const balanceEth = formatEth(balance.toString());
 
     return balanceEth;
   } catch (error) {
@@ -349,6 +329,8 @@ export const depositEthForWeth = async (amountIn: string) => {
     await tx.wait();
 
     const wethBalance = await weth.balanceOf(address);
+
+    return wethBalance;
   } catch (error) {
     console.log("error depositing eth for weth", error);
     throw error;
@@ -358,7 +340,7 @@ export const depositEthForWeth = async (amountIn: string) => {
 export const withdrawWethForEth = async (amountIn: string) => {
   try {
     const amountInEth = toEth(amountIn);
-    const address = await getAccount();
+    const address = provider.getSigner();
 
     const weth = wethContract();
     const tx = await weth.withdraw(amountInEth, {
@@ -368,6 +350,8 @@ export const withdrawWethForEth = async (amountIn: string) => {
     await tx.wait();
 
     const wethBalance = await weth.balanceOf(address);
+
+    return wethBalance;
   } catch (error) {
     console.log("error withdrawing weth for eth", error);
     throw error;
@@ -488,7 +472,7 @@ export const addLiquidity = async (
   try {
     if (valueOne && valueTwo) {
       const deadline = getDeadline();
-      const userAddress = await getAccount();
+      const userAddress = provider.getSigner();
 
       const _addLiquidity = await swapRouter?.addLiquidity(
         tokenOneAddress,
@@ -517,7 +501,7 @@ export const addLiquidityETH = async (
     // await approveTokens(addressToken, valueToken);
     const _valueETH = toEth(valueETH.toString());
     const deadline = getDeadline();
-    const userAddress = await getAccount();
+    const userAddress = provider.getSigner();
     const _addLiquidityETH = await swapRouter?.addLiquidityETH(
       addressToken,
       toEth(valueToken.toString()),
@@ -541,7 +525,7 @@ export const removeLiquidity = async (
   const swapRouter = contract("swapRouter");
   try {
     const deadline = getDeadline();
-    const userAddress = await getAccount();
+    const userAddress = provider.getSigner();
 
     if (addressTokenA && addressTokenB && liquidityAmount) {
       const estimateGas = await swapRouter.estimateGas.removeLiquidity(
@@ -582,7 +566,7 @@ export const removeLiquidityETH = async (
   try {
     if (liquidityAmount) {
       const deadline = getDeadline();
-      const userAddress = await getAccount();
+      const userAddress = provider.getSigner();
       const _removeLiquidityETH = await swapRouter?.removeLiquidityETH(
         addressToken,
         toEth(liquidityAmount),
