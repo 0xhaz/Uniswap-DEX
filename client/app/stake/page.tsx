@@ -246,7 +246,6 @@ const Stake = () => {
           </div>
           <div>
             <Button
-              type="secondary"
               style={{
                 marginTop: "10px",
                 marginLeft: "20px",
@@ -289,7 +288,6 @@ const Stake = () => {
               />
             </div>
             <Button
-              type="secondary"
               style={{
                 marginTop: "10px",
               }}
@@ -312,7 +310,6 @@ const Stake = () => {
               />
             </div>
             <Button
-              type="secondary"
               style={{
                 marginTop: "10px",
               }}
