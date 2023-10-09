@@ -219,7 +219,7 @@ const Stake = () => {
   }, [address, stakeToken]);
 
   useEffect(() => {
-    if (process.browser) {
+    if (typeof window !== "undefined") {
       if (!address) {
         notifyError("Connect Wallet");
       }
