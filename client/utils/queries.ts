@@ -680,8 +680,9 @@ export const getLiquidity = async (
 
 export const getPoolAddress = async (tokenAddress: string) => {
   const stakingContract = contract("stakingRouter");
+  const tokenInfo = tokenContractMap[tokenAddress];
   try {
-    const getPool = await stakingContract?.getPoolAddress(tokenAddress);
+    const getPool = await stakingContract?.getPoolAddress(tokenInfo?.address);
     return getPool;
   } catch (error) {
     console.error(error);

@@ -8,6 +8,7 @@ import { localhost, sepolia, hardhat } from "wagmi/chains";
 import { publicProvider } from "wagmi/providers/public";
 import WagmiProvider from "./WagmiProvider";
 import merge from "lodash.merge";
+import React from "react";
 
 type ProviderType = { children: React.ReactNode };
 
