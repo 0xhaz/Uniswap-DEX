@@ -52,6 +52,15 @@ const Faucet = () => {
     fetchBalances();
   }, [address]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isWalletConnected = localStorage.getItem("walletConnected");
+      if (!isWalletConnected) {
+        notifyError("Connect Wallet");
+      }
+    }
+  }, []);
+
   return (
     <>
       <h1 className="text-gray-100 text-3xl font-semibold">Mint Your Tokens</h1>
