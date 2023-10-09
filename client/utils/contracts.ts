@@ -65,6 +65,7 @@ export const tokenContract = (
 
   if (ethereum) {
     const signer = provider.getSigner();
+    if (!signer) throw new Error("No signer found");
     const contract = new ethers.Contract(address, abi, signer);
 
     return contract;
@@ -100,6 +101,7 @@ export const wethContract = () => {
 
   if (ethereum) {
     const signer = provider.getSigner();
+    if (!signer) throw new Error("No signer found");
     const contract = new ethers.Contract(weth.address, wethAbi, signer);
 
     return contract;
