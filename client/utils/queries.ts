@@ -36,7 +36,26 @@ export const getAccount = async () => {
   }
 };
 
-let address: string;
+export const getSigner = async () => {
+  try {
+    if (typeof window !== "undefined") {
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum as any
+      );
+      const { ethereum } = window;
+
+      if (ethereum) {
+        const signer = provider.getSigner();
+        return signer;
+      }
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting signer", error);
+    return null;
+  }
+};
 
 /////////////////////// TOKENS ///////////////////////
 
@@ -48,7 +67,6 @@ export const approveTokens = async (
 ) => {
   try {
     const token = tokenContract(tokenInAddress, abi);
-    const provider = new ethers.providers.Web3Provider(window.ethereum as any);
 
     if (!token) {
       console.error(
@@ -58,12 +76,7 @@ export const approveTokens = async (
       return false;
     }
 
-    if (!provider) {
-      console.error("Failed to get provider");
-      return false;
-    }
-
-    const signer = provider.getSigner();
+    const signer = await getSigner();
 
     if (!signer) {
       console.error("Failed to get signer");
@@ -211,13 +224,8 @@ export const increaseAllowance = async (tokenName: string, amount: string) => {
 
 export const mintTokens = async (tokenName: string) => {
   const tokenInfo = tokenContractMap[tokenName];
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
 
-  if (!provider) {
-    console.error("Failed to get provider");
-    return false;
-  }
+  const signer = await getSigner();
 
   if (!signer) {
     console.error("Failed to get signer");
@@ -242,21 +250,13 @@ export const swapExactAmountOfTokens = async (
     if (amountIn) {
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
-      const provider = new ethers.providers.Web3Provider(
-        window.ethereum as any
-      );
 
       if (!swapRouter) {
         console.error("Failed to get contract");
         return false;
       }
 
-      if (!provider) {
-        console.error("Failed to get provider");
-        return false;
-      }
-
-      const signer = provider.getSigner();
+      const signer = await getSigner();
 
       if (!signer) {
         console.error("Failed to get signer");
@@ -286,20 +286,13 @@ export const swapTokensForExactAmount = async (
     if (amountOut) {
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
-      const provider = new ethers.providers.Web3Provider(
-        window.ethereum as any
-      );
 
       if (!swapRouter) {
         console.error("Failed to get contract");
         return false;
       }
 
-      if (!provider) {
-        console.error("Failed to get provider");
-        return false;
-      }
-      const signer = provider.getSigner();
+      const signer = await getSigner();
 
       if (!signer) {
         console.error("Failed to get signer");
@@ -326,7 +319,6 @@ export const swapExactAmountOfEthForTokens = async (
   path: string[]
 ) => {
   try {
-    const provider = new ethers.providers.Web3Provider(window.ethereum as any);
     if (amountIn) {
       const _amount = toEth(amountIn.toString());
       const deadline = getDeadline();
@@ -337,12 +329,7 @@ export const swapExactAmountOfEthForTokens = async (
         return false;
       }
 
-      if (!provider) {
-        console.error("Failed to get provider");
-        return false;
-      }
-
-      const signer = provider.getSigner();
+      const signer = await getSigner();
 
       if (!signer) {
         console.error("Failed to get signer");
@@ -374,20 +361,13 @@ export const swapEthForExactAmountOfTokens = async (
       const _amount = toEth(amountETH.toString());
       const _deadline = getDeadline();
       const swapRouter = contract("swapRouter");
-      const provider = new ethers.providers.Web3Provider(
-        window.ethereum as any
-      );
 
       if (!swapRouter) {
         console.error("Failed to get contract");
         return false;
       }
 
-      if (!provider) {
-        console.error("Failed to get provider");
-        return false;
-      }
-      const signer = provider.getSigner();
+      const signer = await getSigner();
 
       if (!signer) {
         console.error("Failed to get signer");
@@ -417,21 +397,13 @@ export const swapTokensForExactAmountOfEth = async (
     if (amountOut) {
       const _deadline = getDeadline();
       const swapRouter = contract("swapRouter");
-      const provider = new ethers.providers.Web3Provider(
-        window.ethereum as any
-      );
 
       if (!swapRouter) {
         console.error("Failed to get contract");
         return false;
       }
 
-      if (!provider) {
-        console.error("Failed to get provider");
-        return false;
-      }
-
-      const signer = provider.getSigner();
+      const signer = await getSigner();
 
       if (!signer) {
         console.error("Failed to get signer");
@@ -461,21 +433,13 @@ export const swapExactAmountOfTokensForEth = async (
     if (amountIn) {
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
-      const provider = new ethers.providers.Web3Provider(
-        window.ethereum as any
-      );
 
       if (!swapRouter) {
         console.error("Failed to get contract");
         return false;
       }
 
-      if (!provider) {
-        console.error("Failed to get provider");
-        return false;
-      }
-
-      const signer = provider.getSigner();
+      const signer = await getSigner();
 
       if (!signer) {
         console.error("Failed to get signer");
@@ -499,14 +463,8 @@ export const swapExactAmountOfTokensForEth = async (
 export const depositEthForWeth = async (amountIn: string) => {
   try {
     const amountInEth = toEth(amountIn);
-    const provider = new ethers.providers.Web3Provider(window.ethereum as any);
 
-    if (!provider) {
-      console.error("Failed to get provider");
-      return false;
-    }
-
-    const signer = provider.getSigner();
+    const signer = await getSigner();
 
     if (!signer) {
       console.error("Failed to get signer");
@@ -526,7 +484,7 @@ export const depositEthForWeth = async (amountIn: string) => {
 
     await tx.wait();
 
-    const wethBalance = await weth.balanceOf(address);
+    const wethBalance = await weth.balanceOf(signer);
 
     return wethBalance;
   } catch (error) {
@@ -538,7 +496,7 @@ export const depositEthForWeth = async (amountIn: string) => {
 export const withdrawWethForEth = async (amountIn: string) => {
   try {
     const amountInEth = toEth(amountIn);
-    const address = await getAccount();
+    const address = await getSigner();
 
     const weth = wethContract();
 
@@ -645,19 +603,14 @@ export const liquidityExistsForPair = async (
   userAddress: string
 ) => {
   const swapFactory = contract("swapFactory");
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
 
-  const signer = provider.getSigner();
+  const signer = await getSigner();
   try {
     if (!swapFactory) {
       console.error("Failed to get contract");
       return false;
     }
 
-    if (!provider) {
-      console.error("Failed to get provider");
-      return false;
-    }
     const pairAddress = await swapFactory?.getPair(
       tokenOneAddress,
       tokenTwoAddress
@@ -884,18 +837,12 @@ export const getPoolAddress = async (tokenAddress: string) => {
 
 export const getStakedAmount = async (tokenAddress: string) => {
   const stakingContract = contract("stakingRouter");
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
+  const signer = await getSigner();
   const tokenContractInfo = tokenContractMap[tokenAddress];
 
   try {
     if (!stakingContract) {
       console.error("Missing contract");
-      return;
-    }
-
-    if (!provider) {
-      console.error("Missing provider");
       return;
     }
 
@@ -916,18 +863,13 @@ export const getStakedAmount = async (tokenAddress: string) => {
 
 export const getEarnedRewards = async (tokenAddress: string) => {
   const stakingContract = contract("stakingRouter");
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
+
+  const signer = await getSigner();
   const tokenContractInfo = tokenContractMap[tokenAddress];
 
   try {
     if (!stakingContract) {
       console.error("Missing contract");
-      return;
-    }
-
-    if (!provider) {
-      console.error("Missing provider");
       return;
     }
 
@@ -1014,18 +956,12 @@ export const claimRewards = async (tokenAddress: string, outAmount: string) => {
 
 export const stakeEther = async (amount: string) => {
   const stakingContract = contract("stakingRouter");
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
+  const signer = await getSigner();
   const amountInWei = toEth(amount);
 
   try {
     if (!stakingContract) {
       console.error("Missing contract");
-      return;
-    }
-
-    if (!provider) {
-      console.error("Missing provider");
       return;
     }
 
@@ -1086,7 +1022,7 @@ export const hasValidAllowanceStaking = async (
 ) => {
   try {
     const stakingRouter = contract("stakingRouter");
-    const stakingContract = contract("staking");
+
     const tokenInfo = tokenContractMap[tokenName];
 
     if (!stakingRouter || !tokenInfo) {
@@ -1202,16 +1138,11 @@ export const createPool = async (tokenAddress: string) => {
 export const getRepaidAmount = async (tokenAddress: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
+
+  const signer = await getSigner();
   try {
     if (!lendingPoolContract) {
       console.error("Missing contract");
-      return;
-    }
-
-    if (!provider) {
-      console.error("Missing provider");
       return;
     }
 
@@ -1236,16 +1167,11 @@ export const getWithdrawalAmount = async (
 ) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
+
+  const signer = await getSigner();
   try {
     if (!lendingPoolContract) {
       console.error("Missing contract");
-      return;
-    }
-
-    if (!provider) {
-      console.error("Missing provider");
       return;
     }
 
@@ -1326,17 +1252,12 @@ export const borrowTokens = async (tokenAddress: string, amount: string) => {
 export const getLendAmount = async (tokenAddress: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
+
+  const signer = await getSigner();
 
   try {
     if (!lendingPoolContract) {
       console.error("Missing contract");
-      return;
-    }
-
-    if (!provider) {
-      console.error("Missing provider");
       return;
     }
 
@@ -1359,17 +1280,12 @@ export const getLendAmount = async (tokenAddress: string) => {
 export const getBorrowAmount = async (tokenAddress: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
+
+  const signer = await getSigner();
 
   try {
     if (!lendingPoolContract) {
       console.error("Missing contract");
-      return;
-    }
-
-    if (!provider) {
-      console.error("Missing provider");
       return;
     }
 
@@ -1430,17 +1346,12 @@ export const repayTokens = async (tokenAddress: string, amount: string) => {
 
 export const depositEther = async (amount: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
+
+  const signer = await getSigner();
   const amountInWei = toEth(amount);
   try {
     if (!lendingPoolContract) {
       console.error("Missing contract");
-      return;
-    }
-
-    if (!provider) {
-      console.error("Missing provider");
       return;
     }
 
@@ -1460,17 +1371,12 @@ export const depositEther = async (amount: string) => {
 
 export const withdrawEtherLending = async (amount: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
+
+  const signer = await getSigner();
   const amountInWei = toEth(amount);
   try {
     if (!lendingPoolContract) {
       console.error("Missing contract");
-      return;
-    }
-
-    if (!provider) {
-      console.error("Missing provider");
       return;
     }
 
