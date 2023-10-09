@@ -218,12 +218,6 @@ const Stake = () => {
     fetchEarnedRewards();
   }, [address, stakeToken]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      console.log("window.ethereum", window.ethereum);
-    }
-  }, [window.ethereum]);
-
   return (
     <>
       <h1 className="text-gray-100 text-3xl font-semibold ">

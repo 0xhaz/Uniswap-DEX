@@ -105,6 +105,8 @@ const Pool = () => {
               tokenB
             );
 
+            if (!liquidityAtoB) return;
+
             if (parseFloat(liquidityAtoB) > 0) {
               positions.push({
                 tokenA: tokenAddressToName[tokenA] || tokenA,
@@ -500,11 +502,6 @@ const Pool = () => {
     }
   }, [selectedToken1, selectedToken2]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      console.log("window.ethereum", window.ethereum);
-    }
-  }, [window.ethereum]);
   return (
     <>
       <div className="w-full mt-36 flex flex-col justify-center items-center px-2 ">

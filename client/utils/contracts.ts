@@ -95,8 +95,12 @@ export const contract = (contractName: string): ethers.Contract | undefined => {
 
 export const wethContract = () => {
   const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const signer = provider.getSigner();
-  const contract = new ethers.Contract(weth.address, wethAbi, signer);
+  const { ethereum } = window;
 
-  return contract;
+  if (ethereum) {
+    const signer = provider.getSigner();
+    const contract = new ethers.Contract(weth.address, wethAbi, signer);
+
+    return contract;
+  }
 };

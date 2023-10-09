@@ -20,9 +20,13 @@ export const getAccount = async () => {
       const provider = new ethers.providers.Web3Provider(
         window.ethereum as any
       );
-      const signer = provider.getSigner();
-      const address = await signer.getAddress();
-      return address;
+      const { ethereum } = window;
+
+      if (ethereum) {
+        const signer = provider.getSigner();
+        const address = await signer.getAddress();
+        return address;
+      }
     } else {
       return null;
     }
@@ -197,6 +201,11 @@ export const increaseAllowance = async (tokenName: string, amount: string) => {
 export const mintTokens = async (tokenName: string) => {
   const tokenInfo = tokenContractMap[tokenName];
   const signer = provider.getSigner();
+
+  if (!signer) {
+    console.error("Failed to get signer");
+    return false;
+  }
   try {
     const tokenNameContract = tokenContract(tokenInfo.address, tokenInfo.abi);
     const mint = await tokenNameContract?.mint(signer.getAddress());
@@ -217,6 +226,11 @@ export const swapExactAmountOfTokens = async (
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const signer = provider.getSigner();
+
+      if (!signer) {
+        console.error("Failed to get signer");
+        return false;
+      }
 
       const _swapExactTokens = await swapRouter?.swapExactTokensForTokens(
         toEth(amountIn.toString()),
@@ -242,6 +256,12 @@ export const swapTokensForExactAmount = async (
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
       const signer = provider.getSigner();
+
+      if (!signer) {
+        console.error("Failed to get signer");
+        return false;
+      }
+
       const _swapTokensForExact = await swapRouter?.swapTokensForExactTokens(
         toEth(amountOut.toString()),
         1,
@@ -266,7 +286,19 @@ export const swapExactAmountOfEthForTokens = async (
       const _amount = toEth(amountIn.toString());
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+
+      if (!swapRouter) {
+        console.error("Failed to get contract");
+        return false;
+      }
+
       const signer = provider.getSigner();
+
+      if (!signer) {
+        console.error("Failed to get signer");
+        return false;
+      }
+
       const _swapExactEthForTokens = await swapRouter?.swapExactETHForTokens(
         1,
         path.map(address => address.toLowerCase()),
@@ -292,7 +324,17 @@ export const swapEthForExactAmountOfTokens = async (
       const _amount = toEth(amountETH.toString());
       const _deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+
+      if (!swapRouter) {
+        console.error("Failed to get contract");
+        return false;
+      }
       const signer = provider.getSigner();
+
+      if (!signer) {
+        console.error("Failed to get signer");
+        return false;
+      }
       const _swapEthForExactTokens = await swapRouter?.swapETHForExactTokens(
         toEth(amountOut),
         path.map(address => address.toLowerCase()),
@@ -317,7 +359,17 @@ export const swapTokensForExactAmountOfEth = async (
     if (amountOut) {
       const _deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+      if (!swapRouter) {
+        console.error("Failed to get contract");
+        return false;
+      }
+
       const signer = provider.getSigner();
+      if (!signer) {
+        console.error("Failed to get signer");
+        return false;
+      }
+
       const _swapTokensForExactETH = await swapRouter?.swapTokensForExactETH(
         toEth(amountOut.toString()),
         1,
@@ -341,7 +393,17 @@ export const swapExactAmountOfTokensForEth = async (
     if (amountIn) {
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+
+      if (!swapRouter) {
+        console.error("Failed to get contract");
+        return false;
+      }
       const signer = provider.getSigner();
+
+      if (!signer) {
+        console.error("Failed to get signer");
+        return false;
+      }
       const _swapExactTokensForEth = await swapRouter?.swapExactTokensForETH(
         toEth(amountIn.toString()),
         1,
@@ -362,7 +424,17 @@ export const depositEthForWeth = async (amountIn: string) => {
     const amountInEth = toEth(amountIn);
     const signer = provider.getSigner();
 
+    if (!signer) {
+      console.error("Failed to get signer");
+      return false;
+    }
+
     const weth = wethContract();
+
+    if (!weth) {
+      console.error("Missing weth contract");
+      return;
+    }
     const tx = await weth.deposit({
       from: signer.getAddress(),
       value: amountInEth,
@@ -385,6 +457,12 @@ export const withdrawWethForEth = async (amountIn: string) => {
     const address = await getAccount();
 
     const weth = wethContract();
+
+    if (!weth) {
+      console.error("Missing weth contract");
+      return;
+    }
+
     const tx = await weth.withdraw(amountInEth, {
       from: address,
     });
@@ -403,6 +481,10 @@ export const withdrawWethForEth = async (amountIn: string) => {
 export const getAmountsIn = async (amountOut: string, path: string[]) => {
   const swapRouter = contract("swapRouter");
   try {
+    if (!swapRouter) {
+      console.error("Failed to get contract");
+      return false;
+    }
     const response = await swapRouter?.getAmountsIn(amountOut, path);
 
     return response.map((amount: string) => formatEth(amount));
@@ -415,6 +497,10 @@ export const getAmountsIn = async (amountOut: string, path: string[]) => {
 export const getAmountsOut = async (amountIn: string, path: string[]) => {
   const swapRouter = contract("swapRouter");
   try {
+    if (!swapRouter) {
+      console.error("Failed to get contract");
+      return false;
+    }
     const response = await swapRouter?.getAmountsOut(amountIn, path);
 
     return response.map((amount: string) => formatEth(amount));
@@ -431,6 +517,10 @@ export const quote = async (
 ) => {
   const swapRouter = contract("swapRouter");
   try {
+    if (!swapRouter) {
+      console.error("Failed to get contract");
+      return false;
+    }
     const amountInWei = toEth(amountIn);
     const reserveAWei = toEth(reserveA);
     const reserveBWei = toEth(reserveB);
@@ -453,6 +543,10 @@ export const getPairAddress = async (tokenA: string, tokenB: string) => {
   const swapFactory = contract("swapFactory");
 
   try {
+    if (!swapFactory) {
+      console.error("Failed to get contract");
+      return false;
+    }
     const pairAddress = await swapFactory?.getPair(tokenA, tokenB);
     return pairAddress;
   } catch (error) {
@@ -469,10 +563,19 @@ export const liquidityExistsForPair = async (
   const swapFactory = contract("swapFactory");
   const signer = provider.getSigner();
   try {
+    if (!swapFactory) {
+      console.error("Failed to get contract");
+      return false;
+    }
     const pairAddress = await swapFactory?.getPair(
       tokenOneAddress,
       tokenTwoAddress
     );
+
+    if (!signer) {
+      console.error("Failed to get contract");
+      return false;
+    }
 
     const pairContract = new Contract(
       pairAddress,
@@ -512,6 +615,10 @@ export const addLiquidity = async (
 ) => {
   const swapRouter = contract("swapRouter");
   try {
+    if (!swapRouter) {
+      console.error("Failed to get contract");
+      return false;
+    }
     if (valueOne && valueTwo) {
       const deadline = getDeadline();
       const userAddress = await getAccount();
@@ -544,6 +651,11 @@ export const addLiquidityETH = async (
     const _valueETH = toEth(valueETH.toString());
     const deadline = getDeadline();
     const userAddress = await getAccount();
+
+    if (!swapRouter) {
+      console.error("Failed to get contract");
+      return false;
+    }
     const _addLiquidityETH = await swapRouter?.addLiquidityETH(
       addressToken,
       toEth(valueToken.toString()),
@@ -614,6 +726,12 @@ export const removeLiquidityETH = async (
     if (liquidityAmount) {
       const deadline = getDeadline();
       const userAddress = await getAccount();
+
+      if (!swapRouter) {
+        console.error("Missing swapRouter");
+        return;
+      }
+
       const _removeLiquidityETH = await swapRouter?.removeLiquidityETH(
         addressToken,
         toEth(liquidityAmount),
@@ -637,6 +755,11 @@ export const getLiquidity = async (
 ) => {
   const swapRouter = contract("swapRouter");
   try {
+    if (!swapRouter) {
+      console.error("Missing swapRouter");
+      return;
+    }
+
     const liquidity = await swapRouter?.getLiquidityAmount(
       walletAddress,
       addressTokenA,
@@ -657,6 +780,10 @@ export const getLiquidity = async (
 export const getPoolAddress = async (tokenAddress: string) => {
   const stakingContract = contract("stakingRouter");
   try {
+    if (!stakingContract) {
+      console.error("Missing contract");
+      return;
+    }
     const getPool = await stakingContract?.getPoolAddress(tokenAddress);
     return getPool;
   } catch (error) {
@@ -670,6 +797,14 @@ export const getStakedAmount = async (tokenAddress: string) => {
   const tokenContractInfo = tokenContractMap[tokenAddress];
 
   try {
+    if (!stakingContract) {
+      console.error("Missing contract");
+      return;
+    }
+    if (!signer) {
+      console.error("Missing signer");
+      return;
+    }
     const staked = await stakingContract?.getStaked(
       signer.getAddress(),
       tokenContractInfo.address
@@ -687,6 +822,14 @@ export const getEarnedRewards = async (tokenAddress: string) => {
   const tokenContractInfo = tokenContractMap[tokenAddress];
 
   try {
+    if (!stakingContract) {
+      console.error("Missing contract");
+      return;
+    }
+    if (!signer) {
+      console.error("Missing signer");
+      return;
+    }
     const rewardEarned = await stakingContract?.getRewardEarned(
       tokenContractInfo.address,
       signer.getAddress()
@@ -708,6 +851,11 @@ export const stakedTokens = async (
   const tokenInfo = tokenContractMap[tokenAddress];
 
   try {
+    if (!stakingContract) {
+      console.error("Missing contract");
+      return;
+    }
+
     const staked = await stakingContract?.stake(
       tokenInfo.address,
       toEth(inputAmount)
@@ -726,6 +874,11 @@ export const withdrawTokens = async (
   const stakingContract = contract("stakingRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
   try {
+    if (!stakingContract) {
+      console.error("Missing contract");
+      return;
+    }
+
     const withdraw = await stakingContract?.withdraw(
       tokenInfo.address,
       toEth(outAmount)
@@ -741,6 +894,11 @@ export const claimRewards = async (tokenAddress: string, outAmount: string) => {
   const stakingContract = contract("stakingRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
   try {
+    if (!stakingContract) {
+      console.error("Missing contract");
+      return;
+    }
+
     const claim = await stakingContract?.redeemReward(tokenInfo.address);
 
     await claim.wait();
@@ -755,6 +913,16 @@ export const stakeEther = async (amount: string) => {
   const amountInWei = toEth(amount);
 
   try {
+    if (!stakingContract) {
+      console.error("Missing contract");
+      return;
+    }
+
+    if (!signer) {
+      console.error("Missing signer");
+      return;
+    }
+
     const stake = await stakingContract?.stakeETH({
       from: signer.getAddress(),
       value: amountInWei,
@@ -770,6 +938,11 @@ export const withdrawEther = async (amount: string) => {
   const stakingContract = contract("stakingRouter");
 
   try {
+    if (!stakingContract) {
+      console.error("Missing contract");
+      return;
+    }
+
     const withdraw = await stakingContract?.withdrawETH(toEth(amount));
 
     await withdraw.wait();
@@ -782,6 +955,11 @@ export const claimEther = async () => {
   const stakingContract = contract("stakingRouter");
 
   try {
+    if (!stakingContract) {
+      console.error("Missing contract");
+      return;
+    }
+
     const claim = await stakingContract?.redeemRewardETH();
 
     await claim.wait();
@@ -881,6 +1059,11 @@ export const getLendingPoolAddress = async (tokenAddress: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
+
     const getPool = await lendingPoolContract?.getPoolAddress(
       tokenInfo.address
     );
@@ -894,6 +1077,10 @@ export const createPool = async (tokenAddress: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
     const createPool = await lendingPoolContract?.createPool(tokenInfo.address);
     await createPool.wait();
   } catch (error) {
@@ -906,6 +1093,14 @@ export const getRepaidAmount = async (tokenAddress: string) => {
   const tokenInfo = tokenContractMap[tokenAddress];
   const signer = provider.getSigner();
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
+    if (!signer) {
+      console.error("Missing signer");
+      return;
+    }
     const repayAmount = await lendingPoolContract?.getRepayAmount(
       tokenInfo.address,
       signer.getAddress()
@@ -925,6 +1120,14 @@ export const getWithdrawalAmount = async (
   const tokenInfo = tokenContractMap[tokenAddress];
   const signer = provider.getSigner();
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
+    if (!signer) {
+      console.error("Missing signer");
+      return;
+    }
     const withdrawAmount = await lendingPoolContract?.getWithdrawAmount(
       tokenInfo.address,
       signer.getAddress(),
@@ -940,6 +1143,11 @@ export const depositTokens = async (tokenAddress: string, amount: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
+
     const deposit = await lendingPoolContract?.depositToken(
       tokenInfo.address,
       toEth(amount)
@@ -957,6 +1165,11 @@ export const withdrawTokensLending = async (
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
+
     const withdraw = await lendingPoolContract?.withdrawToken(
       tokenInfo.address,
       toEth(amount)
@@ -971,6 +1184,10 @@ export const borrowTokens = async (tokenAddress: string, amount: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
     const borrow = await lendingPoolContract?.borrowToken(
       tokenInfo.address,
       toEth(amount)
@@ -987,6 +1204,15 @@ export const getLendAmount = async (tokenAddress: string) => {
   const signer = provider.getSigner();
 
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
+
+    if (!signer) {
+      console.error("Missing signer");
+      return;
+    }
     const lendAmount = await lendingPoolContract?.getLendAmount(
       tokenInfo.address,
       signer.getAddress()
@@ -1005,6 +1231,15 @@ export const getBorrowAmount = async (tokenAddress: string) => {
   const signer = provider.getSigner();
 
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
+
+    if (!signer) {
+      console.error("Missing signer");
+      return;
+    }
     const borrowAmount = await lendingPoolContract?.getBorrowAmount(
       tokenInfo.address,
       signer.getAddress()
@@ -1021,6 +1256,11 @@ export const getTotalBorrowAvailable = async (tokenAddress: string) => {
   const tokenInfo = tokenContractMap[tokenAddress];
 
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
+
     const totalBorrowAvailable = await lendingPoolContract?.getTotalLendAmount(
       tokenInfo?.address
     );
@@ -1036,6 +1276,10 @@ export const repayTokens = async (tokenAddress: string, amount: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
     const payToken = await lendingPoolContract?.repayToken(
       tokenInfo.address,
       toEth(amount)
@@ -1052,6 +1296,15 @@ export const depositEther = async (amount: string) => {
   const signer = provider.getSigner();
   const amountInWei = toEth(amount);
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
+
+    if (!signer) {
+      console.error("Missing signer");
+      return;
+    }
     const deposit = await lendingPoolContract?.depositETH({
       from: signer.getAddress(),
       value: amountInWei,
@@ -1067,6 +1320,10 @@ export const withdrawEtherLending = async (amount: string) => {
   const signer = provider.getSigner();
   const amountInWei = toEth(amount);
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
     const withdraw = await lendingPoolContract?.withdrawETH(amountInWei);
     await withdraw.wait();
   } catch (error) {
@@ -1078,6 +1335,10 @@ export const borrowEther = async (amount: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const amountInWei = toEth(amount);
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
     const borrow = await lendingPoolContract?.borrowETH(amountInWei);
     await borrow.wait();
   } catch (error) {
@@ -1089,6 +1350,10 @@ export const repayEther = async (amount: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const amountInWei = toEth(amount);
   try {
+    if (!lendingPoolContract) {
+      console.error("Missing contract");
+      return;
+    }
     const repay = await lendingPoolContract?.repayETH(amountInWei);
     await repay.wait();
   } catch (error) {

@@ -274,12 +274,6 @@ const Lending = () => {
     fetchBorrowAmount();
   }, [selectedToken]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      console.log("window.ethereum", window.ethereum);
-    }
-  }, [window.ethereum]);
-
   const { address } = useAccount();
   return (
     <>
