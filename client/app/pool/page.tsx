@@ -33,8 +33,6 @@ import TransactionStatus from "../components/transactionStatus";
 import { formatEth, toEth, toWei } from "@/utils/ether-utils";
 import toast, { Toaster } from "react-hot-toast";
 
-const swapRouter = contract("swapRouter");
-
 const Pool = () => {
   const [expand, setExpand] = useState<boolean>(false);
   const [selectedToken1, setSelectedToken1] = useState<TokenProps | null>(
@@ -60,6 +58,12 @@ const Pool = () => {
   const { address } = useAccount();
 
   const renderTable = address !== undefined;
+
+  const swapRouter = contract("swapRouter");
+
+  if (!swapRouter) {
+    console.error("Swap router not found");
+  }
 
   const tokenAddressToName = {
     [CONTRACTS.USDT.address]: "USDT",

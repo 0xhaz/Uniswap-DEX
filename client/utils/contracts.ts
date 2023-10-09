@@ -60,8 +60,12 @@ export const tokenContract = (
   address: string,
   abi: any
 ): ethers.Contract | undefined => {
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const { ethereum } = window;
+  if (typeof window === "undefined" || !window.ethereum) {
+    return undefined;
+  }
+
+  const ethereum = window.ethereum as ethers.providers.ExternalProvider;
+  const provider = new ethers.providers.Web3Provider(ethereum);
 
   if (ethereum) {
     const signer = provider.getSigner();
@@ -78,8 +82,12 @@ export const contract = (contractName: string): ethers.Contract | undefined => {
     throw new Error(`Contract ${contractName} not supported`);
   }
 
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const { ethereum } = window;
+  if (typeof window === "undefined" || !window.ethereum) {
+    return undefined;
+  }
+
+  const ethereum = window.ethereum as ethers.providers.ExternalProvider;
+  const provider = new ethers.providers.Web3Provider(ethereum);
 
   if (ethereum) {
     const signer = provider.getSigner();
@@ -96,8 +104,12 @@ export const contract = (contractName: string): ethers.Contract | undefined => {
 };
 
 export const wethContract = () => {
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  const { ethereum } = window;
+  if (typeof window === "undefined" || !window.ethereum) {
+    return undefined;
+  }
+
+  const ethereum = window.ethereum as ethers.providers.ExternalProvider;
+  const provider = new ethers.providers.Web3Provider(ethereum);
 
   if (ethereum) {
     const signer = provider.getSigner();

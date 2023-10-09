@@ -40,8 +40,6 @@ import TransactionStatus from "@/app/components/transactionStatus";
 import { contract } from "@/utils/contracts";
 import { formatEth, toEth, toWei } from "@/utils/ether-utils";
 
-const stakingRouter = contract("stakingRouter");
-
 const Stake = () => {
   const [stakedAmount, setStakedAmount] = useState<number | string>(0);
   const [earnedRewards, setEarnedRewards] = useState<number | string>(0);
@@ -59,6 +57,12 @@ const Stake = () => {
 
   const notifyError = (msg: string) => toast.error(msg, { duration: 6000 });
   const notifySuccess = () => toast.success("Transaction completed.");
+
+  const stakingRouter = contract("stakingRouter");
+
+  if (!stakingRouter) {
+    console.log("Staking router not found");
+  }
 
   const handleStake = async () => {
     if (!address || !stakeToken) return;

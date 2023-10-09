@@ -30,8 +30,6 @@ import {
 } from "@/utils/queries";
 import { formatEth } from "@/utils/ether-utils";
 
-const lendingRouter = contract("lendingPoolRouter");
-
 const Lending = () => {
   const [expandSupply, setExpandSupply] = useState<boolean>(false);
   const [expandBorrow, setExpandBorrow] = useState<boolean>(false);
@@ -54,6 +52,12 @@ const Lending = () => {
   const [supplyAmount, setSupplyAmount] = useState<number>(0);
   const [poolAddress, setPoolAddress] = useState<string>("");
   const [toBorrow, setToBorrow] = useState<number | string>(0);
+
+  const lendingRouter = contract("lendingPoolRouter");
+
+  if (!lendingRouter) {
+    console.log("Lending Router not found");
+  }
 
   const handleSupplyModal = () => setExpandSupply(true);
   const handleBorrowModal = () => setExpandBorrow(true);
