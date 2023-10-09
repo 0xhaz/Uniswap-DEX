@@ -484,7 +484,7 @@ const Pool = () => {
 
     if (selectedToken1?.key === "ETH" || selectedToken2?.key === "ETH") {
       getEthBalance(address)?.then(balance => {
-        const parsedBalance = parseFloat(balance ?? "0").toFixed(2);
+        const parsedBalance = parseFloat(balance?.toString() ?? "0").toFixed(2);
         setEthBalance(Number(parsedBalance));
       });
     }

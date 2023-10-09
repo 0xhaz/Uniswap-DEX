@@ -82,6 +82,7 @@ export const contract = (contractName: string): ethers.Contract | undefined => {
 
   if (ethereum) {
     const signer = provider.getSigner();
+    if (!signer) throw new Error("No signer found");
     const signerOrProvider = signer || provider;
     const contract = new ethers.Contract(
       contractInfo.address,
