@@ -91,8 +91,10 @@ const Lending = () => {
   };
 
   const getPoolAddress = async () => {
+    if (!address) return;
     try {
       const address = await getLendingPoolAddress(selectedToken?.key || "");
+
       setPoolAddress(address);
     } catch (error) {
       console.log(error);
@@ -103,6 +105,7 @@ const Lending = () => {
     if (!address) return;
     try {
       const tokenInfo = await getTotalBorrowAvailable(selectedToken?.key || "");
+      if (!tokenInfo) return;
       const formatBalance = formatEth(tokenInfo.toString());
 
       setToBorrow(formatBalance);
@@ -112,8 +115,10 @@ const Lending = () => {
   };
 
   const fetchLendAmount = async () => {
+    if (!address) return;
     try {
       const amount = await getLendAmount(selectedToken?.key || "");
+      if (!amount) return;
       const formatAmount = formatEth(amount);
 
       setLendAmount(formatAmount);
@@ -123,8 +128,10 @@ const Lending = () => {
   };
 
   const fetchBorrowAmount = async () => {
+    if (!address || !selectedToken) return;
     try {
       const amount = await getBorrowAmount(selectedToken?.key || "");
+      if (!amount) return;
       const formatAmount = formatEth(amount);
       setBorrowedAmount(formatAmount);
     } catch (error) {
@@ -175,6 +182,7 @@ const Lending = () => {
   };
 
   const handleBorrow = async () => {
+    if (!address || !selectedToken) return;
     try {
       setTxPending(true);
       if (selectedToken) {
@@ -196,6 +204,7 @@ const Lending = () => {
   };
 
   const handleWithdraw = async () => {
+    if (!address || !selectedToken) return;
     try {
       setTxPending(true);
       if (selectedToken) {
@@ -265,7 +274,6 @@ const Lending = () => {
   };
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
     if (!address) return;
     getUserBalance();
     getPoolAddress();
