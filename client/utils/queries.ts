@@ -17,10 +17,10 @@ const getDeadline = () => {
 
 const getAccount = async () => {
   try {
-    if (typeof window !== "undefined") {
-      const provider = new ethers.providers.Web3Provider(
-        window.ethereum as any
-      );
+    if (typeof window !== "undefined" && window.ethereum) {
+      const ethereum = window.ethereum as ethers.providers.ExternalProvider;
+
+      const provider = new ethers.providers.Web3Provider(ethereum);
       const signer = provider.getSigner();
       const address = await signer.getAddress();
       return address;
@@ -33,8 +33,8 @@ const getAccount = async () => {
   }
 };
 
-const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-let address: string;
+// const provider = new ethers.providers.Web3Provider(window.ethereum as any);
+// let address: string;
 
 /////////////////////// TOKENS ///////////////////////
 
@@ -45,6 +45,7 @@ export const approveTokens = async (
   amountIn: string
 ) => {
   try {
+    const provider = new ethers.providers.Web3Provider(window.ethereum as any);
     const signer = provider.getSigner();
 
     const token = tokenContract(tokenInAddress, abi);
@@ -99,6 +100,7 @@ export const getBalance = async (
 
 export const getEthBalance = async (walletAddress: string) => {
   try {
+    const provider = new ethers.providers.Web3Provider(window.ethereum as any);
     const balance = await provider.getBalance(walletAddress);
     const balanceEth = ethers.utils.formatEther(balance);
 
@@ -192,6 +194,7 @@ export const increaseAllowance = async (tokenName: string, amount: string) => {
 
 export const mintTokens = async (tokenName: string) => {
   const tokenInfo = tokenContractMap[tokenName];
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
   const signer = provider.getSigner();
   try {
     const tokenNameContract = tokenContract(tokenInfo.address, tokenInfo.abi);
@@ -212,6 +215,9 @@ export const swapExactAmountOfTokens = async (
     if (amountIn) {
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum as any
+      );
       const signer = provider.getSigner();
 
       const _swapExactTokens = await swapRouter?.swapExactTokensForTokens(
@@ -237,6 +243,9 @@ export const swapTokensForExactAmount = async (
     if (amountOut) {
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum as any
+      );
       const signer = provider.getSigner();
       const _swapTokensForExact = await swapRouter?.swapTokensForExactTokens(
         toEth(amountOut.toString()),
@@ -262,6 +271,9 @@ export const swapExactAmountOfEthForTokens = async (
       const _amount = toEth(amountIn.toString());
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum as any
+      );
       const signer = provider.getSigner();
       const _swapExactEthForTokens = await swapRouter?.swapExactETHForTokens(
         1,
@@ -288,6 +300,9 @@ export const swapEthForExactAmountOfTokens = async (
       const _amount = toEth(amountETH.toString());
       const _deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum as any
+      );
       const signer = provider.getSigner();
       const _swapEthForExactTokens = await swapRouter?.swapETHForExactTokens(
         toEth(amountOut),
@@ -313,6 +328,9 @@ export const swapTokensForExactAmountOfEth = async (
     if (amountOut) {
       const _deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum as any
+      );
       const signer = provider.getSigner();
       const _swapTokensForExactETH = await swapRouter?.swapTokensForExactETH(
         toEth(amountOut.toString()),
@@ -337,6 +355,9 @@ export const swapExactAmountOfTokensForEth = async (
     if (amountIn) {
       const deadline = getDeadline();
       const swapRouter = contract("swapRouter");
+      const provider = new ethers.providers.Web3Provider(
+        window.ethereum as any
+      );
       const signer = provider.getSigner();
       const _swapExactTokensForEth = await swapRouter?.swapExactTokensForETH(
         toEth(amountIn.toString()),
@@ -356,6 +377,7 @@ export const swapExactAmountOfTokensForEth = async (
 export const depositEthForWeth = async (amountIn: string) => {
   try {
     const amountInEth = toEth(amountIn);
+    const provider = new ethers.providers.Web3Provider(window.ethereum as any);
     const signer = provider.getSigner();
 
     const weth = wethContract();
@@ -371,7 +393,9 @@ export const depositEthForWeth = async (amountIn: string) => {
 
     await tx.wait();
 
-    const wethBalance = await weth.balanceOf(address);
+    const wethBalance = await weth.balanceOf(signer.getAddress());
+
+    return wethBalance;
   } catch (error) {
     console.log("error depositing eth for weth", error);
     throw error;
@@ -396,6 +420,8 @@ export const withdrawWethForEth = async (amountIn: string) => {
     await tx.wait();
 
     const wethBalance = await weth.balanceOf(address);
+
+    return wethBalance;
   } catch (error) {
     console.log("error withdrawing weth for eth", error);
     throw error;
@@ -469,6 +495,7 @@ export const liquidityExistsForPair = async (
   userAddress: string
 ) => {
   const swapFactory = contract("swapFactory");
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
   const signer = provider.getSigner();
   try {
     const pairAddress = await swapFactory?.getPair(
@@ -663,6 +690,7 @@ export const getPoolAddress = async (tokenAddress: string) => {
 
 export const getStakedAmount = async (tokenAddress: string) => {
   const stakingContract = contract("stakingRouter");
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
   const signer = provider.getSigner();
   const tokenContractInfo = tokenContractMap[tokenAddress];
 
@@ -680,6 +708,7 @@ export const getStakedAmount = async (tokenAddress: string) => {
 
 export const getEarnedRewards = async (tokenAddress: string) => {
   const stakingContract = contract("stakingRouter");
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
   const signer = provider.getSigner();
   const tokenContractInfo = tokenContractMap[tokenAddress];
 
@@ -748,6 +777,7 @@ export const claimRewards = async (tokenAddress: string, outAmount: string) => {
 
 export const stakeEther = async (amount: string) => {
   const stakingContract = contract("stakingRouter");
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
   const signer = provider.getSigner();
   const amountInWei = toEth(amount);
 
@@ -901,6 +931,7 @@ export const createPool = async (tokenAddress: string) => {
 export const getRepaidAmount = async (tokenAddress: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
   const signer = provider.getSigner();
   try {
     const repayAmount = await lendingPoolContract?.getRepayAmount(
@@ -920,6 +951,7 @@ export const getWithdrawalAmount = async (
 ) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
   const signer = provider.getSigner();
   try {
     const withdrawAmount = await lendingPoolContract?.getWithdrawAmount(
@@ -981,6 +1013,7 @@ export const borrowTokens = async (tokenAddress: string, amount: string) => {
 export const getLendAmount = async (tokenAddress: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
   const signer = provider.getSigner();
 
   try {
@@ -999,6 +1032,7 @@ export const getLendAmount = async (tokenAddress: string) => {
 export const getBorrowAmount = async (tokenAddress: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
   const tokenInfo = tokenContractMap[tokenAddress];
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
   const signer = provider.getSigner();
 
   try {
@@ -1046,6 +1080,7 @@ export const repayTokens = async (tokenAddress: string, amount: string) => {
 
 export const depositEther = async (amount: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
   const signer = provider.getSigner();
   const amountInWei = toEth(amount);
   try {
@@ -1061,6 +1096,7 @@ export const depositEther = async (amount: string) => {
 
 export const withdrawEtherLending = async (amount: string) => {
   const lendingPoolContract = contract("lendingPoolRouter");
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
   const signer = provider.getSigner();
   const amountInWei = toEth(amount);
   try {
