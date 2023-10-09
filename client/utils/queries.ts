@@ -14,28 +14,6 @@ const getDeadline = () => {
   return deadline;
 };
 
-export const getAccount = async () => {
-  try {
-    if (typeof window !== "undefined") {
-      const provider = new ethers.providers.Web3Provider(
-        window.ethereum as any
-      );
-      const { ethereum } = window;
-
-      if (ethereum) {
-        const signer = provider.getSigner();
-        const address = await signer.getAddress();
-        return address;
-      }
-    } else {
-      return null;
-    }
-  } catch (error) {
-    console.error("Error getting account", error);
-    return null;
-  }
-};
-
 export const getSigner = async () => {
   try {
     if (typeof window !== "undefined") {
@@ -665,7 +643,7 @@ export const addLiquidity = async (
     }
     if (valueOne && valueTwo) {
       const deadline = getDeadline();
-      const userAddress = await getAccount();
+      const userAddress = await getSigner();
 
       const _addLiquidity = await swapRouter?.addLiquidity(
         tokenOneAddress,
@@ -694,10 +672,15 @@ export const addLiquidityETH = async (
     // await approveTokens(addressToken, valueToken);
     const _valueETH = toEth(valueETH.toString());
     const deadline = getDeadline();
-    const userAddress = await getAccount();
+    const userAddress = await getSigner();
 
     if (!swapRouter) {
       console.error("Failed to get contract");
+      return false;
+    }
+
+    if (!userAddress) {
+      console.error("Failed to get user address");
       return false;
     }
     const _addLiquidityETH = await swapRouter?.addLiquidityETH(
@@ -723,10 +706,15 @@ export const removeLiquidity = async (
   const swapRouter = contract("swapRouter");
   try {
     const deadline = getDeadline();
-    const userAddress = await getAccount();
+    const userAddress = await getSigner();
 
     if (!swapRouter) {
       console.error("Missing swapRouter");
+      return;
+    }
+
+    if (!userAddress) {
+      console.error("Missing user address");
       return;
     }
 
@@ -769,10 +757,15 @@ export const removeLiquidityETH = async (
   try {
     if (liquidityAmount) {
       const deadline = getDeadline();
-      const userAddress = await getAccount();
+      const userAddress = await getSigner();
 
       if (!swapRouter) {
         console.error("Missing swapRouter");
+        return;
+      }
+
+      if (!userAddress) {
+        console.error("Missing user address");
         return;
       }
 
