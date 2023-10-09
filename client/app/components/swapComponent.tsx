@@ -399,6 +399,14 @@ const SwapComponent = () => {
     fetchBalance();
   }, [srcToken, destToken]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (!address) {
+        notifyError("Connect Wallet");
+      }
+    }
+  }, []);
+
   return (
     <>
       <div className="bg-zinc-900 w-[35%] p-4 px-6 rounded-xl">

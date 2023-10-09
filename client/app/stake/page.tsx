@@ -220,8 +220,7 @@ const Stake = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const isWalletConnected = localStorage.getItem("walletConnected");
-      if (!isWalletConnected) {
+      if (!address) {
         notifyError("Connect Wallet");
       }
     }
