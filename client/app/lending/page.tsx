@@ -274,6 +274,15 @@ const Lending = () => {
     fetchBorrowAmount();
   }, [selectedToken]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isWalletConnected = localStorage.getItem("walletConnected");
+      if (!isWalletConnected) {
+        notifyError("Connect Wallet");
+      }
+    }
+  }, []);
+
   const { address } = useAccount();
   return (
     <>

@@ -502,6 +502,15 @@ const Pool = () => {
     }
   }, [selectedToken1, selectedToken2]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isWalletConnected = localStorage.getItem("walletConnected");
+      if (!isWalletConnected) {
+        notifyError("Connect Wallet");
+      }
+    }
+  }, []);
+
   return (
     <>
       <div className="w-full mt-36 flex flex-col justify-center items-center px-2 ">
