@@ -65,9 +65,7 @@ const Stake = () => {
   }
 
   const handleStake = async () => {
-    if (!address || !stakeToken) return;
-
-    if (!stakingRouter) return;
+    if (!address || !stakeToken || !stakingRouter) return;
 
     try {
       setTxPending(true);
@@ -116,16 +114,22 @@ const Stake = () => {
 
   const handleUnstakes = () => {
     if (!address) return;
-    if (stakeToken) {
-      setTxPending(true);
-      if (stakeToken?.key === "ETH") {
-        withdrawEther(withdrawAmount.toString());
-        notifySuccess();
-      } else {
-        withdrawTokens(stakeToken?.key || "", withdrawAmount.toString());
+    try {
+      if (stakeToken) {
+        setTxPending(true);
+        if (stakeToken?.key === "ETH") {
+          withdrawEther(withdrawAmount.toString());
+          notifySuccess();
+        } else {
+          withdrawTokens(stakeToken?.key || "", withdrawAmount.toString());
 
-        notifySuccess();
+          notifySuccess();
+        }
       }
+    } catch (error) {
+      console.error(error);
+      notifyError("Transaction failed.");
+    } finally {
       setTxPending(false);
     }
   };

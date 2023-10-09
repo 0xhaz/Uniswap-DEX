@@ -251,14 +251,14 @@ const Pool = () => {
           await approveTokens(
             token1Address,
             selectedToken1?.abi,
-            swapRouter.address,
+            swapRouter?.address,
             desiredAmountA.toString()
           );
 
           await approveTokens(
             token2Address,
             selectedToken2?.abi,
-            swapRouter.address,
+            swapRouter?.address,
             desiredAmountB.toString()
           );
           notifySuccess();
@@ -293,7 +293,7 @@ const Pool = () => {
           await approveTokens(
             token1Address,
             selectedToken1?.abi,
-            swapRouter.address,
+            swapRouter?.address,
             desiredAmountA.toString()
           );
           notifySuccess();
