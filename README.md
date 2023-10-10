@@ -27,8 +27,8 @@ DeFi Suite comprises a set of smart contracts that enable decentralized finance 
 
 **Description**: SwapRouter is a Solidity smart contract that facilitates token swapping and liquidity provision on decentralized exchanges.
 
-- [Link to Contract](contracts/SwapRouter.sol)
-- [Link to Interface](interfaces/ISwapRouter.sol)
+- [Link to Contract](hardhat/contracts/router/SwapRouter.sol)
+- [Link to Interface](hardhat/contracts/interfaces/ISwapRouter.sol)
 
 ### 2. StakingPoolRouter.sol
 
