@@ -1,15 +1,8 @@
 "use client";
 import { Fragment, useState, useEffect } from "react";
 import Image from "next/image";
-import { useAccount, useContract, useProvider, useSigner } from "wagmi";
-import {
-  Button,
-  Input,
-  Modal,
-  Text,
-  useModal,
-  Dropdown,
-} from "@nextui-org/react";
+import { useAccount } from "wagmi";
+import { Button, Input, Modal, Text } from "@nextui-org/react";
 import { contract, tokenContract } from "@/utils/contracts";
 import {
   getBalance,
