@@ -7,7 +7,10 @@ const NavItems = () => {
   const pathname = usePathname();
   const navItems = ["Swap", "Pool", "Stake", "Lending", "Faucet"];
 
-  const selectedItem = navItems.find(item => pathname.includes(item)) || "";
+  const selectedItem =
+    navItems.find(item =>
+      pathname.toLowerCase().includes(item.toLowerCase())
+    ) || "Swap";
 
   const getNavIconClassName = (name: string) => {
     const baseClassName =
