@@ -14,8 +14,8 @@
   - [Features](#features)
   - [Getting Started](#getting-started)
   - [Usage](#usage)
+  - [Contributing](#contributing)
   - [License](#license)
-  - [Contact](#contact)
 
 ## Introduction
 
@@ -64,10 +64,10 @@ To begin using the contracts, follow these steps:
 
 To use these contracts, follow the steps outlined in the "Getting Started" section above. Interact with the contract functions to participate in staking, lending and swapping a tokens. Make sure to follow the rules and requirements for each contract's functionalities.
 
+## Contributing
+
+Contributions to this project are welcome! If you find any issues or have ideas for improvement, feel free to open an issue or submit a pull request.
+
 ## License
 
 This project is licensed under the [License Name] License - see the [LICENSE.md](LICENSE.md) file for details.
-
-## Contact
-
-[Provide your contact information or a link to your preferred contact method.]
