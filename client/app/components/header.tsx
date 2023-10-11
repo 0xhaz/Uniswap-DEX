@@ -31,7 +31,9 @@ const Header = () => {
         <Image src="/uniswap.png" alt="logo" width={40} height={40} />
       </div>
 
-      <div className="flex items-center justify-center lg:ml-24 "></div>
+      <div className="fixed flex left-0 top-0 px-8 py-4 w-full items-center justify-between ">
+        <NavItems />
+      </div>
       <div className="flex ">
         <ConnectButton accountStatus={"full"} />
       </div>

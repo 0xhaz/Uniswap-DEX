@@ -19,11 +19,8 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Providers>
-          <div className="w-full h-screen flex flex-col items-center justify-center bg-[#2d242f]">
+          <div className="w-full h-screen flex flex-col items-center justify-center bg-[#2d242f] ">
             <Header />
-            <div className="fixed left-0 top-0 w-full px-8 py-4 flex items-center justify-between">
-              <NavItems />
-            </div>
 
             {children}
           </div>
