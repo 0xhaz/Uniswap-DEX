@@ -297,7 +297,9 @@ const Lending = () => {
   const { address } = useAccount();
   return (
     <>
-      <h1 className="text-gray-100 text-3xl font-semibold">Lending Pool</h1>
+      <h1 className="text-gray-100 mt-10 text-3xl font-semibold">
+        Lending Pool
+      </h1>
       <div className="w-[60%]  bg-[#212429] mt-10 flex flex-col justify-center items-center px-4 py-10">
         <div className="w-full flex flex-col justify-around"></div>
         <div className="flex items-center justify-between">

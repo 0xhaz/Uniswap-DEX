@@ -236,7 +236,7 @@ const Stake = () => {
 
   return (
     <>
-      <h1 className="text-gray-100 text-3xl font-semibold ">
+      <h1 className="text-gray-100 mt-42 text-3xl font-semibold ">
         Stake Your Tokens
       </h1>
       <div className="w-[50%] bg-[#212429] mt-10 p-20 flex flex-col justify-center items-center px-2 pb-10 ">

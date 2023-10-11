@@ -1,10 +1,17 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import Router from "next/router";
 
 const NavItems = () => {
+  const router = Router;
   const navItems = ["Swap", "Pool", "Stake", "Lending", "Faucet"];
-  const [selectedItem, setSelectedItem] = useState("Swap");
+
+  const selectedItem =
+    navItems.find(
+      item =>
+        router.pathname === (item === "Swap" ? "/" : `/${item.toLowerCase()}`)
+    ) || "Swap";
 
   const getNavIconClassName = (name: string) => {
     const baseClassName =
@@ -16,10 +23,6 @@ const NavItems = () => {
     }`;
   };
 
-  const handleItemClick = (name: string) => {
-    setSelectedItem(name);
-  };
-
   return (
     <div className="bg-zinc-900 h-[50px] lg:w-[600px] flex items-center justify-between rounded-full mx-auto">
       {navItems.map(item => (
@@ -27,12 +30,7 @@ const NavItems = () => {
           key={item}
           href={item === "Swap" ? "/" : `/${item.toLowerCase()}`}
         >
-          <div
-            className={getNavIconClassName(item)}
-            onClick={() => handleItemClick(item)}
-          >
-            {item}
-          </div>
+          <div className={getNavIconClassName(item)}>{item}</div>
         </Link>
       ))}
     </div>
