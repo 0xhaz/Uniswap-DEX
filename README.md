@@ -37,14 +37,14 @@ DeFi Suite comprises a set of smart contracts that enable decentralized finance 
 **Description**: StakingPoolRouter is a Solidity smart contract that interacts with staking pools, allowing users to stake, unstake, and claim rewards.
 
 - [Link to Contract](hardhat/contracts/StakingPoolRouter.sol)
-- [Link to Interface](hardhat/contracts/interfaces/IStakingPoolRouter.sol)
+- [Link to Interface](hardhat/contracts/interfaces/IStakingPool.sol)
 
 ### 3. LendingPoolRouter.sol
 
 **Description**: LendingPoolRouter is a Solidity smart contract designed for lending and borrowing tokens, both ERC-20 and Ether (via Wrapped Ether or WETH).
 
 - [Link to Contract](hardhat/contracts/LendingPoolRouter.sol)
-- [Link to Interface](hardhat/contracts/interfaces/ILendingPoolRouter.sol)
+- [Link to Interface](hardhat/contracts/interfaces/ILendingPool.sol)
 
 ## Features
 
